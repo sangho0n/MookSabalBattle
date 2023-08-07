@@ -53,9 +53,13 @@ void AGun::PostInitializeComponents()
 	Damage = 3.0f;
 }
 
-void AGun::FireParticleOnMuzzle()
+void AGun::FireParticleOnMuzzle_Server_Implementation()
 {
-	// TODO: 총 발사 파티클 동기화
+	FireParticleOnMuzzle_Multicast();
+}
+
+void AGun::FireParticleOnMuzzle_Multicast_Implementation()
+{
 	UGameplayStatics::SpawnEmitterAttached(FireParticle,
 		SM_Weapon,
 		MuzzleSocket,
@@ -64,6 +68,7 @@ void AGun::FireParticleOnMuzzle()
 		FVector(0.2f)
 		);
 }
+
 
 // called on client
 FPointDamageEvent AGun::Hit(APlayerCharacter* Causer)
@@ -78,7 +83,7 @@ FPointDamageEvent AGun::Hit(APlayerCharacter* Causer)
 	Bullets--; MulticastBulltes(Bullets);
 	MSB_LOG(Warning, TEXT("current bullets : %d"), Bullets);
 
-	FireParticleOnMuzzle();
+	FireParticleOnMuzzle_Server();
 	bool bHit = false;
 	bool bBlocked = false;
 	auto CameraLocation = Causer->GetCameraLocation();

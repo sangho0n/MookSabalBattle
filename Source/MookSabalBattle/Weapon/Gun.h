@@ -31,8 +31,11 @@ public:
 private:
 	FName MuzzleSocket;
 	FVector MuzzlePosInLocal;
-public:
-	void FireParticleOnMuzzle();
+
+	UFUNCTION(Server, Unreliable)
+	void FireParticleOnMuzzle_Server();
+	UFUNCTION(NetMulticast, Unreliable) 
+	void FireParticleOnMuzzle_Multicast();
 
 private:
 	UParticleSystem* FireParticle;
