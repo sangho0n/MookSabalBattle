@@ -33,7 +33,11 @@ APlayerCharacter::APlayerCharacter()
 	// set animation
 	// TODO: create an animation blueprint 1. jump & fall 2. run 3. rotate(movement of lover body)
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	
+
+	// jump config
+	auto movement = GetCharacterMovement();\
+	movement->AirControl = 0.5f;
+	movement->JumpZVelocity = 350.0f;
 }
 
 // Called when the game starts or when spawned
