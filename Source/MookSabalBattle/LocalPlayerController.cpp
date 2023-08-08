@@ -21,6 +21,7 @@ void ALocalPlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 	InputComponent->BindAxis("MoveForward", this, &ALocalPlayerController::ForwardBack);
 	InputComponent->BindAxis("MoveRight", this, &ALocalPlayerController::LeftRight);
+	InputComponent->BindAction("SpaceBar", IE_Pressed, this, &ALocalPlayerController::SpacebarPressed);
 }
 
 void ALocalPlayerController::ForwardBack(float NewAxisValue)
@@ -40,3 +41,13 @@ void ALocalPlayerController::LeftRight(float NewAxisValue)
 		character->LeftRight(NewAxisValue);
 	}
 }
+
+void ALocalPlayerController::SpacebarPressed()
+{
+	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	{
+		auto character = Cast<APlayerCharacter>(controllingPawn);
+		character->Jump();
+	}
+}
+
