@@ -22,6 +22,9 @@ void ALocalPlayerController::SetupInputComponent()
 	InputComponent->BindAxis("MoveForward", this, &ALocalPlayerController::ForwardBack);
 	InputComponent->BindAxis("MoveRight", this, &ALocalPlayerController::LeftRight);
 	InputComponent->BindAction("SpaceBar", IE_Pressed, this, &ALocalPlayerController::SpacebarPressed);
+	InputComponent->BindAxis("LookUp", this, &ALocalPlayerController::MouseVerticalChange);
+	InputComponent->BindAxis("Turn", this, &ALocalPlayerController::MouseHorizontalChange);
+
 }
 
 void ALocalPlayerController::ForwardBack(float NewAxisValue)
@@ -49,5 +52,25 @@ void ALocalPlayerController::SpacebarPressed()
 		auto character = Cast<APlayerCharacter>(controllingPawn);
 		character->Jump();
 	}
+}
+
+void ALocalPlayerController::MouseVerticalChange(float NewAxisValue)
+{
+	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	{
+		auto character = Cast<APlayerCharacter>(controllingPawn);
+		character->LookUp(NewAxisValue);
+	}
+	AddPitchInput(NewAxisValue);
+}
+
+void ALocalPlayerController::MouseHorizontalChange(float NewAxisValue)
+{
+	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	{
+		auto character = Cast<APlayerCharacter>(controllingPawn);
+		character->Turn(NewAxisValue);
+	}
+	AddYawInput(NewAxisValue);
 }
 

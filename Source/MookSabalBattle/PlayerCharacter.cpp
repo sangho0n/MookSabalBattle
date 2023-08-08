@@ -38,6 +38,14 @@ APlayerCharacter::APlayerCharacter()
 	auto movement = GetCharacterMovement();\
 	movement->AirControl = 0.5f;
 	movement->JumpZVelocity = 350.0f;
+
+	// 3rd view mouse rotation
+	this->bUseControllerRotationYaw = false;
+	SpringArm->bUsePawnControlRotation = true;
+	SpringArm->bInheritPitch = true;
+	SpringArm->bInheritRoll = true;
+	SpringArm->bInheritYaw = true;
+	SpringArm->bDoCollisionTest = true;
 }
 
 // Called when the game starts or when spawned
@@ -69,5 +77,15 @@ void APlayerCharacter::ForwardBack(float NewAxisValue)
 void APlayerCharacter::LeftRight(float NewAxisValue)
 {
 	AddMovementInput(GetActorRightVector(), NewAxisValue);
+}
+
+void APlayerCharacter::LookUp(float NewAxisValue)
+{
+	// look up animation
+}
+
+void APlayerCharacter::Turn(float NewAxisValue)
+{
+	// turn animiation
 }
 

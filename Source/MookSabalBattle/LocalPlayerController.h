@@ -28,4 +28,6 @@ private:
 	void ForwardBack(float NewAxisValue);
 	void LeftRight(float NewAxisValue);
 	void SpacebarPressed();
+	void MouseVerticalChange(float NewAxisValue);
+	void MouseHorizontalChange(float NewAxisValue);
 };
