@@ -19,13 +19,7 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	auto Owner = TryGetPawnOwner();
 	if(::IsValid(Owner))
 	{
-		auto velocity = Owner->GetVelocity();
-		auto speed = velocity.Size();
-		MSB_LOG(Warning, TEXT("velocity %s"), *velocity.ToString());
-		MSB_LOG(Warning, TEXT("speed %f"), speed);
-		CurrentPawnSpeed = speed;
-		//CurrentPawnSpeed = Owner->GetVelocity().Size();
-		MSB_LOG(Warning, TEXT("current speed : %f"), CurrentPawnSpeed);
+		CurrentPawnSpeed = Owner->GetVelocity().Size();
 		if(Owner->IsA(APlayerCharacter::StaticClass()))
 		{
 			bInAir = Owner->GetMovementComponent()->IsFalling();
