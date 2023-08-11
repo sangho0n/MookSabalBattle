@@ -33,6 +33,15 @@ APlayerCharacter::APlayerCharacter()
 	// set animation
 	// TODO: create an animation blueprint 1. jump & fall 2. run 3. rotate(movement of lover body)
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	static ConstructorHelpers::FClassFinder<UAnimInstance> ABP_HUMANOID(
+		TEXT("/Game/Main/Animation/Humanoid/ABP_Humanoid.ABP_Humanoid_C"));
+	MSB_LOG(Warning, TEXT("%d"), ABP_HUMANOID.Succeeded());
+	if(ABP_HUMANOID.Succeeded())
+	{
+		MSB_LOG(Warning, TEXT("dddddd"));
+		GetMesh()->SetAnimInstanceClass(ABP_HUMANOID.Class);
+	}
+	
 
 	// jump config
 	auto movement = GetCharacterMovement();\

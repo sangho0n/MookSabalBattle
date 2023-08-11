@@ -9,8 +9,6 @@
 
 AMookSabalBattleGameModeBase::AMookSabalBattleGameModeBase()
 {
-	MSB_LOG_LOCATION(Warning);
 	DefaultPawnClass = APlayerCharacter::StaticClass();
 	PlayerControllerClass = ALocalPlayerController::StaticClass();
-	MSB_LOG_LOCATION(Warning);
 }
