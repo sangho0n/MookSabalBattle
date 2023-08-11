@@ -49,12 +49,20 @@ APlayerCharacter::APlayerCharacter()
 	movement->JumpZVelocity = 350.0f;
 
 	// 3rd view mouse rotation
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	// Don't rotate when the controller rotates. Let that just affect the camera.
+	this->bUseControllerRotationPitch = false;
+	this->bUseControllerRotationRoll = false;
 	this->bUseControllerRotationYaw = false;
 	SpringArm->bUsePawnControlRotation = true;
 	SpringArm->bInheritPitch = true;
 	SpringArm->bInheritRoll = true;
 	SpringArm->bInheritYaw = true;
 	SpringArm->bDoCollisionTest = true;
+	SpringArm->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+	//Camera->bUsePawnControlRotation = false;
+
+	CurrentMode = CharacterMode::NON_EQUIPPED;
 }
 
 // Called when the game starts or when spawned
@@ -80,12 +88,26 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::ForwardBack(float NewAxisValue)
 {
-	AddMovementInput(GetActorForwardVector(), NewAxisValue);
+	if(nullptr != Controller && NewAxisValue != 0.0)
+	{
+		const auto Rotation = Controller->GetControlRotation();
+		const FRotator XYRotation(0, Rotation.Yaw, 0);
+
+		const auto Forward = FRotationMatrix(XYRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(Forward, NewAxisValue);
+	}
 }
 
 void APlayerCharacter::LeftRight(float NewAxisValue)
 {
-	AddMovementInput(GetActorRightVector(), NewAxisValue);
+	if(nullptr != Controller && NewAxisValue != 0.0)
+	{
+		const auto Rotation = Controller->GetControlRotation();
+		const FRotator XYRotation(0, Rotation.Yaw, 0);
+
+		const auto Forward = FRotationMatrix(XYRotation).GetUnitAxis(EAxis::Y);
+		AddMovementInput(Forward, NewAxisValue);
+	}
 }
 
 void APlayerCharacter::LookUp(float NewAxisValue)
@@ -95,6 +117,6 @@ void APlayerCharacter::LookUp(float NewAxisValue)
 
 void APlayerCharacter::Turn(float NewAxisValue)
 {
-	// turn animiation
+	this->AddControllerYawInput(NewAxisValue);
 }
 
