@@ -6,6 +6,13 @@
 #include "GameFramework/Character.h"
 #include "PlayerCharacter.generated.h"
 
+UENUM()
+enum class CharacterMode
+{
+	NON_EQUIPPED,
+	GUN
+};
+
 UCLASS()
 class MOOKSABALBATTLE_API APlayerCharacter : public ACharacter
 {
@@ -18,6 +25,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	CharacterMode CurrentMode;
 
 public:	
 	// Called every frame
