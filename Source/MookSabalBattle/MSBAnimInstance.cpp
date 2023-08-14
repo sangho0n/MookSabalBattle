@@ -20,11 +20,18 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	auto Owner = TryGetPawnOwner();
 	if(::IsValid(Owner))
-	{
-		CurrentPawnSpeed = Owner->GetVelocity().Size();
+	{		
+		auto Velocity = Owner->GetVelocity(); // speed vector in WS
+		CurrentPawnSpeed = Velocity.Size();
+		
 		if(Owner->IsA(APlayerCharacter::StaticClass()))
 		{
 			bInAir = Owner->GetMovementComponent()->IsFalling();
+			auto Character = Cast<APlayerCharacter>(Owner);
+			CurrentMode = Character->GetCurrentMode();
+			
+			Direction = CalculateDirection(Velocity, Owner->GetActorRotation());
+			MSB_LOG(Warning, TEXT("direction : %f"),Direction); return;
 		}
 	}
 }
