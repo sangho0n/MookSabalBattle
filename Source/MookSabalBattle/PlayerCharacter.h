@@ -47,4 +47,9 @@ public:
 	void LeftRight(float NewAxisValue);
 	void LookUp(float NewAxisValue);
 	void Turn(float NewAxisValue);
+
+	CharacterMode GetCurrentMode();
+	
+private:
+	void ChangeCharacterMode(CharacterMode NewMode);
 };
