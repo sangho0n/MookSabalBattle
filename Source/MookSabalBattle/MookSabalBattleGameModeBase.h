@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "MookSabalBattle.h"
 #include "GameFramework/GameModeBase.h"
 #include "MookSabalBattleGameModeBase.generated.h"
 
