@@ -8,8 +8,10 @@
 UMSBAnimInstance::UMSBAnimInstance()
 {
 	CurrentPawnSpeed = 0.0f;
+	Direction = 0.0f;
 	bInAir = false;
 	bIsIntended = false;
+	CurrentMode = CharacterMode::NON_EQUIPPED;
 }
 
 void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
