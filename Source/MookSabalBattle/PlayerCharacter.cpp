@@ -131,7 +131,19 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 	}
 	if(CurrentMode == CharacterMode::GUN)
 	{
+		// 3rd view mouse rotation
+		SpringArm->TargetArmLength = 400.0f;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		// Don't rotate when the controller rotates. Let that just affect the camera.
+		this->bUseControllerRotationPitch = false;
+		this->bUseControllerRotationRoll = false;
 		this->bUseControllerRotationYaw = true;
+		SpringArm->bUsePawnControlRotation = true;
+		SpringArm->bInheritPitch = true;
+		SpringArm->bInheritRoll = true;
+		SpringArm->bInheritYaw = true;
+		SpringArm->bDoCollisionTest = true;
+		SpringArm->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 		return;
 	}
 }
