@@ -46,7 +46,8 @@ APlayerCharacter::APlayerCharacter()
 	movement->AirControl = 0.5f;
 	movement->JumpZVelocity = 350.0f;
 
-	this->ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
+	//this->ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
+	this->ChangeCharacterMode(CharacterMode::GUN);
 }
 
 // Called when the game starts or when spawned

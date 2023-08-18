@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "MookSabalBattle.h"
+#include "../MookSabalBattle.h"
 #include "PlayerCharacter.h"
 #include "Animation/AnimInstance.h"
 #include "MSBAnimInstance.generated.h"

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "MookSabalBattle.h"
+#include "../MookSabalBattle.h"
 #include "GameFramework/PlayerController.h"
 #include "LocalPlayerController.generated.h"
 

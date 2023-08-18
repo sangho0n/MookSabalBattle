@@ -3,9 +3,9 @@
 
 #include "MookSabalBattleGameModeBase.h"
 
-#include "LocalPlayerController.h"
+#include "Character/LocalPlayerController.h"
 #include "MookSabalBattle.h"
-#include "PlayerCharacter.h"
+#include "Character/PlayerCharacter.h"
 
 AMookSabalBattleGameModeBase::AMookSabalBattleGameModeBase()
 {
