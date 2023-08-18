@@ -31,7 +31,7 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			CurrentMode = Character->GetCurrentMode();
 			
 			Direction = CalculateDirection(Velocity, Owner->GetActorRotation());
-			MSB_LOG(Warning, TEXT("direction : %f"),Direction); return;
+			return;
 		}
 	}
 }

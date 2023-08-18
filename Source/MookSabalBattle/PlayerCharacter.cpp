@@ -101,7 +101,7 @@ void APlayerCharacter::LookUp(float NewAxisValue)
 
 void APlayerCharacter::Turn(float NewAxisValue)
 {
-	this->AddControllerYawInput(NewAxisValue);
+
 }
 
 void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
@@ -120,8 +120,7 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		// Don't rotate when the controller rotates. Let that just affect the camera.
 		this->bUseControllerRotationPitch = false;
 		this->bUseControllerRotationRoll = false;
-		//this->bUseControllerRotationYaw = false; 블랜딩 에니메이션
-		this->bUseControllerRotationYaw = true;
+		this->bUseControllerRotationYaw = false;
 		SpringArm->bUsePawnControlRotation = true;
 		SpringArm->bInheritPitch = true;
 		SpringArm->bInheritRoll = true;
