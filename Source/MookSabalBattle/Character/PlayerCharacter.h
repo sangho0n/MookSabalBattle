@@ -4,6 +4,7 @@
 
 #include "../MookSabalBattle.h"
 #include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
 #include "PlayerCharacter.generated.h"
 
 UENUM()
