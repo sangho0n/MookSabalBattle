@@ -6,12 +6,13 @@
 // Sets default values
 AWeapon::AWeapon()
 {
-	SK_Weapon = CreateDefaultSubobject<USkeletalMeshComponent>("DefaultWeapon");
-	Collider = CreateDefaultSubobject<UPrimitiveComponent>("Collider");
+	SM_Weapon = CreateDefaultSubobject<UStaticMeshComponent>("DefaultWeapon");
+	Collider = CreateDefaultSubobject<UBoxComponent>("Collider");
 	RootComponent = Collider;
+	Collider->InitBoxExtent(FVector(51.0, 30.0, 42.0));
 	
-	SK_Weapon->SetCollisionProfileName(TEXT("NoCollision"));
-	Collider->SetCollisionProfileName(TEXT("Weapon"));
+	SM_Weapon->SetCollisionProfileName(TEXT("NoCollision"));
+	Collider->SetCollisionObjectType(ECC_GameTraceChannel2);
 }
 
 // Called when the game starts or when spawned

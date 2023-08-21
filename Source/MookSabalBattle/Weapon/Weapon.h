@@ -19,10 +19,10 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPrimitiveComponent* Collider;
+	UBoxComponent* Collider;
 
 	UPROPERTY(VisibleAnywhere, Category=Weapon)
-	USkeletalMeshComponent* SK_Weapon;
+	UStaticMeshComponent* SM_Weapon;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
