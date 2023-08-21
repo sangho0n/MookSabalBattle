@@ -5,6 +5,7 @@
 
 AGun::AGun() : Super()
 {
+	Collider->InitBoxExtent(FVector(51.0, 30.0, 42.0));
 	SM_Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Gun"));
 	SM_Weapon->SetupAttachment(RootComponent);
 	
