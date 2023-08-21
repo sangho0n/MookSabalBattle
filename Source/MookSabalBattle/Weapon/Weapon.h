@@ -26,8 +26,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category=Weapon)
 	UStaticMeshComponent* SM_Weapon;
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
 	virtual void OnCharacterBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

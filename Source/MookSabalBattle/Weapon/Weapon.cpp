@@ -30,13 +30,6 @@ void AWeapon::PostInitializeComponents()
 }
 
 
-// Called every frame
-void AWeapon::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
 void AWeapon::OnCharacterBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	// show equip UI
