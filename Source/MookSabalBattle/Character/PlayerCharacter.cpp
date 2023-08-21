@@ -34,10 +34,8 @@ APlayerCharacter::APlayerCharacter()
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	static ConstructorHelpers::FClassFinder<UAnimInstance> ABP_HUMANOID(
 		TEXT("/Game/Main/Animation/Humanoid/ABP_Humanoid.ABP_Humanoid_C"));
-	MSB_LOG(Warning, TEXT("%d"), ABP_HUMANOID.Succeeded());
 	if(ABP_HUMANOID.Succeeded())
 	{
-		MSB_LOG(Warning, TEXT("dddddd"));
 		GetMesh()->SetAnimInstanceClass(ABP_HUMANOID.Class);
 	}
 	
