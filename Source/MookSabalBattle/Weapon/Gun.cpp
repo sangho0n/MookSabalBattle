@@ -20,18 +20,4 @@ AGun::AGun() : Super()
 void AGun::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	
-	Collider->OnComponentBeginOverlap.AddDynamic(this, &AGun::OnBeginOverlap);
-	Collider->OnComponentEndOverlap.AddDynamic(this, &AGun::OnEndOverlap);
-}
-
-
-void AGun::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	// show equip UI
-}
-
-void AGun::OnEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	// hide equip UI
 }
