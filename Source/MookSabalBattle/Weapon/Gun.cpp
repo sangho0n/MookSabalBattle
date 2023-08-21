@@ -13,6 +13,8 @@ AGun::AGun() : Super()
 	{
 		SM_Weapon->SetStaticMesh(SM_GUN.Object);
 	}
+	SM_Weapon->SetRelativeRotation(FRotator(0.0f, 0.0f, -90.0));
+	SM_Weapon->SetRelativeLocation(FVector(-20.0f, 0.0f, 0.0f));
 }
 
 void AGun::BeginPlay()
