@@ -27,6 +27,7 @@ void UInGameUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		auto opacity = (FadeOutTime - AccTimeForFadeOut) / FadeOutTime;
 		if(opacity < KINDA_SMALL_NUMBER)
 		{
+			Equip->SetVisibility(ESlateVisibility::Hidden);
 			bIsFadeOut = false;
 			return;
 		}
@@ -41,6 +42,7 @@ void UInGameUI::BindCharacterStat()
 
 void UInGameUI::SetEquipVisible()
 {
+	Equip->SetRenderOpacity(1);
 	Equip->SetVisibility(ESlateVisibility::Visible);
 }
 
