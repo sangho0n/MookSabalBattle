@@ -121,13 +121,8 @@ void APlayerCharacter::Turn(float NewAxisValue)
 
 void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 {
-	// if(CurrentMode == NewMode && CurrentMode != CharacterMode::NULL)
-	// {
-	// 	MSB_LOG(Warning, TEXT("Already has same mode!!"));
-	// 	return;
-	// }
 	CurrentMode = NewMode;
-	if(CurrentMode == CharacterMode::NON_EQUIPPED)
+	if(CurrentMode == CharacterMode::NON_EQUIPPED || CurrentMode == CharacterMode::MELEE)
 	{
 		// 3rd view mouse rotation
 		SpringArm->TargetArmLength = 400.0f;
@@ -161,23 +156,23 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		SpringArm->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 		return;
 	}
-	if(CurrentMode == CharacterMode::MELEE)
-	{
-		// 3rd view mouse rotation
-		SpringArm->TargetArmLength = 400.0f;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-		// Don't rotate when the controller rotates. Let that just affect the camera.
-		this->bUseControllerRotationPitch = false;
-		this->bUseControllerRotationRoll = false;
-		this->bUseControllerRotationYaw = false;
-		SpringArm->bUsePawnControlRotation = true;
-		SpringArm->bInheritPitch = true;
-		SpringArm->bInheritRoll = true;
-		SpringArm->bInheritYaw = true;
-		SpringArm->bDoCollisionTest = true;
-		SpringArm->bUsePawnControlRotation = true; // Rotate the arm based on the controller
-		return;
-	}
+	// if(CurrentMode == CharacterMode::MELEE)
+	// {
+	// 	// 3rd view mouse rotation
+	// 	SpringArm->TargetArmLength = 400.0f;
+	// 	GetCharacterMovement()->bOrientRotationToMovement = true;
+	// 	// Don't rotate when the controller rotates. Let that just affect the camera.
+	// 	this->bUseControllerRotationPitch = false;
+	// 	this->bUseControllerRotationRoll = false;
+	// 	this->bUseControllerRotationYaw = false;
+	// 	SpringArm->bUsePawnControlRotation = true;
+	// 	SpringArm->bInheritPitch = true;
+	// 	SpringArm->bInheritRoll = true;
+	// 	SpringArm->bInheritYaw = true;
+	// 	SpringArm->bDoCollisionTest = true;
+	// 	SpringArm->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+	// 	return;
+	// }
 }
 
 CharacterMode APlayerCharacter::GetCurrentMode()
