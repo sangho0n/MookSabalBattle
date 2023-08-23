@@ -24,6 +24,7 @@ void ALocalPlayerController::SetupInputComponent()
 	InputComponent->BindAction("SpaceBar", IE_Pressed, this, &ALocalPlayerController::SpacebarPressed);
 	InputComponent->BindAxis("LookUp", this, &ALocalPlayerController::MouseVerticalChange);
 	InputComponent->BindAxis("Turn", this, &ALocalPlayerController::MouseHorizontalChange);
+	InputComponent->BindAction("Equip", IE_Pressed, this, &ALocalPlayerController::FKeyPressed);
 
 }
 
@@ -72,5 +73,17 @@ void ALocalPlayerController::MouseHorizontalChange(float NewAxisValue)
 		character->Turn(NewAxisValue);
 	}
 	AddYawInput(NewAxisValue);
+}
+
+void ALocalPlayerController::FKeyPressed()
+{
+	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	{
+		auto character = Cast<APlayerCharacter>(controllingPawn);
+		// TODO : call Equip() when unequipped
+
+		// TODO : call UnEquip() when equipped
+	}
+	// We could write some code below here when we tend to implement ridings or sth else
 }
 

@@ -30,4 +30,5 @@ private:
 	void SpacebarPressed();
 	void MouseVerticalChange(float NewAxisValue);
 	void MouseHorizontalChange(float NewAxisValue);
+	void FKeyPressed();
 };
