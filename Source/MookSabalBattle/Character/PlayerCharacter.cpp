@@ -44,8 +44,17 @@ APlayerCharacter::APlayerCharacter()
 	movement->AirControl = 0.5f;
 	movement->JumpZVelocity = 350.0f;
 
-	//this->ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
-	this->ChangeCharacterMode(CharacterMode::GUN);
+	this->ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
+	//this->ChangeCharacterMode(CharacterMode::GUN);
+	CurrentWeapon = nullptr; // Fist mode
+
+
+	// UI
+	ConstructorHelpers::FClassFinder<UInGameUI> INGAMEUI(TEXT("/Game/Main/UI/WB_InGame.WB_InGame_C"));
+	if(INGAMEUI.Succeeded())
+	{
+		this->InGameUIClass = INGAMEUI.Class;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -53,6 +62,13 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if(IsValid(InGameUIClass))
+	{
+		InGameUI = Cast<UInGameUI>(CreateWidget(GetWorld(), InGameUIClass));
+		InGameUI->BindCharacterStat();
+
+		InGameUI->AddToViewport();
+	}
 }
 
 // Called every frame
@@ -145,9 +161,43 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		SpringArm->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 		return;
 	}
+	if(CurrentMode == CharacterMode::MELEE)
+	{
+		// 3rd view mouse rotation
+		SpringArm->TargetArmLength = 400.0f;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		// Don't rotate when the controller rotates. Let that just affect the camera.
+		this->bUseControllerRotationPitch = false;
+		this->bUseControllerRotationRoll = false;
+		this->bUseControllerRotationYaw = false;
+		SpringArm->bUsePawnControlRotation = true;
+		SpringArm->bInheritPitch = true;
+		SpringArm->bInheritRoll = true;
+		SpringArm->bInheritYaw = true;
+		SpringArm->bDoCollisionTest = true;
+		SpringArm->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+		return;
+	}
 }
 
 CharacterMode APlayerCharacter::GetCurrentMode()
 {
 	return CurrentMode;
 }
+
+bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
+{
+	CurrentWeapon = NewWeapon;
+	return true;
+}
+
+void APlayerCharacter::OnWeaponStartOverlap()
+{
+	InGameUI->SetEquipVisible();
+}
+
+void APlayerCharacter::OnWeaponEndOverlap()
+{
+	InGameUI->SetEquipInvisible();
+}
+

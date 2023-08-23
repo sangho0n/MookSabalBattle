@@ -13,6 +13,7 @@ AWeapon::AWeapon()
 	
 	SM_Weapon->SetCollisionProfileName(TEXT("NoCollision"));
 	Collider->SetCollisionProfileName(TEXT("CharacterOverlap"));
+	LocalPlayer = nullptr;
 }
 
 // Called when the game starts or when spawned
@@ -32,13 +33,29 @@ void AWeapon::PostInitializeComponents()
 
 void AWeapon::OnCharacterBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// show equip UI
-	MSB_LOG(Warning, TEXT("begin"));
-	MSB_LOG(Warning, TEXT("dd %s"), *SM_Weapon->GetName());
+	if(OtherActor->IsA(APlayerCharacter::StaticClass()) && OtherActor->GetInstigatorController()->IsLocalPlayerController())
+	{
+		LocalPlayer = Cast<APlayerCharacter>(OtherActor);
+		MSB_LOG(Warning, TEXT("begin"));
+		MSB_LOG(Warning, TEXT("dd %s"), *SM_Weapon->GetName());
+		// show equip UI
+		LocalPlayer->OnWeaponStartOverlap();
+	}
 }
 
 void AWeapon::OnCharacterEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	// hide equip UI
-	MSB_LOG(Warning, TEXT("end"));
+	if(OtherActor->IsA(APlayerCharacter::StaticClass()) && OtherActor->GetInstigatorController()->IsLocalPlayerController())
+	{
+		// hide equip UI
+		MSB_LOG(Warning, TEXT("end"));
+		LocalPlayer->OnWeaponEndOverlap();
+		return;
+	}
+}
+
+void AWeapon::Destroyed()
+{
+	OnCharacterEndOverlap(nullptr, LocalPlayer, nullptr, -1);
+	Super::Destroyed();
 }

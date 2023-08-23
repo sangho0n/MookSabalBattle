@@ -5,13 +5,15 @@
 #include "../MookSabalBattle.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
+#include "MookSabalBattle/UI/InGameUI.h"
 #include "PlayerCharacter.generated.h"
 
 UENUM()
 enum class CharacterMode
 {
 	NON_EQUIPPED,
-	GUN
+	GUN,
+	MELEE
 };
 
 UCLASS()
@@ -43,6 +45,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	UCameraComponent* Camera;
 
+	UPROPERTY(VisibleAnywhere, Category=Weapon)
+	AWeapon* CurrentWeapon;
+
 public:
 	void ForwardBack(float NewAxisValue);
 	void LeftRight(float NewAxisValue);
@@ -53,4 +58,17 @@ public:
 	
 private:
 	void ChangeCharacterMode(CharacterMode NewMode);
+
+	TSubclassOf<UInGameUI> InGameUIClass;
+	UInGameUI* InGameUI;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	bool EquipWeapon(AWeapon* NewWeapon);
+	
+	UFUNCTION(BlueprintCallable)
+	void OnWeaponStartOverlap();
+	
+	UFUNCTION(BlueprintCallable)
+	void OnWeaponEndOverlap();
 };

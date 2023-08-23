@@ -4,6 +4,7 @@
 
 #include "../MookSabalBattle.h"
 #include "GameFramework/Actor.h"
+#include "MookSabalBattle/Character/PlayerCharacter.h"
 #include "Weapon.generated.h"
 
 UCLASS(Abstract)
@@ -25,6 +26,11 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category=Weapon)
 	UStaticMeshComponent* SM_Weapon;
+
+	UPROPERTY(VisibleAnywhere, Category=Character)
+	APlayerCharacter* LocalPlayer;
+
+	virtual void Destroyed() override;
 public:	
 
 	UFUNCTION()
