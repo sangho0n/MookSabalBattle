@@ -3,6 +3,10 @@
 
 #include "PlayerCharacter.h"
 
+#include "MookSabalBattle/Weapon/Gun.h"
+#include "MookSabalBattle/Weapon/Melee.h"
+#include "MookSabalBattle/Weapon/Weapon.h"
+
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
@@ -183,6 +187,14 @@ CharacterMode APlayerCharacter::GetCurrentMode()
 bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 {
 	CurrentWeapon = NewWeapon;
+	if(CurrentWeapon->IsA(AGun::StaticClass()))
+	{
+		ChangeCharacterMode(CharacterMode::GUN);
+	}
+	else if (CurrentWeapon->IsA(AMelee::StaticClass()))
+	{
+		ChangeCharacterMode(CharacterMode::MELEE);
+	}
 	return true;
 }
 

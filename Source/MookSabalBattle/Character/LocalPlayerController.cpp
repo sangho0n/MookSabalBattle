@@ -81,7 +81,7 @@ void ALocalPlayerController::FKeyPressed()
 	{
 		auto character = Cast<APlayerCharacter>(controllingPawn);
 		// TODO : call Equip() when unequipped
-
+		
 		// TODO : call UnEquip() when equipped
 	}
 	// We could write some code below here when we tend to implement ridings or sth else
