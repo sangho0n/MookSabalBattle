@@ -39,7 +39,7 @@ void AWeapon::OnCharacterBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 		MSB_LOG(Warning, TEXT("begin"));
 		MSB_LOG(Warning, TEXT("dd %s"), *SM_Weapon->GetName());
 		// show equip UI
-		LocalPlayer->OnWeaponStartOverlap();
+		LocalPlayer->OnWeaponStartOverlap(this);
 	}
 }
 

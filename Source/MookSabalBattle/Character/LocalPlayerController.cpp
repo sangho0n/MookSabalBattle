@@ -80,9 +80,17 @@ void ALocalPlayerController::FKeyPressed()
 	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
 		auto character = Cast<APlayerCharacter>(controllingPawn);
-		// TODO : call Equip() when unequipped
+		auto state = character->GetCharacterStateComponent();
+		if(!state->IsEquippable()) return;
 		
-		// TODO : call UnEquip() when equipped
+		if(!state->IsEquipped())
+		{
+			character->EquipWeapon(character->OverlappedWeapon);
+		}
+		else // not equipped
+		{
+			return;
+		}
 	}
 	// We could write some code below here when we tend to implement ridings or sth else
 }

@@ -49,6 +49,8 @@ public:
 
 	CharacterMode GetCurrentMode();
 	
+	AWeapon* OverlappedWeapon;
+	
 private:
 	void ChangeCharacterMode(CharacterMode NewMode);
 
@@ -57,10 +59,13 @@ private:
 
 public:
 	UFUNCTION(BlueprintCallable)
+	UCharacterStateComponent* GetCharacterStateComponent();
+	
+	UFUNCTION(BlueprintCallable)
 	bool EquipWeapon(AWeapon* NewWeapon);
 	
 	UFUNCTION(BlueprintCallable)
-	void OnWeaponStartOverlap();
+	void OnWeaponStartOverlap(AWeapon* OverlappedWeapon);
 	
 	UFUNCTION(BlueprintCallable)
 	void OnWeaponEndOverlap();

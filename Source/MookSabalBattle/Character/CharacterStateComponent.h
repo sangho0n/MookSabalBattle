@@ -34,9 +34,11 @@ public:
 
 private:
 	bool bIsEquipped;
-	
 	CharacterMode CurrentMode;
-	
+	bool bIsEquippable;
+
+
+#pragma region getter_setter
 public:
 	void SetIsEquipped(bool bIsEquipped_)
 	{
@@ -59,4 +61,16 @@ public:
 	{
 		return CurrentMode;
 	}
+	
+	[[nodiscard]]
+	bool IsEquippable() const
+	{
+		return bIsEquippable;
+	}
+
+	void SetIsEquippable(bool bIsEquippable_)
+	{
+		this->bIsEquippable = bIsEquippable_;
+	}
+#pragma endregion getter_setter
 };

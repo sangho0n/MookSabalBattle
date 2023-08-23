@@ -51,8 +51,9 @@ APlayerCharacter::APlayerCharacter()
 	movement->JumpZVelocity = 350.0f;
 
 	CharacterState->SetCurrentMode(CharacterMode::NON_EQUIPPED);
+	ChangeCharacterMode(CharacterState->GetCurrentMode());
+	CharacterState->SetIsEquipped(false);
 	CurrentWeapon = nullptr; // Fist mode
-
 
 	// UI
 	ConstructorHelpers::FClassFinder<UInGameUI> INGAMEUI(TEXT("/Game/Main/UI/WB_InGame.WB_InGame_C"));
@@ -189,6 +190,7 @@ CharacterMode APlayerCharacter::GetCurrentMode()
 bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 {
 	CurrentWeapon = NewWeapon;
+	CharacterState->SetIsEquipped(true);
 	if(CurrentWeapon->IsA(AGun::StaticClass()))
 	{
 		ChangeCharacterMode(CharacterMode::GUN);
@@ -200,13 +202,21 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 	return true;
 }
 
-void APlayerCharacter::OnWeaponStartOverlap()
+void APlayerCharacter::OnWeaponStartOverlap(AWeapon* OverlappedWeapon_)
 {
 	InGameUI->SetEquipVisible();
+	CharacterState->SetIsEquippable(true);
+	this->OverlappedWeapon = OverlappedWeapon_;
 }
 
 void APlayerCharacter::OnWeaponEndOverlap()
 {
 	InGameUI->SetEquipInvisible();
+	CharacterState->SetIsEquippable(false);
+}
+
+UCharacterStateComponent* APlayerCharacter::GetCharacterStateComponent()
+{
+	return this->CharacterState;
 }
 
