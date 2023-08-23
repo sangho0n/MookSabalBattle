@@ -3,18 +3,10 @@
 #pragma once
 
 #include "../MookSabalBattle.h"
+#include "MookSabalBattle/Character/CharacterStateComponent.h"
 #include "GameFramework/Character.h"
-#include "Kismet/GameplayStatics.h"
 #include "MookSabalBattle/UI/InGameUI.h"
 #include "PlayerCharacter.generated.h"
-
-UENUM()
-enum class CharacterMode
-{
-	NON_EQUIPPED,
-	GUN,
-	MELEE
-};
 
 UCLASS()
 class MOOKSABALBATTLE_API APlayerCharacter : public ACharacter
@@ -28,8 +20,6 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	CharacterMode CurrentMode;
 
 public:	
 	// Called every frame
@@ -47,6 +37,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category=Weapon)
 	AWeapon* CurrentWeapon;
+
+	UPROPERTY(VisibleAnywhere, Category=State)
+	UCharacterStateComponent* CharacterState;
 
 public:
 	void ForwardBack(float NewAxisValue);

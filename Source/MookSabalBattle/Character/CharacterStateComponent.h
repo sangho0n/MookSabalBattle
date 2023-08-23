@@ -6,10 +6,18 @@
 #include "Components/ActorComponent.h"
 #include "CharacterStateComponent.generated.h"
 
+UENUM()
+enum class CharacterMode
+{
+	NON_EQUIPPED,
+	GUN,
+	MELEE
+};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MOOKSABALBATTLE_API UCharacterStateComponent : public UActorComponent
 {
+private:
 	GENERATED_BODY()
 
 public:	
@@ -24,5 +32,31 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-		
+private:
+	bool bIsEquipped;
+	
+	CharacterMode CurrentMode;
+	
+public:
+	void SetIsEquipped(bool bIsEquipped_)
+	{
+		this->bIsEquipped = bIsEquipped_;
+	}
+
+	void SetCurrentMode(CharacterMode CurrentMode_)
+	{
+		this->CurrentMode = CurrentMode_;
+	}
+
+	[[nodiscard]]
+	bool IsEquipped() const
+	{
+		return bIsEquipped;
+	}
+
+	[[nodiscard]]
+	CharacterMode GetCurrentMode() const
+	{
+		return CurrentMode;
+	}
 };

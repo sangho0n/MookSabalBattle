@@ -3,6 +3,7 @@
 
 #include "PlayerCharacter.h"
 
+#include "Engine/FontImportOptions.h"
 #include "MookSabalBattle/Weapon/Gun.h"
 #include "MookSabalBattle/Weapon/Melee.h"
 #include "MookSabalBattle/Weapon/Weapon.h"
@@ -16,6 +17,7 @@ APlayerCharacter::APlayerCharacter()
 	// set cam and spring arm
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>("CAMERA");
+	CharacterState = CreateDefaultSubobject<UCharacterStateComponent>(TEXT("STATE"));
 
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
@@ -48,8 +50,7 @@ APlayerCharacter::APlayerCharacter()
 	movement->AirControl = 0.5f;
 	movement->JumpZVelocity = 350.0f;
 
-	this->ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
-	//this->ChangeCharacterMode(CharacterMode::GUN);
+	CharacterState->SetCurrentMode(CharacterMode::NON_EQUIPPED);
 	CurrentWeapon = nullptr; // Fist mode
 
 
@@ -125,7 +126,8 @@ void APlayerCharacter::Turn(float NewAxisValue)
 
 void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 {
-	CurrentMode = NewMode;
+	CharacterState->SetCurrentMode(NewMode);
+	auto CurrentMode = CharacterState->GetCurrentMode();
 	if(CurrentMode == CharacterMode::NON_EQUIPPED || CurrentMode == CharacterMode::MELEE)
 	{
 		// 3rd view mouse rotation
@@ -181,7 +183,7 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 
 CharacterMode APlayerCharacter::GetCurrentMode()
 {
-	return CurrentMode;
+	return CharacterState->GetCurrentMode();
 }
 
 bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
