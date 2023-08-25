@@ -87,9 +87,9 @@ void ALocalPlayerController::FKeyPressed()
 		{
 			character->EquipWeapon(character->OverlappedWeapon);
 		}
-		else // not equipped
+		else // equipped
 		{
-			return;
+			character->EquipWeapon(character->OverlappedWeapon);
 		}
 	}
 	// We could write some code below here when we tend to implement ridings or sth else

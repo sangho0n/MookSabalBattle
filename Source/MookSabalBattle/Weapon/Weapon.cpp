@@ -56,6 +56,13 @@ void AWeapon::OnCharacterEndOverlap(UPrimitiveComponent* OverlappedComponent, AA
 
 void AWeapon::Destroyed()
 {
-	OnCharacterEndOverlap(nullptr, LocalPlayer, nullptr, -1);
+	if(nullptr != LocalPlayer)
+		OnCharacterEndOverlap(nullptr, LocalPlayer, nullptr, -1);
 	Super::Destroyed();
 }
+
+UStaticMeshComponent* AWeapon::GetWeaponMesh()
+{
+	return this->SM_Weapon;
+}
+

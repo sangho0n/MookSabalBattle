@@ -4,8 +4,11 @@
 #include "PlayerCharacter.h"
 
 #include "Engine/FontImportOptions.h"
+#include "MookSabalBattle/Weapon/Axe.h"
 #include "MookSabalBattle/Weapon/Gun.h"
 #include "MookSabalBattle/Weapon/Melee.h"
+#include "MookSabalBattle/Weapon/Pick.h"
+#include "MookSabalBattle/Weapon/Sword.h"
 #include "MookSabalBattle/Weapon/Weapon.h"
 
 // Sets default values
@@ -189,6 +192,11 @@ CharacterMode APlayerCharacter::GetCurrentMode()
 
 bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 {
+	if(nullptr != CurrentWeapon)
+	{
+		CurrentWeapon->Destroy();
+	}
+	
 	CurrentWeapon = NewWeapon;
 	CharacterState->SetIsEquipped(true);
 	if(CurrentWeapon->IsA(AGun::StaticClass()))
@@ -198,6 +206,25 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 	else if (CurrentWeapon->IsA(AMelee::StaticClass()))
 	{
 		ChangeCharacterMode(CharacterMode::MELEE);
+		FName socket("hand_sword_rSocket");
+		if(GetMesh()->DoesSocketExist(socket))
+		{
+			auto weaponMesh = CurrentWeapon->GetWeaponMesh();
+			weaponMesh->SetSimulatePhysics(false);
+			weaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+			if(CurrentWeapon->IsA(AAxe::StaticClass()) || CurrentWeapon->IsA(APick::StaticClass()))
+			{
+				weaponMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, socket);
+				auto weaponTransform = weaponMesh->GetRelativeTransform();
+				FQuat rot180(FVector(0, 0, 1), FMath::DegreesToRadians(180.0f));
+				weaponTransform.ConcatenateRotation(rot180);
+				weaponMesh->SetRelativeTransform(weaponTransform);
+			}
+			else
+			{
+				weaponMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, socket);
+			}
+		}
 	}
 	return true;
 }
