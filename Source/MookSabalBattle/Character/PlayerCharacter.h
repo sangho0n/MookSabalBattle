@@ -69,4 +69,12 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void OnWeaponEndOverlap();
+
+private:
+	const FVector CamPosWhenGunMode = FVector(0.0f, 50.0f, 50.0f);
+	FVector CurrentCamPos;
+	FVector DesiredCamPos;
+	bool bInterpingCamPos;
+
+	float accTime;
 };

@@ -3,7 +3,6 @@
 
 #include "PlayerCharacter.h"
 
-#include "Engine/FontImportOptions.h"
 #include "MookSabalBattle/Weapon/Axe.h"
 #include "MookSabalBattle/Weapon/Gun.h"
 #include "MookSabalBattle/Weapon/Melee.h"
@@ -24,11 +23,13 @@ APlayerCharacter::APlayerCharacter()
 
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
+	bInterpingCamPos = false;
+	CurrentCamPos = FVector::ZeroVector;
 
 	GetMesh()->SetRelativeLocationAndRotation(
 		FVector(0.0f, 0.0f, -88.0f),
 		FRotator(0.0f, -90.0f, 0.0f));
-	SpringArm->SetRelativeRotation(FRotator(-15.0f, 0.0f, 0.0f));
+	SpringArm->SetRelativeRotation(FRotator(-30.0f, 0.0f, 0.0f));
 
 	// set sk mesh
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_MAN_03(
@@ -39,7 +40,6 @@ APlayerCharacter::APlayerCharacter()
 	}
 
 	// set animation
-	// TODO: create an animation blueprint 1. jump & fall 2. run 3. rotate(movement of lover body)
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	static ConstructorHelpers::FClassFinder<UAnimInstance> ABP_HUMANOID(
 		TEXT("/Game/Main/Animation/Humanoid/ABP_Humanoid.ABP_Humanoid_C"));
@@ -53,7 +53,7 @@ APlayerCharacter::APlayerCharacter()
 	movement->AirControl = 0.5f;
 	movement->JumpZVelocity = 350.0f;
 
-	CharacterState->SetCurrentMode(CharacterMode::NON_EQUIPPED);
+	CharacterState->SetCurrentMode(CharacterMode::MELEE);
 	ChangeCharacterMode(CharacterState->GetCurrentMode());
 	CharacterState->SetIsEquipped(false);
 	CurrentWeapon = nullptr; // Fist mode
@@ -85,6 +85,15 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// cam pos change
+	if(bInterpingCamPos)
+	{
+		accTime += DeltaTime;
+		CurrentCamPos = FMath::Lerp(CurrentCamPos, DesiredCamPos, accTime);
+		MSB_LOG(Warning, TEXT("dfdf %s"), *CurrentCamPos.ToString());
+		Camera->SetRelativeLocation(CurrentCamPos);
+		if(FVector::Dist(DesiredCamPos, CurrentCamPos) < KINDA_SMALL_NUMBER) {bInterpingCamPos = false; accTime = 0.0f;}
+	}
 }
 
 // Called to bind functionality to input
@@ -147,6 +156,9 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		SpringArm->bInheritYaw = true;
 		SpringArm->bDoCollisionTest = true;
 		SpringArm->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+		bInterpingCamPos = true;
+		DesiredCamPos = FVector::ZeroVector;
+		accTime = 0.0f;
 		return;
 	}
 	if(CurrentMode == CharacterMode::GUN)
@@ -158,31 +170,17 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		this->bUseControllerRotationPitch = false;
 		this->bUseControllerRotationRoll = false;
 		this->bUseControllerRotationYaw = true;
-		SpringArm->bUsePawnControlRotation = true;
+		SpringArm->bUsePawnControlRotation = false;
 		SpringArm->bInheritPitch = true;
 		SpringArm->bInheritRoll = true;
 		SpringArm->bInheritYaw = true;
 		SpringArm->bDoCollisionTest = true;
 		SpringArm->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+		bInterpingCamPos = true;
+		DesiredCamPos = CamPosWhenGunMode;
+		accTime = 0.0f;
 		return;
 	}
-	// if(CurrentMode == CharacterMode::MELEE)
-	// {
-	// 	// 3rd view mouse rotation
-	// 	SpringArm->TargetArmLength = 400.0f;
-	// 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	// 	// Don't rotate when the controller rotates. Let that just affect the camera.
-	// 	this->bUseControllerRotationPitch = false;
-	// 	this->bUseControllerRotationRoll = false;
-	// 	this->bUseControllerRotationYaw = false;
-	// 	SpringArm->bUsePawnControlRotation = true;
-	// 	SpringArm->bInheritPitch = true;
-	// 	SpringArm->bInheritRoll = true;
-	// 	SpringArm->bInheritYaw = true;
-	// 	SpringArm->bDoCollisionTest = true;
-	// 	SpringArm->bUsePawnControlRotation = true; // Rotate the arm based on the controller
-	// 	return;
-	// }
 }
 
 CharacterMode APlayerCharacter::GetCurrentMode()
