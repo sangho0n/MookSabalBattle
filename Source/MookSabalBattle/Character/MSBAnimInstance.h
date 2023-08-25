@@ -34,5 +34,8 @@ private:
 	bool bIsIntended;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
-	CharacterMode CurrentMode;
+	TEnumAsByte<CharacterMode> CurrentMode;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
+	bool bIsAttacking;
 };

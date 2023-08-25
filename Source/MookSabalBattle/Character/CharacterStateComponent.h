@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "CharacterStateComponent.generated.h"
 
-UENUM()
+UENUM(BlueprintType)
 enum class CharacterMode
 {
 	NON_EQUIPPED,

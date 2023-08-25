@@ -27,8 +27,10 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		if(Owner->IsA(APlayerCharacter::StaticClass()))
 		{
 			bInAir = Owner->GetMovementComponent()->IsFalling();
-			auto Character = Cast<APlayerCharacter>(Owner);
-			CurrentMode = Character->GetCurrentMode();
+			auto character = Cast<APlayerCharacter>(Owner);
+			auto state = character->GetCharacterStateComponent();
+			CurrentMode = state->GetCurrentMode();
+			bIsAttacking = state->IsAttacking();
 			
 			Direction = CalculateDirection(Velocity, Owner->GetActorRotation());
 			return;
