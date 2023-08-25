@@ -3,6 +3,7 @@
 
 #include "PlayerCharacter.h"
 
+#include "MSBAnimInstance.h"
 #include "MookSabalBattle/Weapon/Axe.h"
 #include "MookSabalBattle/Weapon/Gun.h"
 #include "MookSabalBattle/Weapon/Melee.h"
@@ -126,6 +127,14 @@ void APlayerCharacter::LeftRight(float NewAxisValue)
 		AddMovementInput(Forward, NewAxisValue);
 	}
 }
+
+void APlayerCharacter::Jump()
+{
+	Super::Jump();
+	auto MSBAnimInstacne = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
+	MSBAnimInstacne->SetIntended(true);
+}
+
 
 void APlayerCharacter::LookUp(float NewAxisValue)
 {

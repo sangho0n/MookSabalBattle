@@ -75,6 +75,8 @@ private:
 	FVector CurrentCamPos;
 	FVector DesiredCamPos;
 	bool bInterpingCamPos;
-
 	float accTime;
+
+public:
+	virtual void Jump() override;
 };

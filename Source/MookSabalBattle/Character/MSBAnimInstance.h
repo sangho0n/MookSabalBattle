@@ -20,6 +20,8 @@ public:
 
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
+	virtual void NativeBeginPlay() override;
+
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	float CurrentPawnSpeed;
@@ -38,4 +40,11 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	bool bIsAttacking;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
+	float MaxWalkSpeed;
+
+public:
+	UFUNCTION(BlueprintPure)
+	bool SetIntended(bool isIntended);
 };

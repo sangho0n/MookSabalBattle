@@ -14,6 +14,12 @@ UMSBAnimInstance::UMSBAnimInstance()
 	CurrentMode = CharacterMode::NON_EQUIPPED;
 }
 
+void UMSBAnimInstance::NativeBeginPlay()
+{
+	MaxWalkSpeed = TryGetPawnOwner()->GetMovementComponent()->GetMaxSpeed();
+}
+
+
 void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
@@ -26,14 +32,22 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		
 		if(Owner->IsA(APlayerCharacter::StaticClass()))
 		{
-			bInAir = Owner->GetMovementComponent()->IsFalling();
 			auto character = Cast<APlayerCharacter>(Owner);
 			auto state = character->GetCharacterStateComponent();
+			bInAir = Owner->GetMovementComponent()->IsFalling();
 			CurrentMode = state->GetCurrentMode();
 			bIsAttacking = state->IsAttacking();
-			
 			Direction = CalculateDirection(Velocity, Owner->GetActorRotation());
+
+			if(!bInAir) SetIntended(false);
 			return;
 		}
 	}
 }
+
+bool UMSBAnimInstance::SetIntended(bool isIntended)
+{
+	this->bIsIntended = isIntended;
+	return true;
+}
+

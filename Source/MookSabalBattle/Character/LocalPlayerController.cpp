@@ -2,6 +2,8 @@
 
 
 #include "LocalPlayerController.h"
+
+#include "MSBAnimInstance.h"
 #include "PlayerCharacter.h"
 
 void ALocalPlayerController::PostInitializeComponents()
