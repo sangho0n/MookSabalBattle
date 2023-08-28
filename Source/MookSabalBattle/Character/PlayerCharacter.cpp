@@ -216,7 +216,7 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 		{
 			auto weaponMesh = CurrentWeapon->GetWeaponMesh();
 			weaponMesh->SetSimulatePhysics(false);
-			weaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+			weaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			weaponMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, socket);
 
 			auto weaponTransform = weaponMesh->GetRelativeTransform();
@@ -235,7 +235,7 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 		{
 			auto weaponMesh = CurrentWeapon->GetWeaponMesh();
 			weaponMesh->SetSimulatePhysics(false);
-			weaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+			weaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			if(CurrentWeapon->IsA(AAxe::StaticClass()) || CurrentWeapon->IsA(APick::StaticClass()))
 			{
 				weaponMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, socket);
