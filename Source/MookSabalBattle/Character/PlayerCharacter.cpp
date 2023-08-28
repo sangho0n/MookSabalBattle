@@ -209,6 +209,21 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 	if(CurrentWeapon->IsA(AGun::StaticClass()))
 	{
 		ChangeCharacterMode(CharacterMode::GUN);
+		FName socket("hand_rifle_rSocket");
+		if(GetMesh()->DoesSocketExist(socket))
+		{
+			auto weaponMesh = CurrentWeapon->GetWeaponMesh();
+			weaponMesh->SetSimulatePhysics(false);
+			weaponMesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+			weaponMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, socket);
+
+			auto weaponTransform = weaponMesh->GetRelativeTransform();
+			FQuat rot3_yaw(FVector(0, 0, 1), FMath::DegreesToRadians(3.0f));
+			FQuat rot6_5_pitch(FVector(0, 1, 0), FMath::DegreesToRadians(6.5f));
+			weaponTransform.ConcatenateRotation(rot3_yaw);
+			weaponTransform.ConcatenateRotation(rot6_5_pitch);
+			weaponMesh->SetRelativeTransform(weaponTransform);
+		}
 	}
 	else if (CurrentWeapon->IsA(AMelee::StaticClass()))
 	{
@@ -222,6 +237,7 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 			if(CurrentWeapon->IsA(AAxe::StaticClass()) || CurrentWeapon->IsA(APick::StaticClass()))
 			{
 				weaponMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, socket);
+				
 				auto weaponTransform = weaponMesh->GetRelativeTransform();
 				FQuat rot180(FVector(0, 0, 1), FMath::DegreesToRadians(180.0f));
 				weaponTransform.ConcatenateRotation(rot180);
