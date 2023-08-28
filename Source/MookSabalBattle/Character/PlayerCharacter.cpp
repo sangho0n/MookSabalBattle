@@ -54,7 +54,7 @@ APlayerCharacter::APlayerCharacter()
 	movement->AirControl = 0.5f;
 	movement->JumpZVelocity = 350.0f;
 
-	CharacterState->SetCurrentMode(CharacterMode::MELEE);
+	CharacterState->SetCurrentMode(CharacterMode::NON_EQUIPPED);
 	CharacterState->SetIsEquipped(false);
 	CurrentWeapon = nullptr; // Fist mode
 
