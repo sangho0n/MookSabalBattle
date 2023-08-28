@@ -55,7 +55,6 @@ APlayerCharacter::APlayerCharacter()
 	movement->JumpZVelocity = 350.0f;
 
 	CharacterState->SetCurrentMode(CharacterMode::MELEE);
-	ChangeCharacterMode(CharacterState->GetCurrentMode());
 	CharacterState->SetIsEquipped(false);
 	CurrentWeapon = nullptr; // Fist mode
 
@@ -79,6 +78,7 @@ void APlayerCharacter::BeginPlay()
 
 		InGameUI->AddToViewport();
 	}
+	ChangeCharacterMode(CharacterState->GetCurrentMode());
 }
 
 // Called every frame
