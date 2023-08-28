@@ -22,6 +22,8 @@ public:
 
 	virtual void NativeBeginPlay() override;
 
+	void PlayComboAnim();
+
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	float CurrentPawnSpeed;
@@ -47,4 +49,7 @@ private:
 public:
 	UFUNCTION(BlueprintPure)
 	bool SetIntended(bool isIntended);
+
+private:
+	UAnimMontage* ComboMontage;
 };

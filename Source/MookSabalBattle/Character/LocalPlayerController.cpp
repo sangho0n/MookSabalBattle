@@ -27,6 +27,8 @@ void ALocalPlayerController::SetupInputComponent()
 	InputComponent->BindAxis("LookUp", this, &ALocalPlayerController::MouseVerticalChange);
 	InputComponent->BindAxis("Turn", this, &ALocalPlayerController::MouseHorizontalChange);
 	InputComponent->BindAction("Equip", IE_Pressed, this, &ALocalPlayerController::FKeyPressed);
+	InputComponent->BindAction("Attack", IE_Pressed, this, &ALocalPlayerController::OnAttack);
+	InputComponent->BindAction("Attack", IE_Released, this, &ALocalPlayerController::OnAttackStop);
 
 }
 
@@ -95,5 +97,42 @@ void ALocalPlayerController::FKeyPressed()
 		}
 	}
 	// We could write some code below here when we tend to implement ridings or sth else
+}
+
+void ALocalPlayerController::OnAttack()
+{
+	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	{
+		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto state = character->GetCharacterStateComponent();
+
+		// combo hit
+		if(state->GetCurrentMode() == CharacterMode::NON_EQUIPPED)
+		{
+			
+		}
+		// swing
+		if(state->GetCurrentMode() == CharacterMode::MELEE)
+		{
+			
+		}
+		// shot
+		if(state->GetCurrentMode() == CharacterMode::GUN)
+		{
+			
+		}
+	}
+}
+
+void ALocalPlayerController::OnAttackStop()
+{
+	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	{
+		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto state = character->GetCharacterStateComponent();
+		if(state->GetCurrentMode() != CharacterMode::GUN) return;
+		
+		
+	}
 }
 

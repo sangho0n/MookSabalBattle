@@ -12,6 +12,12 @@ UMSBAnimInstance::UMSBAnimInstance()
 	bInAir = false;
 	bIsIntended = false;
 	CurrentMode = CharacterMode::NON_EQUIPPED;
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> COMBO_MONTAGE(TEXT("/Game/Main/Animation/Humanoid/NonEquip/AM_NonEqip_Attack.AM_NonEqip_Attack"));
+	if(COMBO_MONTAGE.Succeeded())
+	{
+		this->ComboMontage = COMBO_MONTAGE.Object;
+	}
 }
 
 void UMSBAnimInstance::NativeBeginPlay()
@@ -49,5 +55,13 @@ bool UMSBAnimInstance::SetIntended(bool isIntended)
 {
 	this->bIsIntended = isIntended;
 	return true;
+}
+
+void UMSBAnimInstance::PlayComboAnim()
+{
+	if(!Montage_IsPlaying(ComboMontage))
+	{
+		Montage_Play(ComboMontage);
+	}
 }
 

@@ -31,4 +31,6 @@ private:
 	void MouseVerticalChange(float NewAxisValue);
 	void MouseHorizontalChange(float NewAxisValue);
 	void FKeyPressed();
+	void OnAttack();
+	void OnAttackStop();
 };
