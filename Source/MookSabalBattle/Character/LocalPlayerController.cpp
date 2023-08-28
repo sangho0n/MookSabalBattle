@@ -2,6 +2,8 @@
 
 
 #include "LocalPlayerController.h"
+
+#include "MSBAnimInstance.h"
 #include "PlayerCharacter.h"
 
 void ALocalPlayerController::PostInitializeComponents()
@@ -24,6 +26,9 @@ void ALocalPlayerController::SetupInputComponent()
 	InputComponent->BindAction("SpaceBar", IE_Pressed, this, &ALocalPlayerController::SpacebarPressed);
 	InputComponent->BindAxis("LookUp", this, &ALocalPlayerController::MouseVerticalChange);
 	InputComponent->BindAxis("Turn", this, &ALocalPlayerController::MouseHorizontalChange);
+	InputComponent->BindAction("Equip", IE_Pressed, this, &ALocalPlayerController::FKeyPressed);
+	InputComponent->BindAction("Attack", IE_Pressed, this, &ALocalPlayerController::OnAttack);
+	InputComponent->BindAction("Attack", IE_Released, this, &ALocalPlayerController::OnAttackStop);
 
 }
 
@@ -72,5 +77,62 @@ void ALocalPlayerController::MouseHorizontalChange(float NewAxisValue)
 		character->Turn(NewAxisValue);
 	}
 	AddYawInput(NewAxisValue);
+}
+
+void ALocalPlayerController::FKeyPressed()
+{
+	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	{
+		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto state = character->GetCharacterStateComponent();
+		if(!state->IsEquippable()) return;
+		
+		if(!state->IsEquipped())
+		{
+			character->EquipWeapon(character->OverlappedWeapon);
+		}
+		else // equipped
+		{
+			character->EquipWeapon(character->OverlappedWeapon);
+		}
+	}
+	// We could write some code below here when we tend to implement ridings or sth else
+}
+
+void ALocalPlayerController::OnAttack()
+{
+	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	{
+		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto state = character->GetCharacterStateComponent();
+
+		// combo hit
+		if(state->GetCurrentMode() == CharacterMode::NON_EQUIPPED)
+		{
+			
+		}
+		// swing
+		if(state->GetCurrentMode() == CharacterMode::MELEE)
+		{
+			
+		}
+		// shot
+		if(state->GetCurrentMode() == CharacterMode::GUN)
+		{
+			
+		}
+	}
+}
+
+void ALocalPlayerController::OnAttackStop()
+{
+	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	{
+		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto state = character->GetCharacterStateComponent();
+		if(state->GetCurrentMode() != CharacterMode::GUN) return;
+		
+		
+	}
 }
 

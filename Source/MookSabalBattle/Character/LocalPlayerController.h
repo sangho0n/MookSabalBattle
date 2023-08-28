@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "MookSabalBattle.h"
+#include "../MookSabalBattle.h"
 #include "GameFramework/PlayerController.h"
 #include "LocalPlayerController.generated.h"
 
@@ -30,4 +30,7 @@ private:
 	void SpacebarPressed();
 	void MouseVerticalChange(float NewAxisValue);
 	void MouseHorizontalChange(float NewAxisValue);
+	void FKeyPressed();
+	void OnAttack();
+	void OnAttackStop();
 };

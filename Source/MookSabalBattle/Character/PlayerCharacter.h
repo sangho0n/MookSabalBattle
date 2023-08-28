@@ -2,16 +2,11 @@
 
 #pragma once
 
-#include "MookSabalBattle.h"
+#include "../MookSabalBattle.h"
+#include "MookSabalBattle/Character/CharacterStateComponent.h"
 #include "GameFramework/Character.h"
+#include "MookSabalBattle/UI/InGameUI.h"
 #include "PlayerCharacter.generated.h"
-
-UENUM()
-enum class CharacterMode
-{
-	NON_EQUIPPED,
-	GUN
-};
 
 UCLASS()
 class MOOKSABALBATTLE_API APlayerCharacter : public ACharacter
@@ -25,8 +20,6 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	CharacterMode CurrentMode;
 
 public:	
 	// Called every frame
@@ -42,6 +35,12 @@ private:
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	UCameraComponent* Camera;
 
+	UPROPERTY(VisibleAnywhere, Category=Weapon)
+	AWeapon* CurrentWeapon;
+
+	UPROPERTY(VisibleAnywhere, Category=State)
+	UCharacterStateComponent* CharacterState;
+
 public:
 	void ForwardBack(float NewAxisValue);
 	void LeftRight(float NewAxisValue);
@@ -50,6 +49,34 @@ public:
 
 	CharacterMode GetCurrentMode();
 	
+	AWeapon* OverlappedWeapon;
+	
 private:
 	void ChangeCharacterMode(CharacterMode NewMode);
+
+	TSubclassOf<UInGameUI> InGameUIClass;
+	UInGameUI* InGameUI;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	UCharacterStateComponent* GetCharacterStateComponent();
+	
+	UFUNCTION(BlueprintCallable)
+	bool EquipWeapon(AWeapon* NewWeapon);
+	
+	UFUNCTION(BlueprintCallable)
+	void OnWeaponStartOverlap(AWeapon* OverlappedWeapon);
+	
+	UFUNCTION(BlueprintCallable)
+	void OnWeaponEndOverlap();
+
+private:
+	const FVector CamPosWhenGunMode = FVector(0.0f, 50.0f, 50.0f);
+	FVector CurrentCamPos;
+	FVector DesiredCamPos;
+	bool bInterpingCamPos;
+	float accTime;
+
+public:
+	virtual void Jump() override;
 };

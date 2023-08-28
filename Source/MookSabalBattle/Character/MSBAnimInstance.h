@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "MookSabalBattle.h"
+#include "../MookSabalBattle.h"
 #include "PlayerCharacter.h"
 #include "Animation/AnimInstance.h"
 #include "MSBAnimInstance.generated.h"
@@ -20,6 +20,10 @@ public:
 
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
+	virtual void NativeBeginPlay() override;
+
+	void PlayComboAnim();
+
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	float CurrentPawnSpeed;
@@ -34,5 +38,18 @@ private:
 	bool bIsIntended;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
-	CharacterMode CurrentMode;
+	TEnumAsByte<CharacterMode> CurrentMode;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
+	bool bIsAttacking;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
+	float MaxWalkSpeed;
+
+public:
+	UFUNCTION(BlueprintPure)
+	bool SetIntended(bool isIntended);
+
+private:
+	UAnimMontage* ComboMontage;
 };
