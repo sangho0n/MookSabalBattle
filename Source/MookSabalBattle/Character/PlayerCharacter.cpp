@@ -168,6 +168,7 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		bInterpingCamPos = true;
 		DesiredCamPos = FVector::ZeroVector;
 		accTime = 0.0f;
+		InGameUI->SetAimInvisible();
 		return;
 	}
 	if(CurrentMode == CharacterMode::GUN)
@@ -188,6 +189,7 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		bInterpingCamPos = true;
 		DesiredCamPos = CamPosWhenGunMode;
 		accTime = 0.0f;
+		InGameUI->SetAimVisible();
 		return;
 	}
 }

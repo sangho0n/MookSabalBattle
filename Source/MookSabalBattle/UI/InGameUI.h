@@ -31,6 +31,8 @@ private:
 public:
 	void SetEquipVisible();
 	void SetEquipInvisible();
+	void SetAimVisible();
+	void SetAimInvisible();
 
 private:
 	const float FadeOutTime = 0.6f;

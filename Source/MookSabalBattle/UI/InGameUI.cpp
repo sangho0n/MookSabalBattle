@@ -52,3 +52,13 @@ void UInGameUI::SetEquipInvisible()
 	bIsFadeOut = true;
 }
 
+void UInGameUI::SetAimVisible()
+{
+	Aim->SetVisibility(ESlateVisibility::Visible);
+}
+
+void UInGameUI::SetAimInvisible()
+{
+	Aim->SetVisibility(ESlateVisibility::Hidden);
+}
+
