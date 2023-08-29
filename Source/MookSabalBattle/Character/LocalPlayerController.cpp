@@ -109,17 +109,17 @@ void ALocalPlayerController::OnAttack()
 		// combo hit
 		if(state->GetCurrentMode() == CharacterMode::NON_EQUIPPED)
 		{
-			
+			character->AttackNonEquip();
 		}
 		// swing
 		if(state->GetCurrentMode() == CharacterMode::MELEE)
 		{
-			
+			character->SwingMelee();
 		}
 		// shot
 		if(state->GetCurrentMode() == CharacterMode::GUN)
 		{
-			
+			character->Shoot();
 		}
 	}
 }
