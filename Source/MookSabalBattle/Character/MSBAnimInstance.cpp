@@ -47,12 +47,12 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			CurrentMode = state->GetCurrentMode();
 			bIsAttacking = state->IsAttacking();
 			MovingDirection = CalculateDirection(Velocity, Owner->GetActorRotation());
-			if(DeltaYaw > 45.0f)
+			if(DeltaYaw > 30.0f)
 			{
 				bIsCW = true;
 				DeltaYaw = 0.0f;
 			}
-			else if (DeltaYaw < -45.0f)
+			else if (DeltaYaw < -30.0f)
 			{
 				bIsCW = false;
 				DeltaYaw = 0.0f;
