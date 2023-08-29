@@ -6,6 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "CharacterStateComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE(FOnHPIsZero);
+DECLARE_MULTICAST_DELEGATE(FOnHPChanges);
+
 UENUM(BlueprintType)
 enum class CharacterMode
 {
@@ -17,7 +20,6 @@ enum class CharacterMode
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MOOKSABALBATTLE_API UCharacterStateComponent : public UActorComponent
 {
-private:
 	GENERATED_BODY()
 
 public:	
@@ -37,8 +39,15 @@ private:
 	CharacterMode CurrentMode;
 	bool bIsEquippable;
 	bool bIsAttacking;
+	float HP;
+	FString NickName;
+	char team;
+	
+	FOnHPIsZero OnHPIsZero;
 
-private:
+public:
+	void GetDamage(float damage);
+	
 #pragma region getter_setter
 public:
 	void SetIsEquipped(bool bIsEquipped_)
@@ -83,6 +92,38 @@ public:
 	void SetIsAttacking(bool bIsAttacking_)
 	{
 		this->bIsAttacking = bIsAttacking_;
+	}
+	[[nodiscard]]
+	float HP1() const
+	{
+		return HP;
+	}
+
+	void SetHP(float HP_)
+	{
+		this->HP = HP_;
+	}
+
+	[[nodiscard]]
+	FString NickName1() const
+	{
+		return NickName;
+	}
+
+	void SetNickName(const FString& NickName_)
+	{
+		this->NickName = NickName_;
+	}
+
+	[[nodiscard]]
+	char Team() const
+	{
+		return team;
+	}
+
+	void SetTeam(char Team)
+	{
+		team = Team;
 	}
 #pragma endregion getter_setter
 };

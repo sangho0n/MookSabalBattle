@@ -7,6 +7,7 @@
 #include "Animation/AnimInstance.h"
 #include "MSBAnimInstance.generated.h"
 
+
 /**
  * 
  */
@@ -21,6 +22,8 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 	virtual void NativeBeginPlay() override;
+
+	virtual void PostInitProperties() override;
 
 	void PlayComboAnim();
 
@@ -52,11 +55,14 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	float DeltaYaw;
 
+	APlayerCharacter* OwnedPawn;
+
 public:
 	UFUNCTION(BlueprintPure)
 	bool SetIntended(bool isIntended);
 
 private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
 	UAnimMontage* ComboMontage;
 
 public:
@@ -64,4 +70,34 @@ public:
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	bool bIsCW;
+
+public:
+	UFUNCTION()
+	void OnComboMontageEnded(UAnimMontage* montage, bool bInterrupted);
+
+	UFUNCTION()
+	void AnimNotify_HitCheck();
+	UFUNCTION()
+	void AnimNotify_NextComboCheck();
+	UFUNCTION()
+	void AnimNotify_FinalHitCheck();
+
+private:
+	int32 CurrentCombo;
+	const int32 MaxCombo = 3;
+	bool CanNextCombo;
+	bool NextComboInputOn;
+	FName GetNextComboSectionName();
+
+public:
+	bool GetCanNextCombo()
+	{
+		return CanNextCombo;
+	}
+	void SetNextComboInputOn(bool flag)
+	{
+		NextComboInputOn = flag;
+	}
+
+	void JumpToNextSection();
 };

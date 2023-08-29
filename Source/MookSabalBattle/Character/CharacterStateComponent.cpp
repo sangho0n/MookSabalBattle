@@ -19,8 +19,7 @@ void UCharacterStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+	HP = 200.0f;
 }
 
 
@@ -30,5 +29,16 @@ void UCharacterStateComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+void UCharacterStateComponent::GetDamage(float damage)
+{
+	auto candidateHP = HP - damage;
+	HP = candidateHP > 0.0 ? candidateHP : 0.0;
+	if(HP < KINDA_SMALL_NUMBER)
+	{
+		HP = 0.0f;
+		OnHPIsZero.Broadcast();
+	}
 }
 

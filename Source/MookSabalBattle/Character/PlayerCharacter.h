@@ -79,4 +79,12 @@ private:
 
 public:
 	virtual void Jump() override;
+
+	UFUNCTION(BlueprintCallable)
+	void AttackNonEquip();
+	UFUNCTION(BlueprintCallable)
+	void Shoot();
+	UFUNCTION(BlueprintCallable)
+	void SwingMelee();
+	
 };

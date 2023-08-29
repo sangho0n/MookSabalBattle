@@ -79,6 +79,7 @@ void APlayerCharacter::BeginPlay()
 		InGameUI->AddToViewport();
 	}
 	ChangeCharacterMode(CharacterState->GetCurrentMode());
+	CharacterState->SetIsAttacking(false);
 }
 
 // Called every frame
@@ -272,5 +273,28 @@ void APlayerCharacter::OnWeaponEndOverlap()
 UCharacterStateComponent* APlayerCharacter::GetCharacterStateComponent()
 {
 	return this->CharacterState;
+}
+
+void APlayerCharacter::AttackNonEquip()
+{
+	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
+	if(CharacterState->IsAttacking())
+	{
+		animInstance->SetNextComboInputOn(true);
+		return;
+	}
+
+	MSB_LOG(Warning, TEXT("Can Next"));
+	animInstance->PlayComboAnim();
+}
+
+void APlayerCharacter::Shoot()
+{
+	
+}
+
+void APlayerCharacter::SwingMelee()
+{
+	
 }
 

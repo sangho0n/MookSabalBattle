@@ -13,19 +13,31 @@ UMSBAnimInstance::UMSBAnimInstance()
 	bIsIntended = false;
 	CurrentMode = CharacterMode::NON_EQUIPPED;
 
-	static ConstructorHelpers::FObjectFinder<UAnimMontage> COMBO_MONTAGE(TEXT("/Game/Main/Animation/Humanoid/NonEquip/AM_NonEqip_Attack.AM_NonEqip_Attack"));
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> COMBO_MONTAGE(TEXT("/Game/Main/Animation/Humanoid/NonEquip/AM_NonEquip_Attack.AM_NonEquip_Attack"));
 	if(COMBO_MONTAGE.Succeeded())
 	{
 		this->ComboMontage = COMBO_MONTAGE.Object;
 	}
 }
 
+void UMSBAnimInstance::PostInitProperties()
+{
+	Super::PostInitProperties();
+}
+
+
 void UMSBAnimInstance::NativeBeginPlay()
 {
+	Super::NativeBeginPlay();
+	
 	MaxWalkSpeed = TryGetPawnOwner()->GetMovementComponent()->GetMaxSpeed();
 	BeforeDirection = TryGetPawnOwner()->GetControlRotation().Yaw;
 	DeltaYaw = 0;
 	bIsCW = false;
+	OwnedPawn = Cast<APlayerCharacter>(TryGetPawnOwner());
+	CurrentCombo = 0;
+	CanNextCombo = true;
+	OnMontageEnded.AddDynamic(this, &UMSBAnimInstance::OnComboMontageEnded);
 }
 
 
@@ -33,20 +45,19 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	auto Owner = TryGetPawnOwner();
-	if(::IsValid(Owner))
+	if(::IsValid(OwnedPawn))
 	{		
-		auto Velocity = Owner->GetVelocity(); // speed vector in WS
+		auto Velocity = OwnedPawn->GetVelocity(); // speed vector in WS
 		CurrentPawnSpeed = Velocity.Size();
 		
-		if(Owner->IsA(APlayerCharacter::StaticClass()))
+		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
 		{
-			auto character = Cast<APlayerCharacter>(Owner);
+			auto character = Cast<APlayerCharacter>(OwnedPawn);
 			auto state = character->GetCharacterStateComponent();
-			bInAir = Owner->GetMovementComponent()->IsFalling();
+			bInAir = OwnedPawn->GetMovementComponent()->IsFalling();
 			CurrentMode = state->GetCurrentMode();
 			bIsAttacking = state->IsAttacking();
-			MovingDirection = CalculateDirection(Velocity, Owner->GetActorRotation());
+			MovingDirection = CalculateDirection(Velocity, OwnedPawn->GetActorRotation());
 			if(DeltaYaw > 30.0f)
 			{
 				bIsCW = true;
@@ -58,7 +69,6 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 				DeltaYaw = 0.0f;
 			}
 			
-			MSB_LOG(Warning, TEXT("before yaw %f"), DeltaYaw);
 			if(!bInAir) SetIntended(false);
 			return;
 		}
@@ -73,11 +83,27 @@ bool UMSBAnimInstance::SetIntended(bool isIntended)
 
 void UMSBAnimInstance::PlayComboAnim()
 {
-	if(!Montage_IsPlaying(ComboMontage))
-	{
-		Montage_Play(ComboMontage);
+	if(::IsValid(OwnedPawn))
+	{		
+		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
+		{
+			auto character = Cast<APlayerCharacter>(OwnedPawn);
+			auto state = character->GetCharacterStateComponent();
+			state->SetIsAttacking(true);
+			CanNextCombo = false;
+			CurrentCombo = 1;
+			
+			Montage_Play(ComboMontage);
+		}
 	}
 }
+
+void UMSBAnimInstance::JumpToNextSection()
+{
+	auto text = GetNextComboSectionName();
+	Montage_JumpToSection(text, ComboMontage);
+}
+
 
 void UMSBAnimInstance::SetBeforeDirection(float NewBeforeDir)
 {
@@ -85,3 +111,73 @@ void UMSBAnimInstance::SetBeforeDirection(float NewBeforeDir)
 	BeforeDirection = NewBeforeDir;
 }
 
+void UMSBAnimInstance::OnComboMontageEnded(UAnimMontage* montage, bool bInterrupted)
+{
+	if(::IsValid(OwnedPawn))
+	{		
+		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
+		{
+			auto character = Cast<APlayerCharacter>(OwnedPawn);
+			auto state = character->GetCharacterStateComponent();
+
+			state->SetIsAttacking(false);
+			CanNextCombo = true;
+			CurrentCombo = 0;
+		}
+	}
+}
+
+void UMSBAnimInstance::AnimNotify_HitCheck()
+{
+	if(::IsValid(OwnedPawn))
+	{		
+		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
+		{
+			auto character = Cast<APlayerCharacter>(OwnedPawn);
+			auto state = character->GetCharacterStateComponent();
+
+			// detect collision
+		}
+	}
+}
+
+
+void UMSBAnimInstance::AnimNotify_NextComboCheck()
+{
+	MSB_LOG(Warning, TEXT("next combo check"));
+	if(::IsValid(OwnedPawn))
+	{		
+		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
+		{
+			auto character = Cast<APlayerCharacter>(OwnedPawn);
+			auto state = character->GetCharacterStateComponent();
+
+			if(NextComboInputOn)
+			{
+				JumpToNextSection();
+				NextComboInputOn = false;
+			}
+		}
+	}
+}
+
+void UMSBAnimInstance::AnimNotify_FinalHitCheck()
+{
+	if(::IsValid(OwnedPawn))
+	{		
+		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
+		{
+			auto character = Cast<APlayerCharacter>(OwnedPawn);
+			auto state = character->GetCharacterStateComponent();
+
+			// state->SetCanNextCombo(true);
+		}
+	}
+}
+
+FName UMSBAnimInstance::GetNextComboSectionName()
+{
+	CurrentCombo = FMath::Clamp(CurrentCombo+1, 1, 3);
+	auto NextSection = FName(*FString::Printf(TEXT("Combo%d"), CurrentCombo));
+	return NextSection;
+}
