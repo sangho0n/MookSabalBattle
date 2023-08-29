@@ -143,7 +143,9 @@ void APlayerCharacter::LookUp(float NewAxisValue)
 
 void APlayerCharacter::Turn(float NewAxisValue)
 {
-
+	auto yaw = GetControlRotation().Yaw;
+	auto animinstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
+	animinstance->SetBeforeDirection(yaw);
 }
 
 void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)

@@ -8,7 +8,7 @@
 UMSBAnimInstance::UMSBAnimInstance()
 {
 	CurrentPawnSpeed = 0.0f;
-	Direction = 0.0f;
+	MovingDirection = 0.0f;
 	bInAir = false;
 	bIsIntended = false;
 	CurrentMode = CharacterMode::NON_EQUIPPED;
@@ -23,6 +23,9 @@ UMSBAnimInstance::UMSBAnimInstance()
 void UMSBAnimInstance::NativeBeginPlay()
 {
 	MaxWalkSpeed = TryGetPawnOwner()->GetMovementComponent()->GetMaxSpeed();
+	BeforeDirection = TryGetPawnOwner()->GetControlRotation().Yaw;
+	DeltaYaw = 0;
+	bIsCW = false;
 }
 
 
@@ -43,8 +46,19 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			bInAir = Owner->GetMovementComponent()->IsFalling();
 			CurrentMode = state->GetCurrentMode();
 			bIsAttacking = state->IsAttacking();
-			Direction = CalculateDirection(Velocity, Owner->GetActorRotation());
-
+			MovingDirection = CalculateDirection(Velocity, Owner->GetActorRotation());
+			if(DeltaYaw > 45.0f)
+			{
+				bIsCW = true;
+				DeltaYaw = 0.0f;
+			}
+			else if (DeltaYaw < -45.0f)
+			{
+				bIsCW = false;
+				DeltaYaw = 0.0f;
+			}
+			
+			MSB_LOG(Warning, TEXT("before yaw %f"), DeltaYaw);
 			if(!bInAir) SetIntended(false);
 			return;
 		}
@@ -63,5 +77,11 @@ void UMSBAnimInstance::PlayComboAnim()
 	{
 		Montage_Play(ComboMontage);
 	}
+}
+
+void UMSBAnimInstance::SetBeforeDirection(float NewBeforeDir)
+{
+	DeltaYaw += NewBeforeDir - BeforeDirection;
+	BeforeDirection = NewBeforeDir;
 }
 
