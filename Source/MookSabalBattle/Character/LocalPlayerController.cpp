@@ -29,8 +29,7 @@ void ALocalPlayerController::SetupInputComponent()
 	InputComponent->BindAxis("Turn", this, &ALocalPlayerController::MouseHorizontalChange);
 	InputComponent->BindAction("Equip", IE_Pressed, this, &ALocalPlayerController::FKeyPressed);
 	InputComponent->BindAction("Attack", IE_Pressed, this, &ALocalPlayerController::OnAttack);
-	//InputComponent->BindAction("Attack", IE_Released, this, &ALocalPlayerController::OnAttackStop);
-
+	InputComponent->BindAction("Attack", IE_Released, this, &ALocalPlayerController::OnAttackStop);
 }
 
 void ALocalPlayerController::ForwardBack(float NewAxisValue)
