@@ -104,4 +104,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category=Attack)
 	void SetSwingEnd();
+
+	void PlayShot();
 };

@@ -114,6 +114,22 @@ void UMSBAnimInstance::PlayMeleeSwing()
 	}
 }
 
+
+void UMSBAnimInstance::PlayShot()
+{
+	if(::IsValid(OwnedPawn))
+	{		
+		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
+		{
+			auto character = Cast<APlayerCharacter>(OwnedPawn);
+			auto state = character->GetCharacterStateComponent();
+
+			state->SetIsAttacking(true);
+		}
+	}
+}
+
+
 void UMSBAnimInstance::JumpToNextSection()
 {
 	auto text = GetNextComboSectionName();

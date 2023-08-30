@@ -146,7 +146,8 @@ void ALocalPlayerController::OnAttackStop()
 		auto state = character->GetCharacterStateComponent();
 		if(state->GetCurrentMode() == CharacterMode::NON_EQUIPPED) 
 			bEnableInputControl = true;
-		
+		if(state->GetCurrentMode() == CharacterMode::GUN) 
+			character->StopShooting();
 	}
 }
 

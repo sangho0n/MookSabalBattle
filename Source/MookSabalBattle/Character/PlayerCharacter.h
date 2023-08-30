@@ -85,6 +85,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Shoot();
 	UFUNCTION(BlueprintCallable)
+	void StopShooting();
+	UFUNCTION(BlueprintCallable)
 	void SwingMelee();
 	
 };
