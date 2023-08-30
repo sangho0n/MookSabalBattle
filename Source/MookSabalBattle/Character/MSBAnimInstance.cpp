@@ -24,6 +24,7 @@ UMSBAnimInstance::UMSBAnimInstance()
 void UMSBAnimInstance::PostInitProperties()
 {
 	Super::PostInitProperties();
+	OnMontageEnded.AddDynamic(this, &UMSBAnimInstance::OnComboMontageEnded);
 }
 
 
@@ -38,7 +39,6 @@ void UMSBAnimInstance::NativeBeginPlay()
 	OwnedPawn = Cast<APlayerCharacter>(TryGetPawnOwner());
 	CurrentCombo = 0;
 	CanNextCombo = true;
-	OnMontageEnded.AddDynamic(this, &UMSBAnimInstance::OnComboMontageEnded);
 }
 
 
@@ -95,6 +95,21 @@ void UMSBAnimInstance::PlayComboAnim()
 			CurrentCombo = 1;
 			
 			Montage_Play(ComboMontage);
+		}
+	}
+}
+
+void UMSBAnimInstance::PlayMeleeSwing()
+{
+	RandomMeleeIdx = FMath::RandRange(0, 2);
+	if(::IsValid(OwnedPawn))
+	{		
+		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
+		{
+			auto character = Cast<APlayerCharacter>(OwnedPawn);
+			auto state = character->GetCharacterStateComponent();
+
+			state->SetIsAttacking(true);
 		}
 	}
 }
@@ -165,23 +180,24 @@ void UMSBAnimInstance::AnimNotify_NextComboCheck()
 	}
 }
 
-void UMSBAnimInstance::AnimNotify_FinalHitCheck()
-{
-	if(::IsValid(OwnedPawn))
-	{		
-		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
-		{
-			auto character = Cast<APlayerCharacter>(OwnedPawn);
-			auto state = character->GetCharacterStateComponent();
-
-			// state->SetCanNextCombo(true);
-		}
-	}
-}
-
 FName UMSBAnimInstance::GetNextComboSectionName()
 {
 	CurrentCombo = FMath::Clamp(CurrentCombo+1, 1, 3);
 	auto NextSection = FName(*FString::Printf(TEXT("Combo%d"), CurrentCombo));
 	return NextSection;
 }
+
+void UMSBAnimInstance::SetSwingEnd()
+{
+	if(::IsValid(OwnedPawn))
+	{		
+		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
+		{
+			MSB_LOG(Warning, TEXT("asdfsdfasdfasdfasdfasd"));
+			auto character = Cast<APlayerCharacter>(OwnedPawn);
+			auto state = character->GetCharacterStateComponent();
+			state->SetIsAttacking(false);
+		}
+	}
+}
+

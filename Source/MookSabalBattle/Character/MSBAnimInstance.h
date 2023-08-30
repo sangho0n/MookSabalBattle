@@ -7,7 +7,6 @@
 #include "Animation/AnimInstance.h"
 #include "MSBAnimInstance.generated.h"
 
-
 /**
  * 
  */
@@ -70,6 +69,8 @@ public:
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	bool bIsCW;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
+	int32 RandomMeleeIdx;
 
 public:
 	UFUNCTION()
@@ -79,8 +80,6 @@ public:
 	void AnimNotify_HitCheck();
 	UFUNCTION()
 	void AnimNotify_NextComboCheck();
-	UFUNCTION()
-	void AnimNotify_FinalHitCheck();
 
 private:
 	int32 CurrentCombo;
@@ -100,4 +99,9 @@ public:
 	}
 
 	void JumpToNextSection();
+
+	void PlayMeleeSwing();
+
+	UFUNCTION(BlueprintCallable, Category=Attack)
+	void SetSwingEnd();
 };

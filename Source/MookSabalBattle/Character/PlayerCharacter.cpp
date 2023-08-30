@@ -294,6 +294,10 @@ void APlayerCharacter::Shoot()
 
 void APlayerCharacter::SwingMelee()
 {
+	MSB_LOG(Log, TEXT("is attacking %d"), CharacterState->IsAttacking());
+	if(CharacterState->IsAttacking()) return;
 	
+	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
+	animInstance->PlayMeleeSwing();
 }
 
