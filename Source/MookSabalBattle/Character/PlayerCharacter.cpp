@@ -79,7 +79,6 @@ void APlayerCharacter::BeginPlay()
 		InGameUI->AddToViewport();
 	}
 	ChangeCharacterMode(CharacterState->GetCurrentMode());
-	CharacterState->SetIsAttacking(false);
 }
 
 // Called every frame

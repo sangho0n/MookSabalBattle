@@ -20,6 +20,7 @@ void UCharacterStateComponent::BeginPlay()
 	Super::BeginPlay();
 
 	HP = 200.0f;
+	bIsAttacking = false;
 }
 
 
