@@ -3,6 +3,7 @@
 
 #include "MSBAnimInstance.h"
 
+#include "LocalPlayerController.h"
 #include "PlayerCharacter.h"
 
 UMSBAnimInstance::UMSBAnimInstance()
@@ -123,6 +124,8 @@ void UMSBAnimInstance::OnComboMontageEnded(UAnimMontage* montage, bool bInterrup
 			state->SetIsAttacking(false);
 			CanNextCombo = true;
 			CurrentCombo = 0;
+			Cast<ALocalPlayerController>(character->GetController())->OnAttackStop();
+			MSB_LOG(Warning,TEXT("montage end"));
 		}
 	}
 }
@@ -144,13 +147,14 @@ void UMSBAnimInstance::AnimNotify_HitCheck()
 
 void UMSBAnimInstance::AnimNotify_NextComboCheck()
 {
-	MSB_LOG(Warning, TEXT("next combo check"));
 	if(::IsValid(OwnedPawn))
 	{		
 		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
 		{
 			auto character = Cast<APlayerCharacter>(OwnedPawn);
 			auto state = character->GetCharacterStateComponent();
+			auto controller = Cast<ALocalPlayerController>(character->GetController());
+			controller->OnAttackStop();
 
 			if(NextComboInputOn)
 			{

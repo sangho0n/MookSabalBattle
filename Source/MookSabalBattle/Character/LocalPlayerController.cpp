@@ -16,6 +16,7 @@ void ALocalPlayerController::OnPossess(APawn* InPawn)
 	Super::OnPossess(InPawn);
 
 	controllingPawn = InPawn;
+	bEnableInputControl = true;
 }
 
 void ALocalPlayerController::SetupInputComponent()
@@ -34,6 +35,8 @@ void ALocalPlayerController::SetupInputComponent()
 
 void ALocalPlayerController::ForwardBack(float NewAxisValue)
 {
+	if(!bEnableInputControl) return;
+	
 	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
 		auto character = Cast<APlayerCharacter>(controllingPawn);
@@ -43,6 +46,8 @@ void ALocalPlayerController::ForwardBack(float NewAxisValue)
 
 void ALocalPlayerController::LeftRight(float NewAxisValue)
 {
+	if(!bEnableInputControl) return;
+	
 	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
 		auto character = Cast<APlayerCharacter>(controllingPawn);
@@ -52,6 +57,8 @@ void ALocalPlayerController::LeftRight(float NewAxisValue)
 
 void ALocalPlayerController::SpacebarPressed()
 {
+	if(!bEnableInputControl) return;
+	
 	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
 		auto character = Cast<APlayerCharacter>(controllingPawn);
@@ -61,6 +68,8 @@ void ALocalPlayerController::SpacebarPressed()
 
 void ALocalPlayerController::MouseVerticalChange(float NewAxisValue)
 {
+	if(!bEnableInputControl) return;
+	
 	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
 		auto character = Cast<APlayerCharacter>(controllingPawn);
@@ -71,6 +80,8 @@ void ALocalPlayerController::MouseVerticalChange(float NewAxisValue)
 
 void ALocalPlayerController::MouseHorizontalChange(float NewAxisValue)
 {
+	if(!bEnableInputControl) return;
+	
 	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
 		auto character = Cast<APlayerCharacter>(controllingPawn);
@@ -81,6 +92,9 @@ void ALocalPlayerController::MouseHorizontalChange(float NewAxisValue)
 
 void ALocalPlayerController::FKeyPressed()
 {
+	if(!bEnableInputControl) return;
+
+	
 	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
 		auto character = Cast<APlayerCharacter>(controllingPawn);
@@ -110,6 +124,7 @@ void ALocalPlayerController::OnAttack()
 		if(state->GetCurrentMode() == CharacterMode::NON_EQUIPPED)
 		{
 			character->AttackNonEquip();
+			bEnableInputControl = false;
 		}
 		// swing
 		if(state->GetCurrentMode() == CharacterMode::MELEE)
@@ -130,8 +145,8 @@ void ALocalPlayerController::OnAttackStop()
 	{
 		auto character = Cast<APlayerCharacter>(controllingPawn);
 		auto state = character->GetCharacterStateComponent();
-		if(state->GetCurrentMode() != CharacterMode::GUN) return;
-		
+		if(state->GetCurrentMode() == CharacterMode::NON_EQUIPPED) 
+			bEnableInputControl = true;
 		
 	}
 }

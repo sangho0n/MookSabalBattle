@@ -32,5 +32,8 @@ private:
 	void MouseHorizontalChange(float NewAxisValue);
 	void FKeyPressed();
 	void OnAttack();
+public:
 	void OnAttackStop();
+private:
+	bool bEnableInputControl;
 };
