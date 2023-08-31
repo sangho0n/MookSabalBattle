@@ -14,6 +14,7 @@ AAxe::AAxe()
 	{
 		SM_Weapon->SetStaticMesh(SM_AXE.Object);
 	}
+	SM_Weapon->SetRelativeLocation(OffsetFromLand);
 	SM_Weapon->SetRelativeRotation(FRotator(0.0f, -90.0f, 90.0));
 	Collider->InitBoxExtent(FVector(25.0, 60.0, 42.0));
 	Collider->SetRelativeLocation(FVector(0.0f, 0.0f, 20.0f));

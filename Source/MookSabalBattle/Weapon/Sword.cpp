@@ -14,6 +14,7 @@ ASword::ASword()
 	{
 		SM_Weapon->SetStaticMesh(SM_SWORD.Object);
 	}
+	SM_Weapon->SetRelativeLocation(OffsetFromLand);
 	SM_Weapon->SetRelativeRotation(FRotator(0.0f, -90.0f, 90.0));
 	Collider->InitBoxExtent(FVector(20.0, 60.0, 90.0));
 	Collider->SetRelativeLocation(FVector(0, 0, 50.0f));

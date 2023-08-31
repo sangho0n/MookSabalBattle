@@ -14,6 +14,7 @@ AGun::AGun() : Super()
 	{
 		SM_Weapon->SetStaticMesh(SM_GUN.Object);
 	}
+	SM_Weapon->SetRelativeLocation(OffsetFromLand);
 	SM_Weapon->SetRelativeRotation(FRotator(0.0f, 0.0f, -90.0));
 	Collider->InitBoxExtent(FVector(45.0, 60.0, 28.0));
 	Collider->SetRelativeLocation(FVector(17.0f, 0.0f, 11.0f));

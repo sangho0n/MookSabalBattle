@@ -30,6 +30,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category=Character)
 	APlayerCharacter* LocalPlayer;
 
+	FVector OffsetFromLand;
+
 	virtual void Destroyed() override;
 public:	
 
