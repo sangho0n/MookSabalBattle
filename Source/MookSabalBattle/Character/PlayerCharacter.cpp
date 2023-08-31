@@ -269,6 +269,7 @@ UCharacterStateComponent* APlayerCharacter::GetCharacterStateComponent()
 	return this->CharacterState;
 }
 
+# pragma region attack
 void APlayerCharacter::AttackNonEquip()
 {
 	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
@@ -303,4 +304,4 @@ void APlayerCharacter::SwingMelee()
 	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
 	animInstance->PlayMeleeSwing();
 }
-
+# pragma endregion

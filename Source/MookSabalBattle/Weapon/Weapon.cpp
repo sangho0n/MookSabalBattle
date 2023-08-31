@@ -8,11 +8,10 @@ AWeapon::AWeapon()
 {
 	SM_Weapon = CreateDefaultSubobject<UStaticMeshComponent>("DefaultWeapon");
 	Collider = CreateDefaultSubobject<UBoxComponent>("Collider");
-	RootComponent = Collider;
+	RootComponent = SM_Weapon;
+	Collider->SetupAttachment(RootComponent);
 	Collider->InitBoxExtent(FVector(51.0, 30.0, 42.0));
-	
-	SM_Weapon->SetCollisionProfileName(TEXT("NoCollision"));
-	Collider->SetCollisionProfileName(TEXT("CharacterOverlap"));
+
 	LocalPlayer = nullptr;
 }
 
@@ -26,6 +25,9 @@ void AWeapon::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	
+	SM_Weapon->SetCollisionProfileName(TEXT("IgnoreOnlyPawn"));
+	Collider->SetCollisionProfileName(TEXT("CharacterOverlap"));
+	SM_Weapon->SetSimulatePhysics(true);
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnCharacterBeginOverlap);
 	Collider->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnCharacterEndOverlap);
 }

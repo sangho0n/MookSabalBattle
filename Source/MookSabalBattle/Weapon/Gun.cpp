@@ -5,9 +5,9 @@
 
 AGun::AGun() : Super()
 {
-	Collider->InitBoxExtent(FVector(51.0, 30.0, 42.0));
 	SM_Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Gun"));
-	SM_Weapon->SetupAttachment(RootComponent);
+	RootComponent = SM_Weapon;
+	Collider->SetupAttachment(RootComponent);
 	
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_GUN(TEXT("/Game/MiniSurvivalProps/SM_AssaultRifle.SM_AssaultRifle"));
 	if(SM_GUN.Succeeded())
@@ -15,7 +15,8 @@ AGun::AGun() : Super()
 		SM_Weapon->SetStaticMesh(SM_GUN.Object);
 	}
 	SM_Weapon->SetRelativeRotation(FRotator(0.0f, 0.0f, -90.0));
-	SM_Weapon->SetRelativeLocation(FVector(-20.0f, 0.0f, 0.0f));
+	Collider->InitBoxExtent(FVector(45.0, 60.0, 28.0));
+	Collider->SetRelativeLocation(FVector(17.0f, 0.0f, 11.0f));
 }
 
 void AGun::PostInitializeComponents()
