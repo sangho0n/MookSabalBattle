@@ -22,4 +22,5 @@ AGun::AGun() : Super()
 void AGun::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+	Bullets = 0;
 }

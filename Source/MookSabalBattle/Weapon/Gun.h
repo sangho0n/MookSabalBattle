@@ -19,4 +19,7 @@ public:
 	AGun();
 
 	virtual void PostInitializeComponents() override;
+
+private:
+	uint32 Bullets;
 };
