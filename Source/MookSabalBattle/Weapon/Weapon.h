@@ -41,6 +41,7 @@ public:
 	virtual void OnCharacterEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	UFUNCTION()
-	UStaticMeshComponent* GetWeaponMesh();
+	UStaticMeshComponent* ReadyToEquip();
+
+	void AfterEquip();
 };

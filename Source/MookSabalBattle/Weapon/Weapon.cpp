@@ -61,8 +61,15 @@ void AWeapon::Destroyed()
 	Super::Destroyed();
 }
 
-UStaticMeshComponent* AWeapon::GetWeaponMesh()
+UStaticMeshComponent* AWeapon::ReadyToEquip()
 {
-	return this->SM_Weapon;
-}
+	// collider config
+	Collider->SetActive(false);
+	
+	// mesh config
+	auto mesh = this->SM_Weapon;
+	mesh->SetSimulatePhysics(false);
+	mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	return mesh;
+}

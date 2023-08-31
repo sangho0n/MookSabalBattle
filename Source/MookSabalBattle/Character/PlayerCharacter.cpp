@@ -209,6 +209,7 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 	}
 	
 	CurrentWeapon = NewWeapon;
+	auto weaponMesh = CurrentWeapon->ReadyToEquip();
 	CharacterState->SetIsEquipped(true);
 	if(CurrentWeapon->IsA(AGun::StaticClass()))
 	{
@@ -216,9 +217,6 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 		FName socket("hand_rifle_rSocket");
 		if(GetMesh()->DoesSocketExist(socket))
 		{
-			auto weaponMesh = CurrentWeapon->GetWeaponMesh();
-			weaponMesh->SetSimulatePhysics(false);
-			weaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			weaponMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, socket);
 
 			auto weaponTransform = weaponMesh->GetRelativeTransform();
@@ -235,9 +233,6 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 		FName socket("hand_sword_rSocket");
 		if(GetMesh()->DoesSocketExist(socket))
 		{
-			auto weaponMesh = CurrentWeapon->GetWeaponMesh();
-			weaponMesh->SetSimulatePhysics(false);
-			weaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			if(CurrentWeapon->IsA(AAxe::StaticClass()) || CurrentWeapon->IsA(APick::StaticClass()))
 			{
 				weaponMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, socket);
