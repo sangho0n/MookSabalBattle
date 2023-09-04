@@ -48,6 +48,10 @@ APlayerCharacter::APlayerCharacter()
 	{
 		GetMesh()->SetAnimInstanceClass(ABP_HUMANOID.Class);
 	}
+
+	// collision
+	GetCapsuleComponent()->SetCollisionObjectType(ECC_GameTraceChannel1); // set collision obj type to Humanoid
+	GetCapsuleComponent()->SetCollisionProfileName("HumanoidToHumanoid");
 	
 	// jump config
 	auto movement = GetCharacterMovement();\
@@ -65,6 +69,14 @@ APlayerCharacter::APlayerCharacter()
 		this->InGameUIClass = INGAMEUI.Class;
 	}
 }
+
+void APlayerCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	auto Collider = GetCapsuleComponent();
+	Collider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnCharacterBeginOverlapWithCharacter);
+}
+
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
@@ -305,3 +317,14 @@ void APlayerCharacter::SwingMelee()
 	animInstance->PlayMeleeSwing();
 }
 # pragma endregion
+
+void APlayerCharacter::OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	auto currentPos = GetActorLocation();
+	auto otherPos = OtherActor->GetActorLocation();
+	auto toOther = otherPos - currentPos; toOther.Normalize();
+
+	GetMovementComponent()->Velocity = -toOther * 500.0f;
+	MSB_LOG(Warning, TEXT("curr velocity, %s"), *GetMovementComponent()->Velocity.ToString());
+}
+
