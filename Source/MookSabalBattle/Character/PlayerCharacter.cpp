@@ -329,9 +329,61 @@ void APlayerCharacter::SwingMelee()
 void APlayerCharacter::Hit(int32 CurrCombo)
 {
 	//TODO : call function for each case
-	MSB_LOG(Warning, TEXT("hit detect"));
-
+	auto currentMode = GetCurrentMode();
+	if(currentMode == CharacterMode::NON_EQUIPPED)
+	{
+		if (CurrCombo <= 2) Punch();
+		else Kick();
+	}
+	else if(currentMode == CharacterMode::MELEE)
+	{
+		if(CurrentWeapon->IsA(ASword::StaticClass()))
+			HitWithSword();
+		else if(CurrentWeapon->IsA(AAxe::StaticClass()))
+			HitWithAxe();
+		else // curr weapon == pick
+			HitWithPick();
+	}
+	else // gun
+	{
+		HitWithGun();
+	}
 	//TODO : fix shot animation
+}
+
+void APlayerCharacter::Punch()
+{
+	MSB_LOG(Warning,TEXT("punch"));
+}
+
+void APlayerCharacter::Kick()
+{
+	
+	MSB_LOG(Warning,TEXT("kick"));
+}
+
+void APlayerCharacter::HitWithSword()
+{
+	
+	MSB_LOG(Warning,TEXT("sword"));
+}
+
+void APlayerCharacter::HitWithAxe()
+{
+	
+	MSB_LOG(Warning,TEXT("axe"));
+}
+
+void APlayerCharacter::HitWithPick()
+{
+	
+	MSB_LOG(Warning,TEXT("pick"));
+}
+
+void APlayerCharacter::HitWithGun()
+{
+	
+	MSB_LOG(Warning,TEXT("gun"));
 }
 
 

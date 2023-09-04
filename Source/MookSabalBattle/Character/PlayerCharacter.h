@@ -95,18 +95,18 @@ public:
 	void Hit(int32 CurrCombo);
 
 private:
-	// UFUNCTION()
-	// void Punch();
-	// UFUNCTION()
-	// void Kick();
-	// UFUNCTION()
-	// void HitWithSword();
-	// UFUNCTION()
-	// void HitWithAxe();
-	// UFUNCTION()
-	// void HitWithPick();
-	// UFUNCTION()
-	// void HitWithGun();
+	UFUNCTION()
+	void Punch();
+	UFUNCTION()
+	void Kick();
+	UFUNCTION()
+	void HitWithSword();
+	UFUNCTION()
+	void HitWithAxe();
+	UFUNCTION()
+	void HitWithPick();
+	UFUNCTION()
+	void HitWithGun();
 	
 	
 	UFUNCTION()
