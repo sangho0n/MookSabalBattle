@@ -24,9 +24,6 @@ void AWeapon::BeginPlay()
 	Super::BeginPlay();
 	SM_Weapon->SetSimulatePhysics(true);
 	SM_Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
-
-	MSB_LOG(Warning, TEXT("coll prof name : %s"), *SM_Weapon->GetCollisionProfileName().ToString());
-	MSB_LOG(Warning, TEXT("coll sim : %d"), SM_Weapon->IsSimulatingPhysics());
 }
 
 void AWeapon::PostInitializeComponents()
