@@ -325,6 +325,16 @@ void APlayerCharacter::SwingMelee()
 	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
 	animInstance->PlayMeleeSwing();
 }
+
+void APlayerCharacter::Hit(int32 CurrCombo)
+{
+	//TODO : call function for each case
+	MSB_LOG(Warning, TEXT("hit detect"));
+
+	//TODO : fix shot animation
+}
+
+
 # pragma endregion
 
 void APlayerCharacter::OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

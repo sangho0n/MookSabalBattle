@@ -7,7 +7,7 @@
 #include "Animation/AnimInstance.h"
 #include "MSBAnimInstance.generated.h"
 
-DECLARE_MULTICAST_DELEGATE(FOnHitCheck)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHitCheck, int32, CurrCombo);
 /**
  * 
  */

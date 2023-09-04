@@ -39,6 +39,8 @@ void UMSBAnimInstance::NativeBeginPlay()
 	bIsCW = false;
 	CurrentCombo = 0;
 	CanNextCombo = true;
+
+	OnHitCheck.AddDynamic(OwnedCharacter, &APlayerCharacter::Hit);
 }
 
 
@@ -135,7 +137,7 @@ void UMSBAnimInstance::OnComboMontageEnded(UAnimMontage* montage, bool bInterrup
 void UMSBAnimInstance::AnimNotify_HitCheck()
 {
 	// detect collision
-	OnHitCheck.Broadcast();
+	OnHitCheck.Broadcast(CurrentCombo);
 }
 
 

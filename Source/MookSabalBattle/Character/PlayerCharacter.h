@@ -91,7 +91,24 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SwingMelee();
 
+	UFUNCTION(BlueprintCallable)
+	void Hit(int32 CurrCombo);
+
 private:
+	// UFUNCTION()
+	// void Punch();
+	// UFUNCTION()
+	// void Kick();
+	// UFUNCTION()
+	// void HitWithSword();
+	// UFUNCTION()
+	// void HitWithAxe();
+	// UFUNCTION()
+	// void HitWithPick();
+	// UFUNCTION()
+	// void HitWithGun();
+	
+	
 	UFUNCTION()
 	void OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
