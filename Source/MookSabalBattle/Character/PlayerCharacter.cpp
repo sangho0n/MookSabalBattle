@@ -50,8 +50,7 @@ APlayerCharacter::APlayerCharacter()
 	}
 
 	// collision
-	GetCapsuleComponent()->SetCollisionObjectType(ECC_GameTraceChannel1); // set collision obj type to Humanoid
-	GetCapsuleComponent()->SetCollisionProfileName("HumanoidToHumanoid");
+	GetCapsuleComponent()->SetCollisionProfileName("Humanoid");
 	
 	// jump config
 	auto movement = GetCharacterMovement();\
@@ -68,6 +67,16 @@ APlayerCharacter::APlayerCharacter()
 	{
 		this->InGameUIClass = INGAMEUI.Class;
 	}
+
+	// Non Equip Attack
+	PunchKickCollider = CreateDefaultSubobject<UCapsuleComponent>(TEXT("PunchKickCollider"));
+	PunchKickCollider->SetCollisionProfileName("NoCollision");
+	PunchKickCollider->SetupAttachment(RootComponent);
+	PunchKickCollider->InitCapsuleSize(34.0f, 70.0f);
+	PunchKickCollider->SetRelativeLocationAndRotation(
+		FVector(70.0f, 0, 0),
+		FRotator(90.0f, 0, 0));
+	
 }
 
 void APlayerCharacter::PostInitializeComponents()
@@ -320,11 +329,12 @@ void APlayerCharacter::SwingMelee()
 
 void APlayerCharacter::OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if(!OtherActor->IsA(APlayerCharacter::StaticClass())) return;
+	
 	auto currentPos = GetActorLocation();
 	auto otherPos = OtherActor->GetActorLocation();
 	auto toOther = otherPos - currentPos; toOther.Normalize();
 
 	GetMovementComponent()->Velocity = -toOther * 500.0f;
-	MSB_LOG(Warning, TEXT("curr velocity, %s"), *GetMovementComponent()->Velocity.ToString());
 }
 

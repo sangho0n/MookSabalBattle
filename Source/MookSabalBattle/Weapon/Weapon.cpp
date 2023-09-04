@@ -31,7 +31,7 @@ void AWeapon::PostInitializeComponents()
 	Super::PostInitializeComponents();
 	
 	SM_Weapon->SetCollisionProfileName(TEXT("IgnoreOnlyPawn"));
-	Collider->SetCollisionProfileName(TEXT("CharacterOverlap"));
+	Collider->SetCollisionProfileName(TEXT("Weapon"));
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnCharacterBeginOverlap);
 	Collider->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnCharacterEndOverlap);
 }

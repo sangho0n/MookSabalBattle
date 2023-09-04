@@ -7,6 +7,7 @@
 #include "Animation/AnimInstance.h"
 #include "MSBAnimInstance.generated.h"
 
+DECLARE_MULTICAST_DELEGATE(FOnHitCheck)
 /**
  * 
  */
@@ -54,7 +55,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	float DeltaYaw;
 
-	APlayerCharacter* OwnedPawn;
+	APlayerCharacter* OwnedCharacter;
 
 public:
 	UFUNCTION(BlueprintPure)
@@ -106,4 +107,7 @@ public:
 	void SetSwingEnd();
 
 	void PlayShot();
+
+private:
+	FOnHitCheck OnHitCheck;
 };

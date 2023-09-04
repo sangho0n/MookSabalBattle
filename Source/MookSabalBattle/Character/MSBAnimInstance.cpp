@@ -32,11 +32,11 @@ void UMSBAnimInstance::NativeBeginPlay()
 {
 	Super::NativeBeginPlay();
 	
-	MaxWalkSpeed = TryGetPawnOwner()->GetMovementComponent()->GetMaxSpeed();
-	BeforeDirection = TryGetPawnOwner()->GetControlRotation().Yaw;
+	OwnedCharacter = Cast<APlayerCharacter>(TryGetPawnOwner());
+	MaxWalkSpeed = OwnedCharacter->GetMovementComponent()->GetMaxSpeed();
+	BeforeDirection = OwnedCharacter->GetControlRotation().Yaw;
 	DeltaYaw = 0;
 	bIsCW = false;
-	OwnedPawn = Cast<APlayerCharacter>(TryGetPawnOwner());
 	CurrentCombo = 0;
 	CanNextCombo = true;
 }
@@ -46,33 +46,30 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	if(::IsValid(OwnedPawn))
-	{		
-		auto Velocity = OwnedPawn->GetVelocity(); // speed vector in WS
+	// TODO : below if statement will be deleted after server implemented.
+	// for now, just place some other characters in scene for debugging
+	if(nullptr != (OwnedCharacter))
+	{
+		auto Velocity = OwnedCharacter->GetVelocity(); // speed vector in WS
 		CurrentPawnSpeed = Velocity.Size();
-		
-		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
+	
+		auto state = OwnedCharacter->GetCharacterStateComponent();
+		bInAir = OwnedCharacter->GetMovementComponent()->IsFalling();
+		CurrentMode = state->GetCurrentMode();
+		bIsAttacking = state->IsAttacking();
+		MovingDirection = CalculateDirection(Velocity, OwnedCharacter->GetActorRotation());
+		if(DeltaYaw > 30.0f)
 		{
-			auto character = Cast<APlayerCharacter>(OwnedPawn);
-			auto state = character->GetCharacterStateComponent();
-			bInAir = OwnedPawn->GetMovementComponent()->IsFalling();
-			CurrentMode = state->GetCurrentMode();
-			bIsAttacking = state->IsAttacking();
-			MovingDirection = CalculateDirection(Velocity, OwnedPawn->GetActorRotation());
-			if(DeltaYaw > 30.0f)
-			{
-				bIsCW = true;
-				DeltaYaw = 0.0f;
-			}
-			else if (DeltaYaw < -30.0f)
-			{
-				bIsCW = false;
-				DeltaYaw = 0.0f;
-			}
-			
-			if(!bInAir) SetIntended(false);
-			return;
+			bIsCW = true;
+			DeltaYaw = 0.0f;
 		}
+		else if (DeltaYaw < -30.0f)
+		{
+			bIsCW = false;
+			DeltaYaw = 0.0f;
+		}
+	
+		if(!bInAir) SetIntended(false);
 	}
 }
 
@@ -84,49 +81,30 @@ bool UMSBAnimInstance::SetIntended(bool isIntended)
 
 void UMSBAnimInstance::PlayComboAnim()
 {
-	if(::IsValid(OwnedPawn))
-	{		
-		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
-		{
-			auto character = Cast<APlayerCharacter>(OwnedPawn);
-			auto state = character->GetCharacterStateComponent();
-			state->SetIsAttacking(true);
-			CanNextCombo = false;
-			CurrentCombo = 1;
-			
-			Montage_Play(ComboMontage);
-		}
-	}
+	auto state = OwnedCharacter->GetCharacterStateComponent();
+	state->SetIsAttacking(true);
+	CanNextCombo = false;
+	CurrentCombo = 1;
+	
+	Montage_Play(ComboMontage);
 }
 
 void UMSBAnimInstance::PlayMeleeSwing()
 {
 	RandomMeleeIdx = FMath::RandRange(0, 2);
-	if(::IsValid(OwnedPawn))
-	{		
-		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
-		{
-			auto character = Cast<APlayerCharacter>(OwnedPawn);
-			auto state = character->GetCharacterStateComponent();
 
-			state->SetIsAttacking(true);
-		}
-	}
+	auto state = OwnedCharacter->GetCharacterStateComponent();
+
+	state->SetIsAttacking(true);
+
 }
 
 
 void UMSBAnimInstance::PlayShot()
 {
-	if(::IsValid(OwnedPawn))
-	{		
-		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
-		{
-			auto character = Cast<APlayerCharacter>(OwnedPawn);
-			auto state = character->GetCharacterStateComponent();
+	auto state = OwnedCharacter->GetCharacterStateComponent();
 
-			state->SetIsAttacking(true);
-		}
-	}
+	state->SetIsAttacking(true);
 }
 
 
@@ -145,54 +123,33 @@ void UMSBAnimInstance::SetBeforeDirection(float NewBeforeDir)
 
 void UMSBAnimInstance::OnComboMontageEnded(UAnimMontage* montage, bool bInterrupted)
 {
-	if(::IsValid(OwnedPawn))
-	{		
-		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
-		{
-			auto character = Cast<APlayerCharacter>(OwnedPawn);
-			auto state = character->GetCharacterStateComponent();
+	auto state = OwnedCharacter->GetCharacterStateComponent();
 
-			state->SetIsAttacking(false);
-			CanNextCombo = true;
-			CurrentCombo = 0;
-			Cast<ALocalPlayerController>(character->GetController())->OnAttackStop();
-			MSB_LOG(Warning,TEXT("montage end"));
-		}
-	}
+	state->SetIsAttacking(false);
+	CanNextCombo = true;
+	CurrentCombo = 0;
+	Cast<ALocalPlayerController>(OwnedCharacter->GetController())->OnAttackStop();
+	MSB_LOG(Warning,TEXT("montage end"));
 }
 
 void UMSBAnimInstance::AnimNotify_HitCheck()
 {
-	if(::IsValid(OwnedPawn))
-	{		
-		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
-		{
-			auto character = Cast<APlayerCharacter>(OwnedPawn);
-			auto state = character->GetCharacterStateComponent();
-
-			// detect collision
-		}
-	}
+	// detect collision
+	OnHitCheck.Broadcast();
 }
 
 
 void UMSBAnimInstance::AnimNotify_NextComboCheck()
 {
-	if(::IsValid(OwnedPawn))
-	{		
-		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
-		{
-			auto character = Cast<APlayerCharacter>(OwnedPawn);
-			auto state = character->GetCharacterStateComponent();
-			auto controller = Cast<ALocalPlayerController>(character->GetController());
-			controller->OnAttackStop();
+	auto character = Cast<APlayerCharacter>(OwnedCharacter);
+	auto state = character->GetCharacterStateComponent();
+	auto controller = Cast<ALocalPlayerController>(character->GetController());
+	controller->OnAttackStop();
 
-			if(NextComboInputOn)
-			{
-				JumpToNextSection();
-				NextComboInputOn = false;
-			}
-		}
+	if(NextComboInputOn)
+	{
+		JumpToNextSection();
+		NextComboInputOn = false;
 	}
 }
 
@@ -205,15 +162,9 @@ FName UMSBAnimInstance::GetNextComboSectionName()
 
 void UMSBAnimInstance::SetSwingEnd()
 {
-	if(::IsValid(OwnedPawn))
-	{		
-		if(OwnedPawn->IsA(APlayerCharacter::StaticClass()))
-		{
-			MSB_LOG(Warning, TEXT("asdfsdfasdfasdfasdfasd"));
-			auto character = Cast<APlayerCharacter>(OwnedPawn);
-			auto state = character->GetCharacterStateComponent();
-			state->SetIsAttacking(false);
-		}
-	}
+	MSB_LOG(Warning, TEXT("asdfsdfasdfasdfasdfasd"));
+	auto character = Cast<APlayerCharacter>(OwnedCharacter);
+	auto state = character->GetCharacterStateComponent();
+	state->SetIsAttacking(false);
 }
 
