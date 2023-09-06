@@ -166,7 +166,6 @@ void APlayerCharacter::Turn(float NewAxisValue)
 {
 	auto yaw = GetControlRotation().Yaw;
 	auto animinstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
-	animinstance->SetBeforeDirection(yaw);
 }
 
 void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
@@ -202,7 +201,7 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		// Don't rotate when the controller rotates. Let that just affect the camera.
 		this->bUseControllerRotationPitch = false;
 		this->bUseControllerRotationRoll = false;
-		this->bUseControllerRotationYaw = true;
+		this->bUseControllerRotationYaw = false;
 		SpringArm->bUsePawnControlRotation = false;
 		SpringArm->bInheritPitch = true;
 		SpringArm->bInheritRoll = true;

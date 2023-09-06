@@ -53,23 +53,47 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if(nullptr != (OwnedCharacter))
 	{
 		auto Velocity = OwnedCharacter->GetVelocity(); // speed vector in WS
-		CurrentPawnSpeed = Velocity.Size();
-	
 		auto state = OwnedCharacter->GetCharacterStateComponent();
+		auto actorRotation = OwnedCharacter->GetActorRotation();
+		auto controlRotation = OwnedCharacter->GetControlRotation();
+		auto deltaRotation = controlRotation - actorRotation;
+		auto actorForward = OwnedCharacter->GetActorForwardVector();
+		
+		CurrentPawnSpeed = Velocity.Size();
 		bInAir = OwnedCharacter->GetMovementComponent()->IsFalling();
 		CurrentMode = state->GetCurrentMode();
 		bIsAttacking = state->IsAttacking();
-		MovingDirection = CalculateDirection(Velocity, OwnedCharacter->GetActorRotation());
-		if(DeltaYaw > 30.0f)
+
+		if(OwnedCharacter->GetCurrentMode() == CharacterMode::GUN)
 		{
-			bIsCW = true;
-			DeltaYaw = 0.0f;
+
+			auto interpRotation = FRotator(Pitch, DeltaYaw, 0);
+			interpRotation = FMath::RInterpTo(interpRotation, deltaRotation, DeltaSeconds, 15.0f);
+			DeltaYaw = FMath::Clamp(interpRotation.Yaw, -180.0f, 180.0f);
+			Pitch = FMath::ClampAngle(interpRotation.Pitch, -90.0f, 90.0f);
+			
+			if(CurrentPawnSpeed < 0.1)
+			{
+				// use aim offset
+				OwnedCharacter->bUseControllerRotationYaw=false;
+			}
+			else
+			{
+				// use directional move
+				OwnedCharacter->bUseControllerRotationYaw=true;
+				Velocity = FVector(Velocity.X, Velocity.Y, 0); Velocity.Normalize();
+				if(FVector::CrossProduct(Velocity, actorForward).Z < 0.0f)
+					MovingDirection = FMath::RadiansToDegrees(
+						FMath::Acos(FVector::DotProduct(Velocity, actorForward)));
+				else
+					MovingDirection = -FMath::RadiansToDegrees(
+						FMath::Acos(FVector::DotProduct(Velocity, actorForward)));
+			}
+			MSB_LOG(Warning,TEXT("yaw %f"), DeltaYaw);
+			MSB_LOG(Warning,TEXT("moving dir %f"), MovingDirection);
 		}
-		else if (DeltaYaw < -30.0f)
-		{
-			bIsCW = false;
-			DeltaYaw = 0.0f;
-		}
+
+		//MSB_LOG(Warning,TEXT("yaw %f"), DeltaYaw);
 	
 		if(!bInAir) SetIntended(false);
 	}
