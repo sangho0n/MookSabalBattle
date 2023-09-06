@@ -35,6 +35,7 @@ void UMSBAnimInstance::NativeBeginPlay()
 	OwnedCharacter = Cast<APlayerCharacter>(TryGetPawnOwner());
 	MaxWalkSpeed = OwnedCharacter->GetMovementComponent()->GetMaxSpeed();
 	DeltaYaw = 0;
+	Pitch = 0;
 	bIsCW = false;
 	CurrentCombo = 0;
 	CanNextCombo = true;
@@ -113,13 +114,6 @@ void UMSBAnimInstance::JumpToNextSection()
 {
 	auto text = GetNextComboSectionName();
 	Montage_JumpToSection(text, ComboMontage);
-}
-
-
-void UMSBAnimInstance::SetBeforeDirection(float NewBeforeDir)
-{
-	DeltaYaw += NewBeforeDir - BeforeDirection;
-	BeforeDirection = NewBeforeDir;
 }
 
 void UMSBAnimInstance::OnComboMontageEnded(UAnimMontage* montage, bool bInterrupted)

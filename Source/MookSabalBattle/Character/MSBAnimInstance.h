@@ -51,6 +51,9 @@ private:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	float DeltaYaw;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
+	float Pitch;
 
 	APlayerCharacter* OwnedCharacter;
 
