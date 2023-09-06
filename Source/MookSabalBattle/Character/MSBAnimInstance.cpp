@@ -34,7 +34,6 @@ void UMSBAnimInstance::NativeBeginPlay()
 	
 	OwnedCharacter = Cast<APlayerCharacter>(TryGetPawnOwner());
 	MaxWalkSpeed = OwnedCharacter->GetMovementComponent()->GetMaxSpeed();
-	BeforeDirection = OwnedCharacter->GetControlRotation().Yaw;
 	DeltaYaw = 0;
 	bIsCW = false;
 	CurrentCombo = 0;

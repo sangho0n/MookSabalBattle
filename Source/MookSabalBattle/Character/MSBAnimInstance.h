@@ -34,9 +34,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Pawn, meta=(AllowPrivateAccess=true))
 	float MovingDirection; // Obj Space
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Pawn, meta=(AllowPrivateAccess=true))
-	float BeforeDirection; // World Space
-	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	bool bInAir;
 	
@@ -65,9 +62,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
 	UAnimMontage* ComboMontage;
 
-public:
-	void SetBeforeDirection(float NewBeforeDir);
-private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	bool bIsCW;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
