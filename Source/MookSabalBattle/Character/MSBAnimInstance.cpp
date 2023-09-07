@@ -25,6 +25,7 @@ void UMSBAnimInstance::PostInitProperties()
 {
 	Super::PostInitProperties();
 	OnMontageEnded.AddDynamic(this, &UMSBAnimInstance::OnComboMontageEnded);
+	OnOverDeltaOffset.AddDynamic(this, &UMSBAnimInstance::ResetDelta);
 }
 
 
@@ -71,6 +72,17 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			interpRotation = FMath::RInterpTo(interpRotation, deltaRotation, DeltaSeconds, 15.0f);
 			DeltaYaw = FMath::Clamp(interpRotation.Yaw, -180.0f, 180.0f);
 			Pitch = FMath::ClampAngle(interpRotation.Pitch, -90.0f, 90.0f);
+
+			if(DeltaYaw > 90.0f)
+			{
+				bIsCW = true;
+				OnOverDeltaOffset.Broadcast();
+			}
+			else if(DeltaYaw < -90.0f)
+			{
+				bIsCW = false;
+				OnOverDeltaOffset.Broadcast();
+			}
 			
 			if(CurrentPawnSpeed < 0.1)
 			{
@@ -181,9 +193,18 @@ FName UMSBAnimInstance::GetNextComboSectionName()
 
 void UMSBAnimInstance::SetSwingEnd()
 {
-	MSB_LOG(Warning, TEXT("asdfsdfasdfasdfasdfasd"));
+	MSB_LOG(Warning, TEXT("swing end"));
 	auto character = Cast<APlayerCharacter>(OwnedCharacter);
 	auto state = character->GetCharacterStateComponent();
 	state->SetIsAttacking(false);
+}
+
+void UMSBAnimInstance::ResetDelta()
+{
+	DeltaYaw = 0;
+	// set character forward vector to be equal controlling forward vector
+	auto controlRotation = OwnedCharacter->GetControlRotation().Vector();
+	auto controlRotOnXY = FRotator(FVector(controlRotation.X, controlRotation.Y, 0).Rotation());
+	OwnedCharacter->SetActorRotation(controlRotOnXY);
 }
 

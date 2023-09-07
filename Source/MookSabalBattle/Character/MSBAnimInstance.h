@@ -8,6 +8,7 @@
 #include "MSBAnimInstance.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHitCheck, int32, CurrCombo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnOverDeltaOffset);
 /**
  * 
  */
@@ -55,6 +56,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	float Pitch;
 
+	UPROPERTY(BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	APlayerCharacter* OwnedCharacter;
 
 public:
@@ -107,4 +109,10 @@ public:
 
 private:
 	FOnHitCheck OnHitCheck;
+	
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category=Event, meta=(DisplayName="On Over Delta Offset"))
+	FOnOverDeltaOffset OnOverDeltaOffset;
+
+	UFUNCTION()
+	void ResetDelta();
 };
