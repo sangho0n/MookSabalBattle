@@ -52,10 +52,11 @@ APlayerCharacter::APlayerCharacter()
 	// collision
 	GetCapsuleComponent()->SetCollisionProfileName("Humanoid");
 	
-	// jump config
+	// movement
 	auto movement = GetCharacterMovement();\
 	movement->AirControl = 0.5f;
 	movement->JumpZVelocity = 350.0f;
+	movement->MaxWalkSpeed = MaxWalkSpeed;
 
 	CharacterState->SetCurrentMode(CharacterMode::NON_EQUIPPED);
 	CharacterState->SetIsEquipped(false);
@@ -306,6 +307,8 @@ void APlayerCharacter::AttackNonEquip()
 void APlayerCharacter::Shoot()
 {
 	if(CharacterState->IsAttacking()) return;
+
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed / 2.0f * 1.0f;
 	
 	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
 	animInstance->PlayShot();
@@ -315,6 +318,8 @@ void APlayerCharacter::Shoot()
 void APlayerCharacter::StopShooting()
 {
 	CharacterState->SetIsAttacking(false);
+
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
 }
 
 void APlayerCharacter::SwingMelee()

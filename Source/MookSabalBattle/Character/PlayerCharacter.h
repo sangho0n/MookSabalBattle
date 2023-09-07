@@ -78,6 +78,7 @@ private:
 	FVector DesiredCamPos;
 	bool bInterpingCamPos;
 	float accTime;
+	const float MaxWalkSpeed = 600.0f;
 
 public:
 	virtual void Jump() override;
