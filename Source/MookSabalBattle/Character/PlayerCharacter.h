@@ -114,4 +114,10 @@ private:
 	void OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UCapsuleComponent* PunchKickCollider;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void SetCharacterAsAlly();
+	UFUNCTION(BlueprintCallable)
+	void SetCharacterAsEnemy();
 };

@@ -41,7 +41,7 @@ private:
 	bool bIsAttacking;
 	float HP;
 	FString NickName;
-	char team;
+	bool bIsFriendly;
 	
 	FOnHPIsZero OnHPIsZero;
 
@@ -116,14 +116,14 @@ public:
 	}
 
 	[[nodiscard]]
-	char Team() const
+	bool IsFriendly() const
 	{
-		return team;
+		return bIsFriendly;
 	}
 
-	void SetTeam(char Team)
+	void SetFriendly(bool flag)
 	{
-		team = Team;
+		bIsFriendly = flag;
 	}
 #pragma endregion getter_setter
 };

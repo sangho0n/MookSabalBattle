@@ -48,9 +48,9 @@ APlayerCharacter::APlayerCharacter()
 	{
 		GetMesh()->SetAnimInstanceClass(ABP_HUMANOID.Class);
 	}
-
-	// collision
-	GetCapsuleComponent()->SetCollisionProfileName("Humanoid");
+	
+	// Collision
+	SetCharacterAsAlly();
 	
 	// movement
 	auto movement = GetCharacterMovement();\
@@ -101,6 +101,24 @@ void APlayerCharacter::BeginPlay()
 		InGameUI->AddToViewport();
 	}
 	ChangeCharacterMode(CharacterState->GetCurrentMode());
+	
+	// below code will be refactored after implement server
+	if(!GetController()->IsLocalController())
+	{
+		SetCharacterAsEnemy();
+	}
+}
+
+void APlayerCharacter::SetCharacterAsAlly()
+{
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Ally"));
+	CharacterState->SetFriendly(true);
+}
+
+void APlayerCharacter::SetCharacterAsEnemy()
+{
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Enemy"));
+	CharacterState->SetFriendly(false);
 }
 
 // Called every frame
