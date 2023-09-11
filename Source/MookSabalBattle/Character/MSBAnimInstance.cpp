@@ -101,8 +101,6 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 					MovingDirection = -FMath::RadiansToDegrees(
 						FMath::Acos(FVector::DotProduct(Velocity, actorForward)));
 			}
-			MSB_LOG(Warning,TEXT("yaw %f"), DeltaYaw);
-			MSB_LOG(Warning,TEXT("moving dir %f"), MovingDirection);
 		}
 
 		//MSB_LOG(Warning,TEXT("yaw %f"), DeltaYaw);
