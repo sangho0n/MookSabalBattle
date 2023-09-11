@@ -32,4 +32,9 @@ private:
 	FVector MuzzlePosInLocal;
 public:
 	FVector GetMuzzleLocationInWS();
+
+	void FireParticleOnMuzzle();
+
+private:
+	UParticleSystem* FireParticle;
 };

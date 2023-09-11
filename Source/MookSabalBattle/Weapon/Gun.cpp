@@ -20,13 +20,19 @@ AGun::AGun() : Super()
 	Collider->SetRelativeLocation(FVector(17.0f, 0.0f, 11.0f));
 
 	MuzzleSocket = FName("Muzzle");
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> P_Particle(TEXT("/Game/Realistic_Starter_VFX_Pack_Vol2/Particles/Sparks/P_Sparks_C.P_Sparks_C"));
+	if(P_Particle.Succeeded())
+	{
+		FireParticle = P_Particle.Object;
+	}
 }
 
 void AGun::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	Bullets = 0;
-	GunAttackLength = 1000.0f;
+	GunAttackLength = 7000.0f;
 	GunAttackSpreadAngle = 3.0f;
 }
 
@@ -34,3 +40,15 @@ FVector AGun::GetMuzzleLocationInWS()
 {
 	return SM_Weapon->GetSocketLocation(MuzzleSocket);
 }
+
+void AGun::FireParticleOnMuzzle()
+{
+	UGameplayStatics::SpawnEmitterAttached(FireParticle,
+		SM_Weapon,
+		MuzzleSocket,
+		FVector(0, 0, 0),
+		FRotator(-90.0f, 0, 0),
+		FVector(0.2f)
+		);
+}
+

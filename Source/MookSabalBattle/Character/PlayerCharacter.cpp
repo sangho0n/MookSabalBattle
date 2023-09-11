@@ -557,6 +557,7 @@ void APlayerCharacter::HitWithGun()
 	auto Gun = Cast<AGun>(CurrentWeapon);
 	auto MuzzlePosInWorld = Gun->GetMuzzleLocationInWS();
 
+	Gun->FireParticleOnMuzzle();
 	
 	static int32 ViewportSizeX, ViewportSizeY; 
 	GetLocalViewingPlayerController()->GetViewportSize(ViewportSizeX, ViewportSizeY);
