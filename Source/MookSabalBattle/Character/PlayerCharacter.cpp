@@ -555,8 +555,7 @@ void APlayerCharacter::HitWithGun()
 	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
 	Param_IgnoreSelf.AddIgnoredActor(this);
 	auto Gun = Cast<AGun>(CurrentWeapon);
-	auto weaponTransform = CurrentWeapon->GetTransform();
-	auto MuzzlePosInWorld = CurrentWeapon->GetActorLocation() + weaponTransform.TransformVector(Gun->MuzzlePos);
+	auto MuzzlePosInWorld = Gun->GetMuzzleLocationInWS();
 
 	
 	static int32 ViewportSizeX, ViewportSizeY; 

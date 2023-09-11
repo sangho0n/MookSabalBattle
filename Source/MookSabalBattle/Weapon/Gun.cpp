@@ -18,6 +18,8 @@ AGun::AGun() : Super()
 	SM_Weapon->SetRelativeRotation(FRotator(0.0f, 0.0f, -90.0));
 	Collider->InitBoxExtent(FVector(45.0, 60.0, 28.0));
 	Collider->SetRelativeLocation(FVector(17.0f, 0.0f, 11.0f));
+
+	MuzzleSocket = FName("Muzzle");
 }
 
 void AGun::PostInitializeComponents()
@@ -26,5 +28,9 @@ void AGun::PostInitializeComponents()
 	Bullets = 0;
 	GunAttackLength = 1000.0f;
 	GunAttackSpreadAngle = 3.0f;
-	MuzzlePos = FVector(67.0f, -2.0f, 9.0f);
+}
+
+FVector AGun::GetMuzzleLocationInWS()
+{
+	return SM_Weapon->GetSocketLocation(MuzzleSocket);
 }

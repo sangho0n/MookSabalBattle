@@ -27,5 +27,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	float GunAttackSpreadAngle;
 
-	FVector MuzzlePos;
+private:
+	FName MuzzleSocket;
+	FVector MuzzlePosInLocal;
+public:
+	FVector GetMuzzleLocationInWS();
 };
