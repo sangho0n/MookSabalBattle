@@ -112,12 +112,14 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::SetCharacterAsAlly()
 {
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Ally"));
+	GetMesh()->SetCollisionProfileName(TEXT("CharacterMesh"));
 	CharacterState->SetFriendly(true);
 }
 
 void APlayerCharacter::SetCharacterAsEnemy()
 {
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Enemy"));
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn"));
+	GetMesh()->SetCollisionProfileName(TEXT("Enemy"));
 	CharacterState->SetFriendly(false);
 }
 
