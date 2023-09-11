@@ -133,7 +133,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 	{
 		accTime += DeltaTime;
 		CurrentCamPos = FMath::Lerp(CurrentCamPos, DesiredCamPos, accTime);
-		MSB_LOG(Warning, TEXT("dfdf %s"), *CurrentCamPos.ToString());
 		Camera->SetRelativeLocation(CurrentCamPos);
 		if(FVector::Dist(DesiredCamPos, CurrentCamPos) < KINDA_SMALL_NUMBER) {bInterpingCamPos = false; accTime = 0.0f;}
 	}
