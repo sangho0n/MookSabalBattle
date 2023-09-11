@@ -20,6 +20,12 @@ public:
 
 	virtual void PostInitializeComponents() override;
 
-private:
-	uint32 Bullets;
+	UPROPERTY(BlueprintReadWrite)
+	int32 Bullets;
+	UPROPERTY(EditAnywhere)
+	float GunAttackLength;
+	UPROPERTY(EditAnywhere)
+	float GunAttackSpreadAngle;
+
+	FVector MuzzlePos;
 };

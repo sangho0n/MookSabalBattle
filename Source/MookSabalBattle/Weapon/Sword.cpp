@@ -23,5 +23,8 @@ ASword::ASword()
 void ASword::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+
+	AttackCapsuleColliderHalfHeight = 80.0f;
+	AttackCapsuleColliderRadius = 60.0f;
 }
 

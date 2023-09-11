@@ -18,5 +18,9 @@ public:
 	AMelee();
 
 	virtual void PostInitializeComponents() override;
-	
+
+	UPROPERTY(EditAnywhere)
+	float AttackCapsuleColliderHalfHeight;
+	UPROPERTY(EditAnywhere)
+	float AttackCapsuleColliderRadius;
 };

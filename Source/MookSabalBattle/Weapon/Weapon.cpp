@@ -10,7 +10,6 @@ AWeapon::AWeapon()
 	Collider = CreateDefaultSubobject<UBoxComponent>("Collider");
 	RootComponent = SM_Weapon;
 	Collider->SetupAttachment(RootComponent);
-	Collider->InitBoxExtent(FVector(51.0, 30.0, 42.0));
 
 	LocalPlayer = nullptr;
 	SM_Weapon->SetRelativeLocation(FVector(0, 0, 100));

@@ -23,5 +23,8 @@ APick::APick()
 void APick::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+	
+	AttackCapsuleColliderHalfHeight = 60.0f;
+	AttackCapsuleColliderRadius = 50.0f;
 }
 

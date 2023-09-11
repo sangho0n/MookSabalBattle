@@ -24,4 +24,7 @@ void AGun::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	Bullets = 0;
+	GunAttackLength = 1000.0f;
+	GunAttackSpreadAngle = 3.0f;
+	MuzzlePos = FVector(67.0f, -2.0f, 9.0f);
 }

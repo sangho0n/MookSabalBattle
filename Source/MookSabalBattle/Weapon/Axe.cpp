@@ -23,5 +23,8 @@ AAxe::AAxe()
 void AAxe::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+	
+	AttackCapsuleColliderHalfHeight = 35.0f;
+	AttackCapsuleColliderRadius = 34.0f;
 }
 
