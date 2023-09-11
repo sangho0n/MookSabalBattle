@@ -430,7 +430,7 @@ void APlayerCharacter::Kick()
 		
 	if(bResult)
 	{
-		MSB_LOG(Warning, TEXT("punch res %s"), *HitResults[0].ToString());
+		MSB_LOG(Warning, TEXT("kick res %s"), *HitResults[0].ToString());
 	}
 
 #if ENABLE_DRAW_DEBUG
@@ -464,7 +464,7 @@ void APlayerCharacter::HitWithSword()
 		
 	if(bResult)
 	{
-		MSB_LOG(Warning, TEXT("punch res %s"), *HitResults[0].ToString());
+		MSB_LOG(Warning, TEXT("sword res %s"), *HitResults[0].ToString());
 	}
 
 #if ENABLE_DRAW_DEBUG
@@ -499,7 +499,7 @@ void APlayerCharacter::HitWithAxe()
 		
 	if(bResult)
 	{
-		MSB_LOG(Warning, TEXT("punch res %s"), *HitResults[0].ToString());
+		MSB_LOG(Warning, TEXT("Axe res %s"), *HitResults[0].ToString());
 	}
 
 #if ENABLE_DRAW_DEBUG
@@ -535,7 +535,7 @@ void APlayerCharacter::HitWithPick()
 		
 	if(bResult)
 	{
-		MSB_LOG(Warning, TEXT("punch res %s"), *HitResults[0].ToString());
+		MSB_LOG(Warning, TEXT("pick res %s"), *HitResults[0].ToString());
 	}
 
 #if ENABLE_DRAW_DEBUG
@@ -555,8 +555,6 @@ void APlayerCharacter::HitWithPick()
 
 void APlayerCharacter::HitWithGun()
 {
-	MSB_LOG(Warning,TEXT("gun"));
-	
 	FHitResult HitResult;
 	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
 	Param_IgnoreSelf.AddIgnoredActor(this);
@@ -584,7 +582,7 @@ void APlayerCharacter::HitWithGun()
 		
 	if(bResult)
 	{
-		MSB_LOG(Warning, TEXT("punch res %s"), *HitResult.ToString());
+		MSB_LOG(Warning, TEXT("shot res %s"), *HitResult.ToString());
 	}
 
 #if ENABLE_DRAW_DEBUG
