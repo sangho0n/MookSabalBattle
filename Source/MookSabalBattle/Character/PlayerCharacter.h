@@ -74,6 +74,7 @@ public:
 
 private:
 	const FVector CamPosWhenGunMode = FVector(0.0f, 50.0f, 50.0f);
+	const FVector CamPosWhenFireGun = FVector(300.0f, 69.0f, 46.0f);
 	FVector CurrentCamPos;
 	FVector DesiredCamPos;
 	bool bInterpingCamPos;

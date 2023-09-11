@@ -327,6 +327,9 @@ void APlayerCharacter::Shoot()
 {
 	if(CharacterState->IsAttacking()) return;
 
+	bInterpingCamPos = true;
+	DesiredCamPos = CamPosWhenFireGun;
+
 	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed / 2.0f * 1.0f;
 	
 	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
@@ -337,6 +340,9 @@ void APlayerCharacter::Shoot()
 void APlayerCharacter::StopShooting()
 {
 	CharacterState->SetIsAttacking(false);
+
+	bInterpingCamPos = true;
+	DesiredCamPos = CamPosWhenGunMode;
 
 	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
 }
