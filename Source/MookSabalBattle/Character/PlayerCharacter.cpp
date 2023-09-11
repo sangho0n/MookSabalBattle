@@ -74,6 +74,10 @@ APlayerCharacter::APlayerCharacter()
 	// Attack Collision
 	AttackCapsuleColliderRadius = 34.0f;
 	AttackCapsuleColliderHalfHeight = 30.0f;
+
+	
+	// below code will be refactored after implement server
+	SetCharacterAsEnemy();
 }
 
 void APlayerCharacter::PostInitializeComponents()
@@ -99,9 +103,9 @@ void APlayerCharacter::BeginPlay()
 	ChangeCharacterMode(CharacterState->GetCurrentMode());
 	
 	// below code will be refactored after implement server
-	if(!GetController()->IsLocalController())
+	if(GetController()->IsLocalPlayerController())
 	{
-		SetCharacterAsEnemy();
+		SetCharacterAsAlly();	
 	}
 }
 
