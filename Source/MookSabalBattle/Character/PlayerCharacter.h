@@ -108,6 +108,11 @@ private:
 	void HitWithPick();
 	UFUNCTION()
 	void HitWithGun();
+
+	UPROPERTY(EditAnywhere)
+	float AttackCapsuleColliderHalfHeight;
+	UPROPERTY(EditAnywhere)
+	float AttackCapsuleColliderRadius;
 	
 	
 	UFUNCTION()
