@@ -38,4 +38,7 @@ private:
 	const float FadeOutTime = 0.6f;
 	float AccTimeForFadeOut;
 	bool bIsFadeOut;
+
+public:
+	FVector2D CrosshairScreenPos;
 };
