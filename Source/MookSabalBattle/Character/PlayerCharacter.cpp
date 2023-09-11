@@ -11,6 +11,8 @@
 #include "MookSabalBattle/Weapon/Sword.h"
 #include "MookSabalBattle/Weapon/Weapon.h"
 
+#include "DrawDebugHelpers.h"
+
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
@@ -69,15 +71,9 @@ APlayerCharacter::APlayerCharacter()
 		this->InGameUIClass = INGAMEUI.Class;
 	}
 
-	// Non Equip Attack
-	PunchKickCollider = CreateDefaultSubobject<UCapsuleComponent>(TEXT("PunchKickCollider"));
-	PunchKickCollider->SetCollisionProfileName("NoCollision");
-	PunchKickCollider->SetupAttachment(RootComponent);
-	PunchKickCollider->InitCapsuleSize(34.0f, 70.0f);
-	PunchKickCollider->SetRelativeLocationAndRotation(
-		FVector(70.0f, 0, 0),
-		FRotator(90.0f, 0, 0));
-	
+	// Attack Collision
+	AttackCapsuleColliderRadius = 34.0f;
+	AttackCapsuleColliderHalfHeight = 30.0f;
 }
 
 void APlayerCharacter::PostInitializeComponents()
@@ -270,6 +266,9 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 	}
 	else if (CurrentWeapon->IsA(AMelee::StaticClass()))
 	{
+		auto temp = Cast<AMelee>(CurrentWeapon);
+		MSB_LOG(Warning, TEXT("curr weapon radius %f, halfheight %f"), temp->AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight);
+		
 		ChangeCharacterMode(CharacterMode::MELEE);
 		FName socket("hand_sword_rSocket");
 		if(GetMesh()->DoesSocketExist(socket))
@@ -352,7 +351,8 @@ void APlayerCharacter::SwingMelee()
 
 void APlayerCharacter::Hit(int32 CurrCombo)
 {
-	//TODO : call function for each case
+	if(!GetController()->IsLocalPlayerController()) return;
+	
 	auto currentMode = GetCurrentMode();
 	if(currentMode == CharacterMode::NON_EQUIPPED)
 	{
@@ -372,42 +372,226 @@ void APlayerCharacter::Hit(int32 CurrCombo)
 	{
 		HitWithGun();
 	}
-	//TODO : fix shot animation
 }
 
 void APlayerCharacter::Punch()
 {
-	MSB_LOG(Warning,TEXT("punch"));
+	TArray<FHitResult> HitResults;
+	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
+	Param_IgnoreSelf.AddIgnoredActor(this);
+
+	auto bResult = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		GetActorLocation(),
+		GetActorLocation() + GetActorForwardVector() * (AttackCapsuleColliderHalfHeight + AttackCapsuleColliderRadius) * 2,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		ECollisionChannel::ECC_GameTraceChannel4,
+		FCollisionShape::MakeCapsule(AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight));
+		
+	if(bResult)
+	{
+		MSB_LOG(Warning, TEXT("punch res %s"), *HitResults[0].ToString());
+	}
+
+#if ENABLE_DRAW_DEBUG
+	DrawDebugCapsule(
+		GetWorld(),
+		GetActorLocation() + GetActorForwardVector() * (AttackCapsuleColliderHalfHeight + AttackCapsuleColliderRadius),
+		AttackCapsuleColliderHalfHeight,
+		AttackCapsuleColliderRadius,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		bResult ? FColor::Red : FColor::Green,
+		false,
+		1.0f
+	);
+#endif
+	
 }
 
 void APlayerCharacter::Kick()
 {
-	
-	MSB_LOG(Warning,TEXT("kick"));
+	TArray<FHitResult> HitResults;
+	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
+	Param_IgnoreSelf.AddIgnoredActor(this);
+
+	auto bResult = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		GetActorLocation(),
+		GetActorLocation() + GetActorForwardVector() * (AttackCapsuleColliderHalfHeight + AttackCapsuleColliderRadius) * 2,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		ECollisionChannel::ECC_GameTraceChannel4,
+		FCollisionShape::MakeCapsule(AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight));
+		
+	if(bResult)
+	{
+		MSB_LOG(Warning, TEXT("punch res %s"), *HitResults[0].ToString());
+	}
+
+#if ENABLE_DRAW_DEBUG
+	DrawDebugCapsule(
+		GetWorld(),
+		GetActorLocation() + GetActorForwardVector() * (AttackCapsuleColliderHalfHeight + AttackCapsuleColliderRadius),
+		AttackCapsuleColliderHalfHeight,
+		AttackCapsuleColliderRadius,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		bResult ? FColor::Red : FColor::Green,
+		false,
+		1.0f
+	);
+#endif
 }
 
 void APlayerCharacter::HitWithSword()
 {
+	TArray<FHitResult> HitResults;
+	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
+	Param_IgnoreSelf.AddIgnoredActor(this);
+	auto Sword = Cast<ASword>(CurrentWeapon);
+
+	auto bResult = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		GetActorLocation(),
+		GetActorLocation() + GetActorForwardVector() * (Sword->AttackCapsuleColliderHalfHeight + Sword->AttackCapsuleColliderRadius) * 2,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		ECollisionChannel::ECC_GameTraceChannel4,
+		FCollisionShape::MakeCapsule(Sword->AttackCapsuleColliderRadius, Sword->AttackCapsuleColliderHalfHeight));
+		
+	if(bResult)
+	{
+		MSB_LOG(Warning, TEXT("punch res %s"), *HitResults[0].ToString());
+	}
+
+#if ENABLE_DRAW_DEBUG
+	DrawDebugCapsule(
+		GetWorld(),
+		GetActorLocation() + GetActorForwardVector() * (Sword->AttackCapsuleColliderHalfHeight + Sword->AttackCapsuleColliderRadius),
+		Sword->AttackCapsuleColliderHalfHeight,
+		Sword->AttackCapsuleColliderRadius,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		bResult ? FColor::Red : FColor::Green,
+		false,
+		1.0f
+	);
+#endif
 	
-	MSB_LOG(Warning,TEXT("sword"));
 }
 
 void APlayerCharacter::HitWithAxe()
 {
+	TArray<FHitResult> HitResults;
+	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
+	Param_IgnoreSelf.AddIgnoredActor(this);
+	auto Axe = Cast<AAxe>(CurrentWeapon);
+
+	auto bResult = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		GetActorLocation(),
+		GetActorLocation() + GetActorForwardVector() * (Axe->AttackCapsuleColliderHalfHeight + Axe->AttackCapsuleColliderRadius) * 2,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		ECollisionChannel::ECC_GameTraceChannel4,
+		FCollisionShape::MakeCapsule(Axe->AttackCapsuleColliderRadius, Axe->AttackCapsuleColliderHalfHeight));
+		
+	if(bResult)
+	{
+		MSB_LOG(Warning, TEXT("punch res %s"), *HitResults[0].ToString());
+	}
+
+#if ENABLE_DRAW_DEBUG
+	DrawDebugCapsule(
+		GetWorld(),
+		GetActorLocation() + GetActorForwardVector() * (Axe->AttackCapsuleColliderHalfHeight + Axe->AttackCapsuleColliderRadius),
+		Axe->AttackCapsuleColliderHalfHeight,
+		Axe->AttackCapsuleColliderRadius,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		bResult ? FColor::Red : FColor::Green,
+		false,
+		1.0f
+	);
+#endif
 	
-	MSB_LOG(Warning,TEXT("axe"));
+	
 }
 
 void APlayerCharacter::HitWithPick()
 {
+	TArray<FHitResult> HitResults;
+	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
+	Param_IgnoreSelf.AddIgnoredActor(this);
+	auto Pick = Cast<APick>(CurrentWeapon);
+
+	auto bResult = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		GetActorLocation(),
+		GetActorLocation() + GetActorForwardVector() * (Pick->AttackCapsuleColliderHalfHeight + Pick->AttackCapsuleColliderRadius) * 2,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		ECollisionChannel::ECC_GameTraceChannel4,
+		FCollisionShape::MakeCapsule(Pick->AttackCapsuleColliderRadius, Pick->AttackCapsuleColliderHalfHeight));
+		
+	if(bResult)
+	{
+		MSB_LOG(Warning, TEXT("punch res %s"), *HitResults[0].ToString());
+	}
+
+#if ENABLE_DRAW_DEBUG
+	DrawDebugCapsule(
+		GetWorld(),
+		GetActorLocation() + GetActorForwardVector() * (Pick->AttackCapsuleColliderHalfHeight + Pick->AttackCapsuleColliderRadius),
+		Pick->AttackCapsuleColliderHalfHeight,
+		Pick->AttackCapsuleColliderRadius,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		bResult ? FColor::Red : FColor::Green,
+		false,
+		1.0f
+	);
+#endif
 	
-	MSB_LOG(Warning,TEXT("pick"));
 }
 
 void APlayerCharacter::HitWithGun()
 {
-	
 	MSB_LOG(Warning,TEXT("gun"));
+	
+	FHitResult HitResult;
+	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
+	Param_IgnoreSelf.AddIgnoredActor(this);
+	auto Gun = Cast<AGun>(CurrentWeapon);
+	auto weaponTransform = CurrentWeapon->GetTransform();
+	auto MuzzlePosInWorld = CurrentWeapon->GetActorLocation() + weaponTransform.TransformVector(Gun->MuzzlePos);
+
+	
+	static int32 ViewportSizeX, ViewportSizeY; 
+	GetLocalViewingPlayerController()->GetViewportSize(ViewportSizeX, ViewportSizeY);
+	InGameUI->CrosshairScreenPos = FVector2D(ViewportSizeX / 2, ViewportSizeY / 2);
+
+	FVector CamPosInWorld;
+	FVector CamDirInWorld;
+	GetLocalViewingPlayerController()->DeprojectScreenPositionToWorld(InGameUI->CrosshairScreenPos.X, InGameUI->CrosshairScreenPos.Y,
+		CamPosInWorld, CamDirInWorld);
+
+	auto bResult = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		MuzzlePosInWorld,
+		CamPosInWorld + CamDirInWorld * Gun->GunAttackLength,
+		ECollisionChannel::ECC_GameTraceChannel4,
+		Param_IgnoreSelf
+		);
+		
+	if(bResult)
+	{
+		MSB_LOG(Warning, TEXT("punch res %s"), *HitResult.ToString());
+	}
+
+#if ENABLE_DRAW_DEBUG
+	DrawDebugLine(
+		GetWorld(),
+		MuzzlePosInWorld,
+		CamPosInWorld + CamDirInWorld * Gun->GunAttackLength,
+		bResult ? FColor::Red : FColor::Green,
+		false,
+		1.0f
+	);
+#endif
+	
 }
 
 
