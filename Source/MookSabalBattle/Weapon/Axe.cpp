@@ -26,5 +26,7 @@ void AAxe::PostInitializeComponents()
 	
 	AttackCapsuleColliderHalfHeight = 35.0f;
 	AttackCapsuleColliderRadius = 34.0f;
+	AttackSpeed = 1.0f;
+	Damage = 15.f;
 }
 

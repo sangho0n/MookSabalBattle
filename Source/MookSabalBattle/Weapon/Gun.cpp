@@ -31,9 +31,10 @@ AGun::AGun() : Super()
 void AGun::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	Bullets = 0;
+	Bullets = 45;
 	GunAttackLength = 7000.0f;
 	GunAttackSpreadAngle = 3.0f;
+	Damage = 3.0f;
 }
 
 FVector AGun::GetMuzzleLocationInWS()

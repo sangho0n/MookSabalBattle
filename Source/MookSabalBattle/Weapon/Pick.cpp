@@ -26,5 +26,7 @@ void APick::PostInitializeComponents()
 	
 	AttackCapsuleColliderHalfHeight = 60.0f;
 	AttackCapsuleColliderRadius = 50.0f;
+	AttackSpeed = 0.6f;
+	Damage = 35.0f;
 }
 

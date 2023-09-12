@@ -26,5 +26,7 @@ void ASword::PostInitializeComponents()
 
 	AttackCapsuleColliderHalfHeight = 80.0f;
 	AttackCapsuleColliderRadius = 60.0f;
+	AttackSpeed = 1.5f;
+	Damage = 15.0f;
 }
 
