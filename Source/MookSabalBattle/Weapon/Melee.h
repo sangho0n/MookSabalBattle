@@ -23,4 +23,6 @@ public:
 	float AttackCapsuleColliderHalfHeight;
 	UPROPERTY(EditAnywhere)
 	float AttackCapsuleColliderRadius;
+
+	float AttackSpeed;
 };
