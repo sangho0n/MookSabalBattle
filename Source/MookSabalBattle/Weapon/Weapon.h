@@ -46,4 +46,6 @@ public:
 	UStaticMeshComponent* ReadyToEquip();
 
 	void AfterEquip();
+
+	float Damage;
 };
