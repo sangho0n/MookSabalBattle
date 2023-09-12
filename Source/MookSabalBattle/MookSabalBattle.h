@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "EngineMinimal.h"
+#include "Engine.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(MookSablBattle, Log, All);
 
