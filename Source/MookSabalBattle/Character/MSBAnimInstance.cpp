@@ -39,7 +39,7 @@ void UMSBAnimInstance::NativeBeginPlay()
 	Pitch = 0;
 	bIsCW = false;
 	CurrentCombo = 0;
-	CanNextCombo = true;
+	CanNextCombo = false;
 
 	OnHitCheck.AddDynamic(OwnedCharacter, &APlayerCharacter::Hit);
 }
@@ -155,10 +155,10 @@ void UMSBAnimInstance::OnComboMontageEnded(UAnimMontage* montage, bool bInterrup
 	auto state = OwnedCharacter->GetCharacterStateComponent();
 
 	state->SetIsAttacking(false);
-	CanNextCombo = true;
+	CanNextCombo = false;
 	CurrentCombo = 0;
 	Cast<ALocalPlayerController>(OwnedCharacter->GetController())->OnAttackStop();
-	MSB_LOG(Warning,TEXT("montage end"));
+	MSB_LOG(Warning,TEXT("montage end : %d"), bInterrupted);
 }
 
 void UMSBAnimInstance::AnimNotify_HitCheck()
@@ -173,7 +173,6 @@ void UMSBAnimInstance::AnimNotify_NextComboCheck()
 	auto character = Cast<APlayerCharacter>(OwnedCharacter);
 	auto state = character->GetCharacterStateComponent();
 	auto controller = Cast<ALocalPlayerController>(character->GetController());
-	controller->OnAttackStop();
 
 	if(NextComboInputOn)
 	{

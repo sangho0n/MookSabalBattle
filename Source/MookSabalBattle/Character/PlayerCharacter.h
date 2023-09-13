@@ -130,5 +130,6 @@ public:
 	void SetCharacterAsEnemy();
 
 private:
+	UFUNCTION()
 	void Die();
 };

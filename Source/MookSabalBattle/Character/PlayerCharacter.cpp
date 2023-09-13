@@ -12,6 +12,7 @@
 #include "MookSabalBattle/Weapon/Weapon.h"
 
 #include "DrawDebugHelpers.h"
+#include "Engine/DamageEvents.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -69,6 +70,7 @@ APlayerCharacter::APlayerCharacter()
 	if(INGAMEUI.Succeeded())
 	{
 		this->InGameUIClass = INGAMEUI.Class;
+		MSB_LOG(Warning, TEXT("loading ui succ"));
 	}
 
 	// Attack Collision
@@ -85,6 +87,8 @@ void APlayerCharacter::PostInitializeComponents()
 	Super::PostInitializeComponents();
 	auto Collider = GetCapsuleComponent();
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnCharacterBeginOverlapWithCharacter);
+	PunchDamage = 7.0f;
+	KickDamage = 16.0f;
 }
 
 
@@ -92,13 +96,13 @@ void APlayerCharacter::PostInitializeComponents()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	CharacterState->OnHPIsZero.AddDynamic(this, &APlayerCharacter::Die);
 	
-	if(IsValid(InGameUIClass))
+	if(GetController()->IsLocalPlayerController() && IsValid(InGameUIClass))
 	{
 		InGameUI = Cast<UInGameUI>(CreateWidget(GetWorld(), InGameUIClass));
-		InGameUI->BindCharacterStat();
-
 		InGameUI->AddToViewport();
+		InGameUI->BindCharacterStat(CharacterState);
 	}
 	ChangeCharacterMode(CharacterState->GetCurrentMode());
 	
@@ -194,13 +198,14 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 	auto CurrentMode = CharacterState->GetCurrentMode();
 	if(CurrentMode == CharacterMode::NON_EQUIPPED || CurrentMode == CharacterMode::MELEE)
 	{
-		// 3rd view mouse rotation
-		SpringArm->TargetArmLength = 400.0f;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
 		// Don't rotate when the controller rotates. Let that just affect the camera.
 		this->bUseControllerRotationPitch = false;
 		this->bUseControllerRotationRoll = false;
 		this->bUseControllerRotationYaw = false;
+		if(!Controller->IsLocalPlayerController()) return;
+		// 3rd view mouse rotation
+		SpringArm->TargetArmLength = 400.0f;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
 		SpringArm->bUsePawnControlRotation = true;
 		SpringArm->bInheritPitch = true;
 		SpringArm->bInheritRoll = true;
@@ -215,13 +220,14 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 	}
 	if(CurrentMode == CharacterMode::GUN)
 	{
-		// 3rd view mouse rotation
-		SpringArm->TargetArmLength = 400.0f;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
 		// Don't rotate when the controller rotates. Let that just affect the camera.
 		this->bUseControllerRotationPitch = false;
 		this->bUseControllerRotationRoll = false;
 		this->bUseControllerRotationYaw = false;
+		if(!Controller->IsLocalPlayerController()) return;
+		// 3rd view mouse rotation
+		SpringArm->TargetArmLength = 400.0f;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
 		SpringArm->bUsePawnControlRotation = false;
 		SpringArm->bInheritPitch = true;
 		SpringArm->bInheritRoll = true;
@@ -386,7 +392,7 @@ void APlayerCharacter::Hit(int32 CurrCombo)
 void APlayerCharacter::Punch()
 {
 	TArray<FHitResult> HitResults;
-	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
+	auto Param_IgnoreSelf = FCollisionQueryParams();
 	Param_IgnoreSelf.AddIgnoredActor(this);
 
 	auto bResult = GetWorld()->SweepMultiByChannel(
@@ -396,10 +402,27 @@ void APlayerCharacter::Punch()
 		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
 		ECollisionChannel::ECC_GameTraceChannel4,
 		FCollisionShape::MakeCapsule(AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight));
-		
+
 	if(bResult)
 	{
-		MSB_LOG(Warning, TEXT("punch res %s"), *HitResults[0].ToString());
+		TArray<APlayerCharacter*> AlreadyHitActors;
+		for(auto res: HitResults)
+		{
+			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
+
+			auto Character = Cast<APlayerCharacter>(res.GetActor());
+			if(AlreadyHitActors.Contains(Character)) continue;
+			
+			AlreadyHitActors.Push(Character);
+			auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
+			FPointDamageEvent PointDamageEvent;
+			PointDamageEvent.Damage = PunchDamage;
+			PointDamageEvent.HitInfo = res;
+			PointDamageEvent.ShotDirection = ToThis;
+
+			MSB_LOG(Warning, TEXT("puncehd %s"), *res.GetActor()->GetName());
+			Character->TakeDamage(PunchDamage, PointDamageEvent, this->GetInstigatorController(), this);
+		}
 	}
 
 #if ENABLE_DRAW_DEBUG
@@ -433,7 +456,24 @@ void APlayerCharacter::Kick()
 		
 	if(bResult)
 	{
-		MSB_LOG(Warning, TEXT("kick res %s"), *HitResults[0].ToString());
+		TArray<APlayerCharacter*> AlreadyHitActors;
+		for(auto res: HitResults)
+		{
+			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
+
+			auto Character = Cast<APlayerCharacter>(res.GetActor());
+			if(AlreadyHitActors.Contains(Character)) continue;
+			
+			AlreadyHitActors.Push(Character);
+			auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
+			FPointDamageEvent PointDamageEvent;
+			PointDamageEvent.Damage = KickDamage;
+			PointDamageEvent.HitInfo = res;
+			PointDamageEvent.ShotDirection = ToThis;
+
+			MSB_LOG(Warning, TEXT("kicked %s"), *res.GetActor()->GetName());
+			Character->TakeDamage(KickDamage, PointDamageEvent, this->GetInstigatorController(), this);
+		}
 	}
 
 #if ENABLE_DRAW_DEBUG
@@ -467,7 +507,24 @@ void APlayerCharacter::HitWithSword()
 		
 	if(bResult)
 	{
-		MSB_LOG(Warning, TEXT("sword res %s"), *HitResults[0].ToString());
+		TArray<APlayerCharacter*> AlreadyHitActors;
+		for(auto res: HitResults)
+		{
+			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
+
+			auto Character = Cast<APlayerCharacter>(res.GetActor());
+			if(AlreadyHitActors.Contains(Character)) continue;
+			
+			AlreadyHitActors.Push(Character);
+			auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
+			FPointDamageEvent PointDamageEvent;
+			PointDamageEvent.Damage = CurrentWeapon->Damage;
+			PointDamageEvent.HitInfo = res;
+			PointDamageEvent.ShotDirection = ToThis;
+
+			MSB_LOG(Warning, TEXT("attack %s with sword"), *res.GetActor()->GetName());
+			Character->TakeDamage(CurrentWeapon->Damage, PointDamageEvent, this->GetInstigatorController(), this);
+		}
 	}
 
 #if ENABLE_DRAW_DEBUG
@@ -502,7 +559,24 @@ void APlayerCharacter::HitWithAxe()
 		
 	if(bResult)
 	{
-		MSB_LOG(Warning, TEXT("Axe res %s"), *HitResults[0].ToString());
+		TArray<APlayerCharacter*> AlreadyHitActors;
+		for(auto res: HitResults)
+		{
+			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
+
+			auto Character = Cast<APlayerCharacter>(res.GetActor());
+			if(AlreadyHitActors.Contains(Character)) continue;
+			
+			AlreadyHitActors.Push(Character);
+			auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
+			FPointDamageEvent PointDamageEvent;
+			PointDamageEvent.Damage = CurrentWeapon->Damage;
+			PointDamageEvent.HitInfo = res;
+			PointDamageEvent.ShotDirection = ToThis;
+
+			MSB_LOG(Warning, TEXT("attack %s with Axe"), *res.GetActor()->GetName());
+			Character->TakeDamage(CurrentWeapon->Damage, PointDamageEvent, this->GetInstigatorController(), this);
+		}
 	}
 
 #if ENABLE_DRAW_DEBUG
@@ -538,7 +612,24 @@ void APlayerCharacter::HitWithPick()
 		
 	if(bResult)
 	{
-		MSB_LOG(Warning, TEXT("pick res %s"), *HitResults[0].ToString());
+		TArray<APlayerCharacter*> AlreadyHitActors;
+		for(auto res: HitResults)
+		{
+			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
+
+			auto Character = Cast<APlayerCharacter>(res.GetActor());
+			if(AlreadyHitActors.Contains(Character)) continue;
+			
+			AlreadyHitActors.Push(Character);
+			auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
+			FPointDamageEvent PointDamageEvent;
+			PointDamageEvent.Damage = CurrentWeapon->Damage;
+			PointDamageEvent.HitInfo = res;
+			PointDamageEvent.ShotDirection = ToThis;
+
+			MSB_LOG(Warning, TEXT("attack %s with Pick"), *res.GetActor()->GetName());
+			Character->TakeDamage(CurrentWeapon->Damage, PointDamageEvent, this->GetInstigatorController(), this);
+		}
 	}
 
 #if ENABLE_DRAW_DEBUG
@@ -572,7 +663,7 @@ void APlayerCharacter::HitWithGun()
 
 	FVector CamPosInWorld;
 	FVector CamDirInWorld;
-	GetLocalViewingPlayerController()->DeprojectScreenPositionToWorld(InGameUI->CrosshairScreenPos.X, InGameUI->CrosshairScreenPos.Y,
+	auto res = GetLocalViewingPlayerController()->DeprojectScreenPositionToWorld(InGameUI->CrosshairScreenPos.X, InGameUI->CrosshairScreenPos.Y,
 		CamPosInWorld, CamDirInWorld);
 
 	auto bResult = GetWorld()->LineTraceSingleByChannel(
@@ -585,7 +676,18 @@ void APlayerCharacter::HitWithGun()
 		
 	if(bResult)
 	{
-		MSB_LOG(Warning, TEXT("shot res %s"), *HitResult.ToString());
+		if(!HitResult.GetActor()->IsA(APlayerCharacter::StaticClass())) return;
+
+		auto Character = Cast<APlayerCharacter>(HitResult.GetActor());
+		
+		auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
+		FPointDamageEvent PointDamageEvent;
+		PointDamageEvent.Damage = CurrentWeapon->Damage;
+		PointDamageEvent.HitInfo = HitResult;
+		PointDamageEvent.ShotDirection = ToThis;
+
+		MSB_LOG(Warning, TEXT("shot %s with gun"), *HitResult.GetActor()->GetName());
+		Character->TakeDamage(CurrentWeapon->Damage, PointDamageEvent, this->GetInstigatorController(), this);
 	}
 
 #if ENABLE_DRAW_DEBUG
@@ -594,6 +696,16 @@ void APlayerCharacter::HitWithGun()
 		MuzzlePosInWorld,
 		CamPosInWorld + CamDirInWorld * Gun->GunAttackLength,
 		bResult ? FColor::Red : FColor::Green,
+		false,
+		1.0f
+	);
+
+	DrawDebugSphere(
+		GetWorld(),
+		CamPosInWorld + CamDirInWorld * Gun->GunAttackLength,
+		100.0f,
+		1,
+		res? FColor::Red : FColor::Blue,
 		false,
 		1.0f
 	);
@@ -613,5 +725,16 @@ void APlayerCharacter::OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent*
 	auto toOther = otherPos - currentPos; toOther.Normalize();
 
 	GetMovementComponent()->Velocity = -toOther * 500.0f;
+}
+
+float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	CharacterState->ApplyDamage(DamageAmount);
+	return DamageAmount;
+}
+
+void APlayerCharacter::Die()
+{
+	MSB_LOG(Warning, TEXT("Player died"));
 }
 

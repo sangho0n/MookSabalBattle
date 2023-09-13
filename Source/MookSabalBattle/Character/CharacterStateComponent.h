@@ -36,10 +36,11 @@ public:
 
 private:
 	bool bIsEquipped;
+	UPROPERTY(EditAnywhere, Category=Status, meta=(AllowPrivateAccess=true))
 	CharacterMode CurrentMode;
 	bool bIsEquippable;
 	bool bIsAttacking;
-	UPROPERTY(EditAnywhere, Category=state)
+	UPROPERTY(EditAnywhere, Category=Status, meta=(AllowPrivateAccess=true))
 	float HP;
 public:
 	const float MaxHP = 200.0f;
