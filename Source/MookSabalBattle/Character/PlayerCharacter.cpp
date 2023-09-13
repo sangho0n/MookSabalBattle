@@ -508,6 +508,7 @@ void APlayerCharacter::HitWithSword()
 	if(bResult)
 	{
 		TArray<APlayerCharacter*> AlreadyHitActors;
+		int32 count = 0;
 		for(auto res: HitResults)
 		{
 			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
@@ -518,12 +519,13 @@ void APlayerCharacter::HitWithSword()
 			AlreadyHitActors.Push(Character);
 			auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
 			FPointDamageEvent PointDamageEvent;
-			PointDamageEvent.Damage = CurrentWeapon->Damage;
+			PointDamageEvent.Damage = CurrentWeapon->Damage * FMath::Pow(0.9f,count);
 			PointDamageEvent.HitInfo = res;
 			PointDamageEvent.ShotDirection = ToThis;
 
 			MSB_LOG(Warning, TEXT("attack %s with sword"), *res.GetActor()->GetName());
-			Character->TakeDamage(CurrentWeapon->Damage, PointDamageEvent, this->GetInstigatorController(), this);
+			Character->TakeDamage(CurrentWeapon->Damage * FMath::Pow(0.9f, count), PointDamageEvent, this->GetInstigatorController(), this);
+			count++;
 		}
 	}
 
