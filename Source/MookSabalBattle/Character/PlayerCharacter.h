@@ -30,6 +30,8 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
 private:
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	USpringArmComponent* SpringArm;
@@ -114,6 +116,8 @@ private:
 	float AttackCapsuleColliderHalfHeight;
 	UPROPERTY(EditAnywhere)
 	float AttackCapsuleColliderRadius;
+	float PunchDamage;
+	float KickDamage;
 	
 	
 	UFUNCTION()
@@ -124,4 +128,7 @@ public:
 	void SetCharacterAsAlly();
 	UFUNCTION(BlueprintCallable)
 	void SetCharacterAsEnemy();
+
+private:
+	void Die();
 };
