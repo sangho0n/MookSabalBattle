@@ -9,6 +9,7 @@ void UInGameUI::NativeConstruct()
 	
 	this->Equip = Cast<UCanvasPanel>(GetWidgetFromName(TEXT("Equip_Canvas")));
 	this->Aim = Cast<UCanvasPanel>(GetWidgetFromName(TEXT("Aim_Canvas")));
+	this->HPBar = Cast<UProgressBar>(GetWidgetFromName(TEXT("HP_Bar")));
 
 	Equip->SetVisibility(ESlateVisibility::Hidden);
 	Aim->SetVisibility(ESlateVisibility::Hidden);
@@ -35,9 +36,15 @@ void UInGameUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	}
 }
 
-void UInGameUI::BindCharacterStat()
+void UInGameUI::BindCharacterStat(UCharacterStateComponent* State)
 {
-	// this would be implemented later
+	MSB_LOG(Warning, TEXT("binding states"));
+	MSB_LOG(Warning, TEXT("is HP bar valid or not %d"), HPBar->IsValidLowLevel());
+	State->OnHPChanges.AddLambda([this, State](float HP)-> void
+	{
+		HPBar->SetPercent(HP / State->MaxHP);
+	});
+	State->OnHPChanges.Broadcast(200.0f);
 }
 
 void UInGameUI::SetEquipVisible()

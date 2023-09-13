@@ -5,6 +5,8 @@
 #include "../MookSabalBattle.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/CanvasPanel.h"
+#include "Components/ProgressBar.h"
+#include "MookSabalBattle/Character/CharacterStateComponent.h"
 #include "InGameUI.generated.h"
 
 /**
@@ -20,13 +22,14 @@ public:
 
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	
-	void BindCharacterStat();
+	void BindCharacterStat(UCharacterStateComponent* State);
 
 private:
 
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
 	UCanvasPanel* Equip;
 	UCanvasPanel* Aim;
+	UProgressBar* HPBar;
 
 public:
 	void SetEquipVisible();
