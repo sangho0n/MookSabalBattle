@@ -6,8 +6,8 @@
 #include "Components/ActorComponent.h"
 #include "CharacterStateComponent.generated.h"
 
-DECLARE_MULTICAST_DELEGATE(FOnHPIsZero);
-DECLARE_MULTICAST_DELEGATE(FOnHPChanges);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHPIsZero);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnHPChanges, float);
 
 UENUM(BlueprintType)
 enum class CharacterMode
@@ -39,14 +39,20 @@ private:
 	CharacterMode CurrentMode;
 	bool bIsEquippable;
 	bool bIsAttacking;
+	UPROPERTY(EditAnywhere, Category=state)
 	float HP;
+public:
+	const float MaxHP = 200.0f;
+private:
 	FString NickName;
 	bool bIsFriendly;
-	
-	FOnHPIsZero OnHPIsZero;
 
 public:
-	void GetDamage(float damage);
+	FOnHPIsZero OnHPIsZero;
+	FOnHPChanges OnHPChanges;
+
+public:
+	void ApplyDamage(float damage);
 	
 #pragma region getter_setter
 public:
@@ -94,7 +100,7 @@ public:
 		this->bIsAttacking = bIsAttacking_;
 	}
 	[[nodiscard]]
-	float HP1() const
+	float GetHP() const
 	{
 		return HP;
 	}
@@ -105,7 +111,7 @@ public:
 	}
 
 	[[nodiscard]]
-	FString NickName1() const
+	FString GetNickName() const
 	{
 		return NickName;
 	}
