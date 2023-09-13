@@ -12,6 +12,7 @@ UMSBAnimInstance::UMSBAnimInstance()
 	MovingDirection = 0.0f;
 	bInAir = false;
 	bIsIntended = false;
+	bIsDead = false;
 	CurrentMode = CharacterMode::NON_EQUIPPED;
 
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> COMBO_MONTAGE(TEXT("/Game/Main/Animation/Humanoid/NonEquip/AM_NonEquip_Attack.AM_NonEquip_Attack"));
@@ -38,10 +39,12 @@ void UMSBAnimInstance::NativeBeginPlay()
 	DeltaYaw = 0;
 	Pitch = 0;
 	bIsCW = false;
+	bIsDead = false;
 	CurrentCombo = 0;
 	CanNextCombo = false;
 
 	OnHitCheck.AddDynamic(OwnedCharacter, &APlayerCharacter::Hit);
+	OwnedCharacter->GetCharacterStateComponent()->OnHPIsZero.AddDynamic(this, &UMSBAnimInstance::PlayDeadAnim);
 }
 
 
@@ -203,5 +206,12 @@ void UMSBAnimInstance::ResetDelta()
 	auto controlRotation = OwnedCharacter->GetControlRotation().Vector();
 	auto controlRotOnXY = FRotator(FVector(controlRotation.X, controlRotation.Y, 0).Rotation());
 	OwnedCharacter->SetActorRotation(controlRotOnXY);
+}
+
+void UMSBAnimInstance::PlayDeadAnim()
+{
+	RandomDeadIdx2 =FMath::RandRange(0,2);
+	RandomDeadIdx3 =FMath::RandRange(0,3);
+	bIsDead = true;
 }
 

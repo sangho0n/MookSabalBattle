@@ -665,49 +665,58 @@ void APlayerCharacter::HitWithGun()
 
 	FVector CamPosInWorld;
 	FVector CamDirInWorld;
-	auto res = GetLocalViewingPlayerController()->DeprojectScreenPositionToWorld(InGameUI->CrosshairScreenPos.X, InGameUI->CrosshairScreenPos.Y,
+	FVector TargetPos;
+	GetLocalViewingPlayerController()->DeprojectScreenPositionToWorld(InGameUI->CrosshairScreenPos.X, InGameUI->CrosshairScreenPos.Y,
 		CamPosInWorld, CamDirInWorld);
 
-	auto bResult = GetWorld()->LineTraceSingleByChannel(
+	auto bIsBlocked = GetWorld()->LineTraceSingleByChannel(
 		HitResult,
-		MuzzlePosInWorld,
+		CamPosInWorld,
 		CamPosInWorld + CamDirInWorld * Gun->GunAttackLength,
 		ECollisionChannel::ECC_GameTraceChannel4,
 		Param_IgnoreSelf
-		);
-		
-	if(bResult)
+	);
+	bool bHit = false;
+
+	if(bIsBlocked)
 	{
-		if(!HitResult.GetActor()->IsA(APlayerCharacter::StaticClass())) return;
-
-		auto Character = Cast<APlayerCharacter>(HitResult.GetActor());
+		TargetPos = HitResult.Location;
+		if(!HitResult.GetActor()->IsA(APlayerCharacter::StaticClass()))
+		{
+			bHit = false;
+ 		}
+		else
+		{
+			bHit = GetWorld()->LineTraceSingleByChannel(
+				HitResult,
+				MuzzlePosInWorld,
+				TargetPos,
+				ECollisionChannel::ECC_GameTraceChannel4,
+				Param_IgnoreSelf
+				);
 		
-		auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
-		FPointDamageEvent PointDamageEvent;
-		PointDamageEvent.Damage = CurrentWeapon->Damage;
-		PointDamageEvent.HitInfo = HitResult;
-		PointDamageEvent.ShotDirection = ToThis;
+			if(bHit) // must be true
+			{
+				auto Character = Cast<APlayerCharacter>(HitResult.GetActor());
 
-		MSB_LOG(Warning, TEXT("shot %s with gun"), *HitResult.GetActor()->GetName());
-		Character->TakeDamage(CurrentWeapon->Damage, PointDamageEvent, this->GetInstigatorController(), this);
+				auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
+				FPointDamageEvent PointDamageEvent;
+				PointDamageEvent.Damage = CurrentWeapon->Damage;
+				PointDamageEvent.HitInfo = HitResult;
+				PointDamageEvent.ShotDirection = ToThis;
+
+				MSB_LOG(Warning, TEXT("shot %s with gun"), *HitResult.GetActor()->GetName());
+				Character->TakeDamage(CurrentWeapon->Damage, PointDamageEvent, this->GetInstigatorController(), this);
+			}
+		}
+
 	}
-
 #if ENABLE_DRAW_DEBUG
 	DrawDebugLine(
 		GetWorld(),
 		MuzzlePosInWorld,
-		CamPosInWorld + CamDirInWorld * Gun->GunAttackLength,
-		bResult ? FColor::Red : FColor::Green,
-		false,
-		1.0f
-	);
-
-	DrawDebugSphere(
-		GetWorld(),
-		CamPosInWorld + CamDirInWorld * Gun->GunAttackLength,
-		100.0f,
-		1,
-		res? FColor::Red : FColor::Blue,
+		bHit ? TargetPos : CamPosInWorld + CamDirInWorld * Gun->GunAttackLength,
+		bHit ? FColor::Red : FColor::Green,
 		false,
 		1.0f
 	);
@@ -731,7 +740,13 @@ void APlayerCharacter::OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent*
 
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+	DamageAmount = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	CharacterState->ApplyDamage(DamageAmount);
+
+	// TODO : 피격 애니메이션 + 파티클
+
+	// TODO : is local일 경우 피격 위젯
+	
 	return DamageAmount;
 }
 

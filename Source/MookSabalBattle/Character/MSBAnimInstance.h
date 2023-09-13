@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notfkice in the Description page of Project Settings.
 
 #pragma once
 
@@ -40,6 +40,9 @@ private:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	bool bIsIntended;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
+	bool bIsDead;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	TEnumAsByte<CharacterMode> CurrentMode;
@@ -71,6 +74,10 @@ private:
 	bool bIsCW;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
 	int32 RandomMeleeIdx;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
+	int32 RandomDeadIdx3;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
+	int32 RandomDeadIdx2;
 
 public:
 	UFUNCTION()
@@ -115,4 +122,7 @@ private:
 
 	UFUNCTION()
 	void ResetDelta();
+
+	UFUNCTION()
+	void PlayDeadAnim();
 };
