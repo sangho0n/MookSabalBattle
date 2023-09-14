@@ -27,8 +27,8 @@ public:
 private:
 
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
-	UCanvasPanel* Equip;
-	UCanvasPanel* Aim;
+	UCanvasPanel* Canvas_Equip;
+	UCanvasPanel* Canvas_Aim;
 	UProgressBar* HPBar;
 
 public:

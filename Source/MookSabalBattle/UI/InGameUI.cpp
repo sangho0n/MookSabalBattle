@@ -7,12 +7,12 @@ void UInGameUI::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-	this->Equip = Cast<UCanvasPanel>(GetWidgetFromName(TEXT("Equip_Canvas")));
-	this->Aim = Cast<UCanvasPanel>(GetWidgetFromName(TEXT("Aim_Canvas")));
+	this->Canvas_Equip = Cast<UCanvasPanel>(GetWidgetFromName(TEXT("Equip_Canvas")));
+	this->Canvas_Aim = Cast<UCanvasPanel>(GetWidgetFromName(TEXT("Aim_Canvas")));
 	this->HPBar = Cast<UProgressBar>(GetWidgetFromName(TEXT("HP_Bar")));
 
-	Equip->SetVisibility(ESlateVisibility::Hidden);
-	Aim->SetVisibility(ESlateVisibility::Hidden);
+	Canvas_Equip->SetVisibility(ESlateVisibility::Hidden);
+	Canvas_Aim->SetVisibility(ESlateVisibility::Hidden);
 
 	AccTimeForFadeOut = 0.0f;
 	bIsFadeOut = false;
@@ -28,11 +28,11 @@ void UInGameUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		auto opacity = (FadeOutTime - AccTimeForFadeOut) / FadeOutTime;
 		if(opacity < KINDA_SMALL_NUMBER)
 		{
-			Equip->SetVisibility(ESlateVisibility::Hidden);
+			Canvas_Equip->SetVisibility(ESlateVisibility::Hidden);
 			bIsFadeOut = false;
 			return;
 		}
-		Equip->SetRenderOpacity(opacity);
+		Canvas_Equip->SetRenderOpacity(opacity);
 	}
 }
 
@@ -49,8 +49,8 @@ void UInGameUI::BindCharacterStat(UCharacterStateComponent* State)
 
 void UInGameUI::SetEquipVisible()
 {
-	Equip->SetRenderOpacity(1);
-	Equip->SetVisibility(ESlateVisibility::Visible);
+	Canvas_Equip->SetRenderOpacity(1);
+	Canvas_Equip->SetVisibility(ESlateVisibility::Visible);
 }
 
 void UInGameUI::SetEquipInvisible()
@@ -61,11 +61,11 @@ void UInGameUI::SetEquipInvisible()
 
 void UInGameUI::SetAimVisible()
 {
-	Aim->SetVisibility(ESlateVisibility::Visible);
+	Canvas_Aim->SetVisibility(ESlateVisibility::Visible);
 }
 
 void UInGameUI::SetAimInvisible()
 {
-	Aim->SetVisibility(ESlateVisibility::Hidden);
+	Canvas_Aim->SetVisibility(ESlateVisibility::Hidden);
 }
 
