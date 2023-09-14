@@ -29,6 +29,10 @@ private:
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
 	UCanvasPanel* Canvas_Equip;
 	UCanvasPanel* Canvas_Aim;
+	UCanvasPanel* Canvas_Bleeding;
+	UWidget* Image_Bleeding1;
+	UWidget* Image_Bleeding2;
+	UCanvasPanel* Canvas_DamageIndicator;
 	UProgressBar* HPBar;
 
 public:
@@ -41,7 +45,14 @@ private:
 	const float FadeOutTime = 0.6f;
 	float AccTimeForFadeOut;
 	bool bIsFadeOut;
+	const float Bleeding1Offset = 100.0f;
+	const float Bleeding2Offset = 65.0f;
+	const float MaxBleeding2Opacity = 0.384f;
 
 public:
 	FVector2D CrosshairScreenPos;
+
+private:
+	UFUNCTION()
+	void ShowBleeding(float HP);
 };
