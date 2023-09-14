@@ -5,6 +5,9 @@
 
 #include "LocalPlayerController.h"
 #include "PlayerCharacter.h"
+#include "MookSabalBattle/Weapon/Axe.h"
+#include "MookSabalBattle/Weapon/Pick.h"
+#include "MookSabalBattle/Weapon/Sword.h"
 
 UMSBAnimInstance::UMSBAnimInstance()
 {
@@ -130,7 +133,7 @@ void UMSBAnimInstance::PlayComboAnim()
 
 void UMSBAnimInstance::PlayMeleeSwing()
 {
-	RandomMeleeIdx = FMath::RandRange(0, 2);
+	RandomMeleeIdx = FMath::RandRange(0, 1);
 
 	auto state = OwnedCharacter->GetCharacterStateComponent();
 
@@ -213,5 +216,22 @@ void UMSBAnimInstance::PlayDeadAnim()
 	RandomDeadIdx2 =FMath::RandRange(0,2);
 	RandomDeadIdx3 =FMath::RandRange(0,3);
 	bIsDead = true;
+}
+
+void UMSBAnimInstance::SetMeleeType(AMelee* NewMelee)
+{
+	CurrentMelee = NewMelee;
+	if(CurrentMelee->IsA(APick::StaticClass()))
+	{
+		SwingPlayRate = 0.6f;
+	}
+	else if(CurrentMelee->IsA(AAxe::StaticClass()))
+	{
+		SwingPlayRate = 1.0f;
+	}
+	else if(CurrentMelee->IsA(ASword::StaticClass()))
+	{
+		SwingPlayRate = 1.7f;
+	}
 }
 
