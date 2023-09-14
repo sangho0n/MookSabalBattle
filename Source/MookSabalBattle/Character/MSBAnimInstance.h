@@ -5,6 +5,7 @@
 #include "../MookSabalBattle.h"
 #include "PlayerCharacter.h"
 #include "Animation/AnimInstance.h"
+#include "MookSabalBattle/Weapon/Melee.h"
 #include "MSBAnimInstance.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHitCheck, int32, CurrCombo);
@@ -74,10 +75,17 @@ private:
 	bool bIsCW;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
 	int32 RandomMeleeIdx;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	int32 RandomDeadIdx3;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	int32 RandomDeadIdx2;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
+	AMelee* CurrentMelee;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
+	float SwingPlayRate;
+
+public:
+	void SetMeleeType(AMelee* NewMelee);
 
 public:
 	UFUNCTION()

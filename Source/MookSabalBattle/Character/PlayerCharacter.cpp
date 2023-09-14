@@ -256,6 +256,7 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 	
 	CurrentWeapon = NewWeapon;
 	auto weaponMesh = CurrentWeapon->ReadyToEquip();
+
 	CharacterState->SetIsEquipped(true);
 	if(CurrentWeapon->IsA(AGun::StaticClass()))
 	{
@@ -275,8 +276,11 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 	}
 	else if (CurrentWeapon->IsA(AMelee::StaticClass()))
 	{
-		auto temp = Cast<AMelee>(CurrentWeapon);
-		MSB_LOG(Warning, TEXT("curr weapon radius %f, halfheight %f"), temp->AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight);
+		auto CurrentMelee = Cast<AMelee>(CurrentWeapon);
+		auto AnimInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
+		AnimInstance->SetMeleeType(CurrentMelee);
+		
+		MSB_LOG(Warning, TEXT("curr weapon radius %f, halfheight %f"), CurrentMelee->AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight);
 		
 		ChangeCharacterMode(CharacterMode::MELEE);
 		FName socket("hand_sword_rSocket");
