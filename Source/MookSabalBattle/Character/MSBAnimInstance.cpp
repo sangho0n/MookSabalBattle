@@ -221,17 +221,6 @@ void UMSBAnimInstance::PlayDeadAnim()
 void UMSBAnimInstance::SetMeleeType(AMelee* NewMelee)
 {
 	CurrentMelee = NewMelee;
-	if(CurrentMelee->IsA(APick::StaticClass()))
-	{
-		SwingPlayRate = 0.6f;
-	}
-	else if(CurrentMelee->IsA(AAxe::StaticClass()))
-	{
-		SwingPlayRate = 1.0f;
-	}
-	else if(CurrentMelee->IsA(ASword::StaticClass()))
-	{
-		SwingPlayRate = 1.7f;
-	}
+	SwingPlayRate = CurrentMelee->AttackSpeed;
 }
 
