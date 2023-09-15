@@ -141,6 +141,9 @@ void APlayerCharacter::Tick(float DeltaTime)
 		Camera->SetRelativeLocation(CurrentCamPos);
 		if(FVector::Dist(DesiredCamPos, CurrentCamPos) < KINDA_SMALL_NUMBER) {bInterpingCamPos = false; accTime = 0.0f;}
 	}
+
+	if(!HitBlendWeights.IsEmpty())
+		MSB_LOG(Warning,TEXT("not empty"));
 }
 
 // Called to bind functionality to input
@@ -720,8 +723,8 @@ void APlayerCharacter::HitWithGun()
 	DrawDebugLine(
 		GetWorld(),
 		MuzzlePosInWorld,
-		bHit ? TargetPos : CamPosInWorld + CamDirInWorld * Gun->GunAttackLength,
-		bHit ? FColor::Red : FColor::Green,
+		bIsBlocked ? TargetPos : CamPosInWorld + CamDirInWorld * Gun->GunAttackLength,
+		bIsBlocked ? (bHit ? FColor::Red : FColor:: Magenta) : FColor::Green,
 		false,
 		1.0f
 	);
