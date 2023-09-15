@@ -8,6 +8,8 @@
 #include "MookSabalBattle/UI/InGameUI.h"
 #include "PlayerCharacter.generated.h"
 
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnGetDamage, FName, BoneName, FVector, HitFrom);
+
 UCLASS()
 class MOOKSABALBATTLE_API APlayerCharacter : public ACharacter
 {
@@ -119,7 +121,6 @@ private:
 	float PunchDamage;
 	float KickDamage;
 	
-	
 	UFUNCTION()
 	void OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
@@ -132,4 +133,24 @@ public:
 private:
 	UFUNCTION()
 	void Die();
+
+public:
+	UPROPERTY()
+	FOnGetDamage OnGetDamage;
+
+private:
+	
+public:
+	UFUNCTION(BlueprintImplementableEvent, Category=Event, meta=(DisplayName="On Hit"))
+	void OnHit(FName BoneName, FVector HitFrom);
+
+private:
+	UPROPERTY(BlueprintReadWrite, Category="HitPhysAnim", meta=(AllowPrivateAccess=true))
+	TArray<FName> HitBones;
+	
+	UPROPERTY(BlueprintReadWrite, Category="HitPhysAnim", meta=(AllowPrivateAccess=true))
+	TArray<FVector> HitFromVector;
+	
+	UPROPERTY(BlueprintReadWrite, Category="HitPhysAnim", meta=(AllowPrivateAccess=true))
+	TArray<float> HitBlendWeights;
 };

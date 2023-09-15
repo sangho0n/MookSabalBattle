@@ -87,6 +87,7 @@ void APlayerCharacter::PostInitializeComponents()
 	Super::PostInitializeComponents();
 	auto Collider = GetCapsuleComponent();
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnCharacterBeginOverlapWithCharacter);
+	OnGetDamage.BindDynamic(this, &APlayerCharacter::OnHit);
 	PunchDamage = 7.0f;
 	KickDamage = 16.0f;
 }
@@ -418,7 +419,7 @@ void APlayerCharacter::Punch()
 			if(AlreadyHitActors.Contains(Character)) continue;
 			
 			AlreadyHitActors.Push(Character);
-			auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
+			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
 			FPointDamageEvent PointDamageEvent;
 			PointDamageEvent.Damage = PunchDamage;
 			PointDamageEvent.HitInfo = res;
@@ -469,7 +470,7 @@ void APlayerCharacter::Kick()
 			if(AlreadyHitActors.Contains(Character)) continue;
 			
 			AlreadyHitActors.Push(Character);
-			auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
+			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
 			FPointDamageEvent PointDamageEvent;
 			PointDamageEvent.Damage = KickDamage;
 			PointDamageEvent.HitInfo = res;
@@ -521,7 +522,7 @@ void APlayerCharacter::HitWithSword()
 			if(AlreadyHitActors.Contains(Character)) continue;
 			
 			AlreadyHitActors.Push(Character);
-			auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
+			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
 			FPointDamageEvent PointDamageEvent;
 			PointDamageEvent.Damage = CurrentWeapon->Damage * FMath::Pow(0.9f,count);
 			PointDamageEvent.HitInfo = res;
@@ -574,7 +575,7 @@ void APlayerCharacter::HitWithAxe()
 			if(AlreadyHitActors.Contains(Character)) continue;
 			
 			AlreadyHitActors.Push(Character);
-			auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
+			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
 			FPointDamageEvent PointDamageEvent;
 			PointDamageEvent.Damage = CurrentWeapon->Damage;
 			PointDamageEvent.HitInfo = res;
@@ -627,7 +628,7 @@ void APlayerCharacter::HitWithPick()
 			if(AlreadyHitActors.Contains(Character)) continue;
 			
 			AlreadyHitActors.Push(Character);
-			auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
+			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
 			FPointDamageEvent PointDamageEvent;
 			PointDamageEvent.Damage = CurrentWeapon->Damage;
 			PointDamageEvent.HitInfo = res;
@@ -703,7 +704,7 @@ void APlayerCharacter::HitWithGun()
 			{
 				auto Character = Cast<APlayerCharacter>(HitResult.GetActor());
 
-				auto ToThis = this->GetActorLocation() - Character->GetActorLocation(); ToThis.Normalize();
+				auto ToThis = this->GetActorLocation() - HitResult.Location; ToThis.Normalize();
 				FPointDamageEvent PointDamageEvent;
 				PointDamageEvent.Damage = CurrentWeapon->Damage;
 				PointDamageEvent.HitInfo = HitResult;
@@ -744,6 +745,12 @@ void APlayerCharacter::OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent*
 
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
+	if(DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+	{
+		auto PointDamageEvent = (FPointDamageEvent*)&DamageEvent;
+		OnGetDamage.Execute(PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection); 
+	}
+	
 	DamageAmount = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	CharacterState->ApplyDamage(DamageAmount);
 
