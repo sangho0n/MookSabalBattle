@@ -8,7 +8,7 @@
 #include "MookSabalBattle/UI/InGameUI.h"
 #include "PlayerCharacter.generated.h"
 
-DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnGetDamage, FName, BoneName, FVector, HitFrom);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGetDamage, FName, BoneName, FVector, HitFrom);
 
 UCLASS()
 class MOOKSABALBATTLE_API APlayerCharacter : public ACharacter

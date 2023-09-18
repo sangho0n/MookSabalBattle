@@ -92,7 +92,7 @@ void APlayerCharacter::PostInitializeComponents()
 	Super::PostInitializeComponents();
 	auto Collider = GetCapsuleComponent();
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnCharacterBeginOverlapWithCharacter);
-	OnGetDamage.BindDynamic(this, &APlayerCharacter::OnHit);
+	OnGetDamage.AddDynamic(this, &APlayerCharacter::OnHit);
 	Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnReloadAnimEnd.AddLambda([this]()->void
 	{
 		CharacterState->SetIsReloading(false);
@@ -546,7 +546,7 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	if(DamageEvent.IsOfType(FPointDamageEvent::ClassID))
 	{
 		auto PointDamageEvent = (FPointDamageEvent*)&DamageEvent;
-		OnGetDamage.Execute(PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection);
+		OnGetDamage.Broadcast(PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection);
 		ShowBleeding(PointDamageEvent->HitInfo.Location, PointDamageEvent->ShotDirection, PointDamageEvent->HitInfo.Normal);
 	}
 	

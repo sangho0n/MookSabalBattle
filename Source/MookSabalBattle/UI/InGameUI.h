@@ -48,11 +48,6 @@ private:
 	const float Bleeding1Offset = 100.0f;
 	const float Bleeding2Offset = 65.0f;
 	const float MaxBleeding2Opacity = 0.384f;
-
-public:
-	FVector2D CrosshairScreenPos;
-
-private:
 	UFUNCTION()
 	void ShowBleeding(float HP);
 };
