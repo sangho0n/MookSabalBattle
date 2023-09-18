@@ -396,6 +396,15 @@ void APlayerCharacter::Hit(int32 CurrCombo)
 	{
 		auto Gun = Cast<AGun>(CurrentWeapon);
 		Gun->Hit(this); // return single result
+		// ApplyRecoil
+		UGameplayStatics::PlayWorldCameraShake(
+			Camera,
+			Gun->CamShakeShoot,
+			GetCameraLocation(),
+			0.0f,
+			10.0f
+		);
+		AddControllerPitchInput(-0.5f);
 	}
 }
 

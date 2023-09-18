@@ -27,6 +27,12 @@ AGun::AGun() : Super()
 	{
 		FireParticle = P_Particle.Object;
 	}
+
+	static ConstructorHelpers::FClassFinder<UCameraShakeBase> CS_SHOOT(TEXT("/Game/Main/Camera/CS_Shoot.CS_Shoot_C"));
+	if(CS_SHOOT.Succeeded())
+	{
+		CamShakeShoot = CS_SHOOT.Class;
+	}
 }
 
 void AGun::PostInitializeComponents()

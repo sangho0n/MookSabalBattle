@@ -40,4 +40,6 @@ private:
 
 public:
 	FHitResult Hit(APlayerCharacter* Causer);
+
+	TSubclassOf<UCameraShakeBase> CamShakeShoot;
 };
