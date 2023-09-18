@@ -105,14 +105,6 @@ private:
 	void Punch();
 	UFUNCTION()
 	void Kick();
-	UFUNCTION()
-	void HitWithSword();
-	UFUNCTION()
-	void HitWithAxe();
-	UFUNCTION()
-	void HitWithPick();
-	UFUNCTION()
-	void HitWithGun();
 
 	UPROPERTY(EditAnywhere)
 	float AttackCapsuleColliderHalfHeight;
@@ -157,4 +149,8 @@ private:
 	UParticleSystem* BleedingParticle;
 
 	void ShowBleeding(FVector Location, FVector From, FVector Normal);
+
+public:
+	FVector GetCameraLocation();
+	FVector GetCameraDirection();
 };

@@ -25,4 +25,6 @@ public:
 	float AttackCapsuleColliderRadius;
 
 	float AttackSpeed;
+	
+	TArray<FHitResult> Hit(AActor* Causer);
 };

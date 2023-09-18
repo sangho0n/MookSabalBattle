@@ -37,4 +37,7 @@ public:
 
 private:
 	UParticleSystem* FireParticle;
+
+public:
+	FHitResult Hit(APlayerCharacter* Causer);
 };

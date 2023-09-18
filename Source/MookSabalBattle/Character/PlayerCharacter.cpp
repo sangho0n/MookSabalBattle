@@ -389,16 +389,13 @@ void APlayerCharacter::Hit(int32 CurrCombo)
 	}
 	else if(currentMode == CharacterMode::MELEE)
 	{
-		if(CurrentWeapon->IsA(ASword::StaticClass()))
-			HitWithSword();
-		else if(CurrentWeapon->IsA(AAxe::StaticClass()))
-			HitWithAxe();
-		else // curr weapon == pick
-			HitWithPick();
+		auto Melee = Cast<AMelee>(CurrentWeapon);
+		Melee->Hit(this); // return multiple results
 	}
 	else // gun
 	{
-		HitWithGun();
+		auto Gun = Cast<AGun>(CurrentWeapon);
+		Gun->Hit(this); // return single result
 	}
 }
 
@@ -503,242 +500,6 @@ void APlayerCharacter::Kick()
 #endif
 }
 
-void APlayerCharacter::HitWithSword()
-{
-	TArray<FHitResult> HitResults;
-	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
-	Param_IgnoreSelf.AddIgnoredActor(this);
-	auto Sword = Cast<ASword>(CurrentWeapon);
-
-	auto bResult = GetWorld()->SweepMultiByChannel(
-		HitResults,
-		GetActorLocation(),
-		GetActorLocation() + GetActorForwardVector() * (Sword->AttackCapsuleColliderHalfHeight + Sword->AttackCapsuleColliderRadius) * 2,
-		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
-		ECollisionChannel::ECC_GameTraceChannel4,
-		FCollisionShape::MakeCapsule(Sword->AttackCapsuleColliderRadius, Sword->AttackCapsuleColliderHalfHeight));
-		
-	if(bResult)
-	{
-		TArray<APlayerCharacter*> AlreadyHitActors;
-		int32 count = 0;
-		for(auto res: HitResults)
-		{
-			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
-
-			auto Character = Cast<APlayerCharacter>(res.GetActor());
-			if(AlreadyHitActors.Contains(Character)) continue;
-			
-			AlreadyHitActors.Push(Character);
-			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
-			FPointDamageEvent PointDamageEvent;
-			PointDamageEvent.Damage = CurrentWeapon->Damage * FMath::Pow(0.9f,count);
-			PointDamageEvent.HitInfo = res;
-			PointDamageEvent.ShotDirection = ToThis;
-
-			MSB_LOG(Warning, TEXT("attack %s with sword"), *res.GetActor()->GetName());
-			Character->TakeDamage(CurrentWeapon->Damage * FMath::Pow(0.9f, count), PointDamageEvent, this->GetInstigatorController(), this);
-			count++;
-		}
-	}
-
-#if ENABLE_DRAW_DEBUG
-	DrawDebugCapsule(
-		GetWorld(),
-		GetActorLocation() + GetActorForwardVector() * (Sword->AttackCapsuleColliderHalfHeight + Sword->AttackCapsuleColliderRadius),
-		Sword->AttackCapsuleColliderHalfHeight,
-		Sword->AttackCapsuleColliderRadius,
-		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
-		bResult ? FColor::Red : FColor::Green,
-		false,
-		1.0f
-	);
-#endif
-	
-}
-
-void APlayerCharacter::HitWithAxe()
-{
-	TArray<FHitResult> HitResults;
-	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
-	Param_IgnoreSelf.AddIgnoredActor(this);
-	auto Axe = Cast<AAxe>(CurrentWeapon);
-
-	auto bResult = GetWorld()->SweepMultiByChannel(
-		HitResults,
-		GetActorLocation(),
-		GetActorLocation() + GetActorForwardVector() * (Axe->AttackCapsuleColliderHalfHeight + Axe->AttackCapsuleColliderRadius) * 2,
-		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
-		ECollisionChannel::ECC_GameTraceChannel4,
-		FCollisionShape::MakeCapsule(Axe->AttackCapsuleColliderRadius, Axe->AttackCapsuleColliderHalfHeight));
-		
-	if(bResult)
-	{
-		TArray<APlayerCharacter*> AlreadyHitActors;
-		for(auto res: HitResults)
-		{
-			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
-
-			auto Character = Cast<APlayerCharacter>(res.GetActor());
-			if(AlreadyHitActors.Contains(Character)) continue;
-			
-			AlreadyHitActors.Push(Character);
-			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
-			FPointDamageEvent PointDamageEvent;
-			PointDamageEvent.Damage = CurrentWeapon->Damage;
-			PointDamageEvent.HitInfo = res;
-			PointDamageEvent.ShotDirection = ToThis;
-
-			MSB_LOG(Warning, TEXT("attack %s with Axe"), *res.GetActor()->GetName());
-			Character->TakeDamage(CurrentWeapon->Damage, PointDamageEvent, this->GetInstigatorController(), this);
-		}
-	}
-
-#if ENABLE_DRAW_DEBUG
-	DrawDebugCapsule(
-		GetWorld(),
-		GetActorLocation() + GetActorForwardVector() * (Axe->AttackCapsuleColliderHalfHeight + Axe->AttackCapsuleColliderRadius),
-		Axe->AttackCapsuleColliderHalfHeight,
-		Axe->AttackCapsuleColliderRadius,
-		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
-		bResult ? FColor::Red : FColor::Green,
-		false,
-		1.0f
-	);
-#endif
-	
-	
-}
-
-void APlayerCharacter::HitWithPick()
-{
-	TArray<FHitResult> HitResults;
-	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
-	Param_IgnoreSelf.AddIgnoredActor(this);
-	auto Pick = Cast<APick>(CurrentWeapon);
-
-	auto bResult = GetWorld()->SweepMultiByChannel(
-		HitResults,
-		GetActorLocation(),
-		GetActorLocation() + GetActorForwardVector() * (Pick->AttackCapsuleColliderHalfHeight + Pick->AttackCapsuleColliderRadius) * 2,
-		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
-		ECollisionChannel::ECC_GameTraceChannel4,
-		FCollisionShape::MakeCapsule(Pick->AttackCapsuleColliderRadius, Pick->AttackCapsuleColliderHalfHeight));
-		
-	if(bResult)
-	{
-		TArray<APlayerCharacter*> AlreadyHitActors;
-		for(auto res: HitResults)
-		{
-			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
-
-			auto Character = Cast<APlayerCharacter>(res.GetActor());
-			if(AlreadyHitActors.Contains(Character)) continue;
-			
-			AlreadyHitActors.Push(Character);
-			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
-			FPointDamageEvent PointDamageEvent;
-			PointDamageEvent.Damage = CurrentWeapon->Damage;
-			PointDamageEvent.HitInfo = res;
-			PointDamageEvent.ShotDirection = ToThis;
-
-			MSB_LOG(Warning, TEXT("attack %s with Pick"), *res.GetActor()->GetName());
-			Character->TakeDamage(CurrentWeapon->Damage, PointDamageEvent, this->GetInstigatorController(), this);
-		}
-	}
-
-#if ENABLE_DRAW_DEBUG
-	DrawDebugCapsule(
-		GetWorld(),
-		GetActorLocation() + GetActorForwardVector() * (Pick->AttackCapsuleColliderHalfHeight + Pick->AttackCapsuleColliderRadius),
-		Pick->AttackCapsuleColliderHalfHeight,
-		Pick->AttackCapsuleColliderRadius,
-		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
-		bResult ? FColor::Red : FColor::Green,
-		false,
-		1.0f
-	);
-#endif
-	
-}
-
-void APlayerCharacter::HitWithGun()
-{
-	FHitResult HitResult;
-	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
-	Param_IgnoreSelf.AddIgnoredActor(this);
-	Param_IgnoreSelf.bTraceComplex = true;
-	auto Gun = Cast<AGun>(CurrentWeapon);
-	auto MuzzlePosInWorld = Gun->GetMuzzleLocationInWS();
-
-	Gun->FireParticleOnMuzzle();
-	
-	static int32 ViewportSizeX, ViewportSizeY; 
-	GetLocalViewingPlayerController()->GetViewportSize(ViewportSizeX, ViewportSizeY);
-	InGameUI->CrosshairScreenPos = FVector2D(ViewportSizeX / 2, ViewportSizeY / 2);
-
-	FVector CamPosInWorld;
-	FVector CamDirInWorld;
-	FVector TargetPos;
-	GetLocalViewingPlayerController()->DeprojectScreenPositionToWorld(InGameUI->CrosshairScreenPos.X, InGameUI->CrosshairScreenPos.Y,
-		CamPosInWorld, CamDirInWorld);
-
-	auto bIsBlocked = GetWorld()->LineTraceSingleByChannel(
-		HitResult,
-		CamPosInWorld,
-		CamPosInWorld + CamDirInWorld * Gun->GunAttackLength,
-		ECollisionChannel::ECC_GameTraceChannel4,
-		Param_IgnoreSelf
-	);
-	bool bHit = false;
-
-	if(bIsBlocked)
-	{
-		TargetPos = HitResult.Location;
-		if(!HitResult.GetActor()->IsA(APlayerCharacter::StaticClass()))
-		{
-			bHit = false;
- 		}
-		else
-		{
-			bHit = GetWorld()->LineTraceSingleByChannel(
-				HitResult,
-				MuzzlePosInWorld,
-				TargetPos,
-				ECollisionChannel::ECC_GameTraceChannel4,
-				Param_IgnoreSelf
-				);
-		
-			if(bHit) // must be true
-			{
-				auto Character = Cast<APlayerCharacter>(HitResult.GetActor());
-
-				auto ToThis = this->GetActorLocation() - HitResult.Location; ToThis.Normalize();
-				FPointDamageEvent PointDamageEvent;
-				PointDamageEvent.Damage = CurrentWeapon->Damage;
-				PointDamageEvent.HitInfo = HitResult;
-				PointDamageEvent.ShotDirection = ToThis;
-
-				MSB_LOG(Warning, TEXT("shot %s with gun"), *HitResult.GetActor()->GetName());
-				Character->TakeDamage(CurrentWeapon->Damage, PointDamageEvent, this->GetInstigatorController(), this);
-			}
-		}
-
-	}
-#if ENABLE_DRAW_DEBUG
-	DrawDebugLine(
-		GetWorld(),
-		MuzzlePosInWorld,
-		bIsBlocked ? TargetPos : CamPosInWorld + CamDirInWorld * Gun->GunAttackLength,
-		bIsBlocked ? (bHit ? FColor::Red : FColor:: Magenta) : FColor::Green,
-		false,
-		1.0f
-	);
-#endif
-	
-}
-
-
 # pragma endregion
 
 void APlayerCharacter::OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -797,3 +558,12 @@ void APlayerCharacter::ShowBleeding(FVector Location, FVector From, FVector Norm
 	);
 }
 
+FVector APlayerCharacter::GetCameraLocation()
+{
+	return Camera->GetComponentLocation();
+}
+
+FVector APlayerCharacter::GetCameraDirection()
+{
+	return Camera->GetComponentRotation().Vector();
+}

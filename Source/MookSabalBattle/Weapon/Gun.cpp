@@ -2,6 +2,7 @@
 
 
 #include "Gun.h"
+#include "Engine/DamageEvents.h"
 
 AGun::AGun() : Super()
 {
@@ -53,3 +54,55 @@ void AGun::FireParticleOnMuzzle()
 		);
 }
 
+FHitResult AGun::Hit(APlayerCharacter* Causer)
+{
+	FHitResult HitResult;
+	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
+	Param_IgnoreSelf.AddIgnoredActor(this);
+	Param_IgnoreSelf.bTraceComplex = true;
+
+	FireParticleOnMuzzle();
+	bool bHit = false;
+	bool bBlocked = false;
+	auto CameraLocation = Causer->GetCameraLocation();
+	auto TargetPos = CameraLocation + Causer->GetCameraDirection() * GunAttackLength;
+	
+	bBlocked = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		CameraLocation,
+		TargetPos,
+		ECollisionChannel::ECC_GameTraceChannel4,
+		Param_IgnoreSelf
+		);
+
+	if(bBlocked)
+	{
+		if(!HitResult.GetActor()->IsA(APlayerCharacter::StaticClass())) {bHit = false;}
+		else
+		{
+			bHit = true;
+			auto Character = Cast<APlayerCharacter>(HitResult.GetActor());
+
+			auto ToThis = this->GetActorLocation() - HitResult.Location; ToThis.Normalize();
+			FPointDamageEvent PointDamageEvent;
+			PointDamageEvent.Damage = this->Damage;
+			PointDamageEvent.HitInfo = HitResult;
+			PointDamageEvent.ShotDirection = ToThis;
+
+			MSB_LOG(Warning, TEXT("shot %s with gun"), *HitResult.GetActor()->GetName());
+			Character->TakeDamage(this->Damage, PointDamageEvent, Causer->GetInstigatorController(), Causer);
+		}
+	}
+#if ENABLE_DRAW_DEBUG
+	DrawDebugLine(
+		GetWorld(),
+		CameraLocation,
+		TargetPos,
+		bBlocked ? (bHit ? FColor::Red : FColor:: Magenta) : FColor::Green,
+		false,
+		1.0f
+	);
+#endif
+
+	return HitResult;
+}
