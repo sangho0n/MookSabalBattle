@@ -44,4 +44,6 @@ public:
 	TSubclassOf<UCameraShakeBase> CamShakeShoot;
 
 	bool CanFire(APlayerCharacter* Causer);
+
+	void ReloadGun();
 };

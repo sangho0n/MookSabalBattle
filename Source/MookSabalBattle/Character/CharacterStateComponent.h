@@ -40,6 +40,7 @@ private:
 	CharacterMode CurrentMode;
 	bool bIsEquippable;
 	bool bIsAttacking;
+	bool bIsReloading;
 	UPROPERTY(EditAnywhere, Category=Status, meta=(AllowPrivateAccess=true))
 	float HP;
 public:
@@ -131,6 +132,16 @@ public:
 	void SetFriendly(bool flag)
 	{
 		bIsFriendly = flag;
+	}
+	[[nodiscard]]
+	bool IsReloading() const
+	{
+		return bIsReloading;
+	}
+
+	void SetIsReloading(bool bIsReloading_)
+	{
+		this->bIsReloading = bIsReloading_;
 	}
 #pragma endregion getter_setter
 };

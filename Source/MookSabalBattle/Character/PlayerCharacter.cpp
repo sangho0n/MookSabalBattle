@@ -93,6 +93,11 @@ void APlayerCharacter::PostInitializeComponents()
 	auto Collider = GetCapsuleComponent();
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnCharacterBeginOverlapWithCharacter);
 	OnGetDamage.BindDynamic(this, &APlayerCharacter::OnHit);
+	Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnReloadAnimEnd.AddLambda([this]()->void
+	{
+		CharacterState->SetIsReloading(false);
+	});
+	
 	PunchDamage = 7.0f;
 	KickDamage = 16.0f;
 }
@@ -192,13 +197,12 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::LookUp(float NewAxisValue)
 {
-	// look up animation
+
 }
 
 void APlayerCharacter::Turn(float NewAxisValue)
 {
-	auto yaw = GetControlRotation().Yaw;
-	auto animinstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
+
 }
 
 void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
@@ -282,6 +286,9 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 			weaponTransform.ConcatenateRotation(rot6_5_pitch);
 			weaponMesh->SetRelativeTransform(weaponTransform);
 		}
+
+		auto Gun = Cast<AGun>(CurrentWeapon);
+		Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnReloadAnimEnd.AddUObject(Gun, &AGun::ReloadGun);
 	}
 	else if (CurrentWeapon->IsA(AMelee::StaticClass()))
 	{
@@ -347,7 +354,7 @@ void APlayerCharacter::AttackNonEquip()
 
 void APlayerCharacter::Shoot()
 {
-	if(CharacterState->IsAttacking()) return;
+	if(CharacterState->IsAttacking() || CharacterState->IsReloading()) return;
 	auto Gun = Cast<AGun>(CurrentWeapon);
 	if(!Gun->CanFire(this)) return;
 
@@ -370,6 +377,16 @@ void APlayerCharacter::StopShooting()
 
 	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
 }
+
+void APlayerCharacter::ReloadGun()
+{
+	auto Gun = Cast<AGun>(CurrentWeapon);
+	if(CharacterState->IsReloading()
+		|| CharacterState->IsAttacking()
+		|| Gun->Bullets >= 45) return;
+	CharacterState->SetIsReloading(true);
+}
+
 
 void APlayerCharacter::SwingMelee()
 {

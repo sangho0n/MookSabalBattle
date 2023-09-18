@@ -21,6 +21,7 @@ void UCharacterStateComponent::BeginPlay()
 
 	HP = MaxHP;
 	bIsAttacking = false;
+	bIsReloading = false;
 }
 
 

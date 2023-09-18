@@ -130,9 +130,6 @@ public:
 	UPROPERTY()
 	FOnGetDamage OnGetDamage;
 
-private:
-	
-public:
 	UFUNCTION(BlueprintImplementableEvent, Category=Event, meta=(DisplayName="On Hit"))
 	void OnHit(FName BoneName, FVector HitFrom);
 
@@ -153,4 +150,5 @@ private:
 public:
 	FVector GetCameraLocation();
 	FVector GetCameraDirection();
+	void ReloadGun();
 };

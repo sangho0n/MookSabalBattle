@@ -30,6 +30,7 @@ void ALocalPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Equip", IE_Pressed, this, &ALocalPlayerController::FKeyPressed);
 	InputComponent->BindAction("Attack", IE_Pressed, this, &ALocalPlayerController::OnAttack);
 	InputComponent->BindAction("Attack", IE_Released, this, &ALocalPlayerController::OnAttackStop);
+	InputComponent->BindAction("Reload", IE_Released, this, &ALocalPlayerController::OnReload);
 }
 
 void ALocalPlayerController::ForwardBack(float NewAxisValue)
@@ -148,6 +149,17 @@ void ALocalPlayerController::OnAttackStop()
 			bEnableInputControl = true;
 		if(state->GetCurrentMode() == CharacterMode::GUN) 
 			character->StopShooting();
+	}
+}
+
+void ALocalPlayerController::OnReload()
+{
+	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	{
+		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto state = character->GetCharacterStateComponent();
+		if(state->GetCurrentMode() == CharacterMode::GUN) 
+			character->ReloadGun();
 	}
 }
 

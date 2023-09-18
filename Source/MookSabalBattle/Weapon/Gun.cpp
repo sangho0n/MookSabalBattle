@@ -122,3 +122,8 @@ bool AGun::CanFire(APlayerCharacter* Causer)
 	if(Bullets <= 0) {Causer->StopShooting(); return false;}
 	return true;
 }
+
+void AGun::ReloadGun()
+{
+	Bullets = 45;
+}

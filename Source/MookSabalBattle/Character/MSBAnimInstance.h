@@ -10,6 +10,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHitCheck, int32, CurrCombo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnOverDeltaOffset);
+DECLARE_MULTICAST_DELEGATE(FOnReloadAnimEnd);
 /**
  * 
  */
@@ -62,6 +63,9 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	APlayerCharacter* OwnedCharacter;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
+	bool bIsReload;
 
 public:
 	UFUNCTION(BlueprintPure)
@@ -121,6 +125,9 @@ public:
 	void SetSwingEnd();
 
 	void PlayShot();
+	
+	UFUNCTION(BlueprintCallable, Category=Attack)
+	void SetReloadEnd();
 
 private:
 	FOnHitCheck OnHitCheck;
@@ -133,4 +140,7 @@ private:
 
 	UFUNCTION()
 	void PlayDeadAnim();
+
+public:
+	FOnReloadAnimEnd OnReloadAnimEnd;
 };

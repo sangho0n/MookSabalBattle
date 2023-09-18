@@ -70,6 +70,7 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bInAir = OwnedCharacter->GetMovementComponent()->IsFalling();
 		CurrentMode = state->GetCurrentMode();
 		bIsAttacking = state->IsAttacking();
+		bIsReload = state->IsReloading();
 
 		if(OwnedCharacter->GetCurrentMode() == CharacterMode::GUN)
 		{
@@ -141,14 +142,11 @@ void UMSBAnimInstance::PlayMeleeSwing()
 
 }
 
-
 void UMSBAnimInstance::PlayShot()
 {
 	auto state = OwnedCharacter->GetCharacterStateComponent();
-
 	state->SetIsAttacking(true);
 }
-
 
 void UMSBAnimInstance::JumpToNextSection()
 {
@@ -196,11 +194,17 @@ FName UMSBAnimInstance::GetNextComboSectionName()
 
 void UMSBAnimInstance::SetSwingEnd()
 {
-	MSB_LOG(Warning, TEXT("swing end"));
 	auto character = Cast<APlayerCharacter>(OwnedCharacter);
 	auto state = character->GetCharacterStateComponent();
 	state->SetIsAttacking(false);
 }
+
+void UMSBAnimInstance::SetReloadEnd()
+{
+	OnReloadAnimEnd.Broadcast();
+	bIsReload = false;
+}
+
 
 void UMSBAnimInstance::ResetDelta()
 {
