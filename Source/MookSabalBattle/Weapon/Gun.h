@@ -42,4 +42,6 @@ public:
 	FHitResult Hit(APlayerCharacter* Causer);
 
 	TSubclassOf<UCameraShakeBase> CamShakeShoot;
+
+	bool CanFire(APlayerCharacter* Causer);
 };

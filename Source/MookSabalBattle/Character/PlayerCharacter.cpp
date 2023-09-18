@@ -348,6 +348,8 @@ void APlayerCharacter::AttackNonEquip()
 void APlayerCharacter::Shoot()
 {
 	if(CharacterState->IsAttacking()) return;
+	auto Gun = Cast<AGun>(CurrentWeapon);
+	if(!Gun->CanFire(this)) return;
 
 	bInterpingCamPos = true;
 	DesiredCamPos = CamPosWhenFireGun;

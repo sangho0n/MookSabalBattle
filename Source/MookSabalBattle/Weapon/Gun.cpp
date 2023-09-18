@@ -66,6 +66,10 @@ FHitResult AGun::Hit(APlayerCharacter* Causer)
 	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
 	Param_IgnoreSelf.AddIgnoredActor(this);
 	Param_IgnoreSelf.bTraceComplex = true;
+	
+	if(!CanFire(Causer)) { return HitResult;}
+	Bullets--;
+	MSB_LOG(Warning, TEXT("current bullets : %d"), Bullets);
 
 	FireParticleOnMuzzle();
 	bool bHit = false;
@@ -111,4 +115,10 @@ FHitResult AGun::Hit(APlayerCharacter* Causer)
 #endif
 
 	return HitResult;
+}
+
+bool AGun::CanFire(APlayerCharacter* Causer)
+{
+	if(Bullets <= 0) {Causer->StopShooting(); return false;}
+	return true;
 }
