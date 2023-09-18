@@ -76,6 +76,11 @@ APlayerCharacter::APlayerCharacter()
 	// Attack Collision
 	AttackCapsuleColliderRadius = 34.0f;
 	AttackCapsuleColliderHalfHeight = 30.0f;
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> BLEEDING(TEXT("/Game/Realistic_Starter_VFX_Pack_Vol2/Particles/Blood/P_Blood_Splat_Cone.P_Blood_Splat_Cone"));
+	if(BLEEDING.Succeeded())
+	{
+		BleedingParticle = BLEEDING.Object;
+	}
 
 	
 	// below code will be refactored after implement server
@@ -662,6 +667,7 @@ void APlayerCharacter::HitWithGun()
 	FHitResult HitResult;
 	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
 	Param_IgnoreSelf.AddIgnoredActor(this);
+	Param_IgnoreSelf.bTraceComplex = true;
 	auto Gun = Cast<AGun>(CurrentWeapon);
 	auto MuzzlePosInWorld = Gun->GetMuzzleLocationInWS();
 
@@ -751,15 +757,12 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	if(DamageEvent.IsOfType(FPointDamageEvent::ClassID))
 	{
 		auto PointDamageEvent = (FPointDamageEvent*)&DamageEvent;
-		OnGetDamage.Execute(PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection); 
+		OnGetDamage.Execute(PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection);
+		ShowBleeding(PointDamageEvent->HitInfo.Location, PointDamageEvent->ShotDirection, PointDamageEvent->HitInfo.Normal);
 	}
 	
 	DamageAmount = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	CharacterState->ApplyDamage(DamageAmount);
-
-	// TODO : 피격 애니메이션 + 파티클
-
-	// TODO : is local일 경우 피격 위젯
 	
 	return DamageAmount;
 }
@@ -767,5 +770,30 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 void APlayerCharacter::Die()
 {
 	MSB_LOG(Warning, TEXT("Player died"));
+}
+
+/*
+ * APlayerCharacter::ShowBleeding
+ *
+ * Location : The location that particle spawned
+ * From : A vector from attacking point to `Location
+ * Normal : The normal of that mesh at location
+ *
+ * the particle must spawned on the `Location,
+ * and the rotation angle should be same as the angle between `Normal and `From
+ */
+void APlayerCharacter::ShowBleeding(FVector Location, FVector From, FVector Normal)
+{
+	FTransform Transform;
+	From.Normalize(); Normal.Normalize();
+	Transform.SetLocation(Location);
+	Transform.SetRotation(FRotationMatrix::MakeFromZ(
+		From + 2 * Normal * FVector::DotProduct(-From, Normal)).ToQuat()
+	);
+	UGameplayStatics::SpawnEmitterAtLocation(
+		GetWorld(),
+		BleedingParticle,
+		Transform
+	);
 }
 

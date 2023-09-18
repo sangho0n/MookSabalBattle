@@ -153,4 +153,8 @@ private:
 	
 	UPROPERTY(BlueprintReadWrite, Category="HitPhysAnim", meta=(AllowPrivateAccess=true))
 	TArray<float> HitBlendWeights;
+
+	UParticleSystem* BleedingParticle;
+
+	void ShowBleeding(FVector Location, FVector From, FVector Normal);
 };
