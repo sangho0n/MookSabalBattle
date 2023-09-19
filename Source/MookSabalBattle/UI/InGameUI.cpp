@@ -20,26 +20,40 @@ void UInGameUI::NativeConstruct()
 	Canvas_Aim->SetVisibility(ESlateVisibility::Hidden);
 	Canvas_Bleeding->SetVisibility(ESlateVisibility::Visible);
 
-	AccTimeForFadeOut = 0.0f;
-	bIsFadeOut = false;
+	AccTimeForFadeOut_Equip = 0.0f;
+	bIsFadeOut_Equip = false;
 }
 
 void UInGameUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	if(bIsFadeOut)
+	UpdateFadeOutEffect(Canvas_Equip, bIsFadeOut_Equip, AccTimeForFadeOut_Equip, InDeltaTime);
+	UpdateFadeOutEffect(Canvas_DamageIndicator, bIsFadeOut_DamageIndicator,
+		AccTimeForFadeOut_DamageIndicator, InDeltaTime, 1.0f);
+}
+
+
+void UInGameUI::UpdateFadeOutEffect(UCanvasPanel* Canvas, bool& bIsFading, float& AccTime, const float InDeltaTime, float Threshold)
+{
+	if(!bIsFading) return;
+	if(Canvas == Canvas_DamageIndicator)
 	{
-		AccTimeForFadeOut += InDeltaTime;
-		auto opacity = (FadeOutTime - AccTimeForFadeOut) / FadeOutTime;
-		if(opacity < KINDA_SMALL_NUMBER)
-		{
-			Canvas_Equip->SetVisibility(ESlateVisibility::Hidden);
-			bIsFadeOut = false;
-			return;
-		}
-		Canvas_Equip->SetRenderOpacity(opacity);
+		float Angle = CalcDamageIndicatorAngle();
+		Canvas_DamageIndicator->SetRenderTransformAngle(Angle);
 	}
+	
+	AccTime += InDeltaTime;
+	float Opacity = (FadeOutTime + Threshold - AccTime) / FadeOutTime;
+
+	if (Opacity < KINDA_SMALL_NUMBER)
+	{
+		Canvas->SetVisibility(ESlateVisibility::Hidden);
+		bIsFading = false;
+		Opacity = 0.0f;
+	}
+
+	Canvas->SetRenderOpacity(Opacity);
 }
 
 void UInGameUI::BindCharacterStat(UCharacterStateComponent* State)
@@ -51,20 +65,21 @@ void UInGameUI::BindCharacterStat(UCharacterStateComponent* State)
 	State->OnHPChanges.AddUObject(this, &UInGameUI::ShowBleeding);
 	State->OnHPChanges.Broadcast(200.0f);
 
-	this->Canvas_Bleeding->SetRenderOpacity(1.0f);
+	this->Canvas_Bleeding->SetRenderOpacity(0.0f);
 	this->Canvas_DamageIndicator->SetRenderOpacity(0.0f);
 }
 
 void UInGameUI::SetEquipVisible()
 {
+	bIsFadeOut_Equip = false;
 	Canvas_Equip->SetRenderOpacity(1);
 	Canvas_Equip->SetVisibility(ESlateVisibility::Visible);
 }
 
 void UInGameUI::SetEquipInvisible()
 {
-	AccTimeForFadeOut = 0.0f;
-	bIsFadeOut = true;
+	AccTimeForFadeOut_Equip = 0.0f;
+	bIsFadeOut_Equip = true;
 }
 
 void UInGameUI::SetAimVisible()
@@ -91,5 +106,39 @@ void UInGameUI::ShowBleeding(float HP)
 	Image_Bleeding1->SetRenderOpacity((Bleeding1Offset - HP)/Bleeding1Offset);
 	if(HP < Bleeding2Offset)
 		Image_Bleeding2->SetRenderOpacity((Bleeding2Offset - HP)/Bleeding2Offset * MaxBleeding2Opacity);
+}
+
+void UInGameUI::ShowDamageIndicator(AActor* Causer)
+{
+	AccTimeForFadeOut_DamageIndicator = 0.0f;
+	Canvas_DamageIndicator->SetVisibility(ESlateVisibility::Visible);
+	Canvas_DamageIndicator->SetRenderOpacity(1.0f);
+	RecentDamageCauser = Causer;
+	bIsFadeOut_DamageIndicator = true;
+	float Angle = CalcDamageIndicatorAngle();
+
+	Canvas_DamageIndicator->SetRenderTransformAngle(Angle);
+}
+
+float UInGameUI::CalcDamageIndicatorAngle()
+{
+	float Angle;
+	auto ShotDirection = RecentDamageCauser->GetActorLocation() - GetOwningPlayerPawn()->GetActorLocation();
+	auto OffsetVector = GetOwningPlayerCameraManager()->GetCameraRotation().Vector();
+	ShotDirection = FVector(ShotDirection.X, ShotDirection.Y, 0.0f);
+	OffsetVector = FVector(OffsetVector.X, OffsetVector.Y, 0.0f);
+	ShotDirection.Normalize(); OffsetVector.Normalize();
+
+	if(FVector::CrossProduct(OffsetVector, ShotDirection).Z > 0.0f)
+	{
+		Angle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(OffsetVector, ShotDirection)));
+	}
+	else
+	{
+		Angle = -FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(OffsetVector, ShotDirection)));
+	}
+
+	MSB_LOG(Warning, TEXT("got attack from : %f"), Angle);
+	return Angle;
 }
 

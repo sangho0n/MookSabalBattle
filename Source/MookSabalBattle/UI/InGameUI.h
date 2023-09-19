@@ -43,11 +43,23 @@ public:
 
 private:
 	const float FadeOutTime = 0.6f;
-	float AccTimeForFadeOut;
-	bool bIsFadeOut;
+	float AccTimeForFadeOut_Equip;
+	bool bIsFadeOut_Equip;
+	float AccTimeForFadeOut_DamageIndicator;
+	bool bIsFadeOut_DamageIndicator;
 	const float Bleeding1Offset = 100.0f;
 	const float Bleeding2Offset = 65.0f;
 	const float MaxBleeding2Opacity = 0.384f;
 	UFUNCTION()
 	void ShowBleeding(float HP);
+
+	UFUNCTION()
+	void UpdateFadeOutEffect(UCanvasPanel* Canvas,  bool& bIsFading, float& AccTime, const float InDeltaTime, float Threshold = 0.0f);
+
+public:
+	UFUNCTION()
+	void ShowDamageIndicator(AActor* Causer);
+private:
+	AActor* RecentDamageCauser;
+	float CalcDamageIndicatorAngle();
 };

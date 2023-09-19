@@ -548,11 +548,15 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 		auto PointDamageEvent = (FPointDamageEvent*)&DamageEvent;
 		OnGetDamage.Broadcast(PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection);
 		ShowBleeding(PointDamageEvent->HitInfo.Location, PointDamageEvent->ShotDirection, PointDamageEvent->HitInfo.Normal);
+
+		if(this->GetController()->IsLocalPlayerController())
+		{
+			InGameUI->ShowDamageIndicator(DamageCauser);
+		}
 	}
 	
 	DamageAmount = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	CharacterState->ApplyDamage(DamageAmount);
-	
 	return DamageAmount;
 }
 
