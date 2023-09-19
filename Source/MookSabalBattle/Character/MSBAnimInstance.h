@@ -67,47 +67,50 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	bool bIsReload;
 
-public:
-	UFUNCTION(BlueprintPure)
-	bool SetIntended(bool isIntended);
-
-private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
 	UAnimMontage* ComboMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	bool bIsCW;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
 	int32 RandomMeleeIdx;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	int32 RandomDeadIdx3;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	int32 RandomDeadIdx2;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
 	AMelee* CurrentMelee;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Attack, meta=(AllowPrivateAccess=true))
 	float SwingPlayRate;
 
-public:
-	void SetMeleeType(AMelee* NewMelee);
+	int32 CurrentCombo;
+
+	const int32 MaxCombo = 3;
+
+	bool CanNextCombo;
+
+	bool NextComboInputOn;
+
+	FName GetNextComboSectionName();
 
 public:
+	UFUNCTION(BlueprintPure)
+	bool SetIntended(bool isIntended);
+
 	UFUNCTION()
 	void OnComboMontageEnded(UAnimMontage* montage, bool bInterrupted);
 
 	UFUNCTION()
 	void AnimNotify_HitCheck();
+	
 	UFUNCTION()
 	void AnimNotify_NextComboCheck();
-
-private:
-	int32 CurrentCombo;
-	const int32 MaxCombo = 3;
-	bool CanNextCombo;
-	bool NextComboInputOn;
-	FName GetNextComboSectionName();
-
-public:
+	
 	bool GetCanNextCombo()
 	{
 		return CanNextCombo;

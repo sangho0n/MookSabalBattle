@@ -293,8 +293,6 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 	else if (CurrentWeapon->IsA(AMelee::StaticClass()))
 	{
 		auto CurrentMelee = Cast<AMelee>(CurrentWeapon);
-		auto AnimInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
-		AnimInstance->SetMeleeType(CurrentMelee);
 		
 		MSB_LOG(Warning, TEXT("curr weapon radius %f, halfheight %f"), CurrentMelee->AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight);
 		

@@ -41,8 +41,10 @@ private:
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	UCameraComponent* Camera;
 
+public:
 	UPROPERTY(VisibleAnywhere, Category=Weapon)
 	AWeapon* CurrentWeapon;
+private:
 
 	UPROPERTY(VisibleAnywhere, Category=State)
 	UCharacterStateComponent* CharacterState;

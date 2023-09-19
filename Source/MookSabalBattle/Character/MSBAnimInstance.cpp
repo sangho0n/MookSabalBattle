@@ -72,6 +72,12 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bIsAttacking = state->IsAttacking();
 		bIsReload = state->IsReloading();
 
+		if(nullptr != OwnedCharacter->CurrentWeapon && OwnedCharacter->CurrentWeapon->IsA(AMelee::StaticClass()))
+		{
+			CurrentMelee = Cast<AMelee>(OwnedCharacter->CurrentWeapon);
+			SwingPlayRate = CurrentMelee->AttackSpeed;
+		}
+
 		if(OwnedCharacter->GetCurrentMode() == CharacterMode::GUN)
 		{
 
@@ -221,10 +227,3 @@ void UMSBAnimInstance::PlayDeadAnim()
 	RandomDeadIdx3 =FMath::RandRange(0,3);
 	bIsDead = true;
 }
-
-void UMSBAnimInstance::SetMeleeType(AMelee* NewMelee)
-{
-	CurrentMelee = NewMelee;
-	SwingPlayRate = CurrentMelee->AttackSpeed;
-}
-
