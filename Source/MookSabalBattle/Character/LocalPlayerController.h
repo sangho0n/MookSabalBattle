@@ -27,14 +27,14 @@ protected:
 private:
 	void ForwardBack(float NewAxisValue);
 	void LeftRight(float NewAxisValue);
-	void SpacebarPressed();
+	void Jump();
 	void MouseVerticalChange(float NewAxisValue);
 	void MouseHorizontalChange(float NewAxisValue);
-	void FKeyPressed();
-	void OnAttack();
-	void OnReload();
+	void Equip();
+	void Attack();
+	void Reload();
 public:
-	void OnAttackStop();
+	void AttackStop();
 private:
 	bool bEnableInputControl;
 };

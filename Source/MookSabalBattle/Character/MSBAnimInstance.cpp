@@ -161,7 +161,7 @@ void UMSBAnimInstance::OnComboMontageEnded(UAnimMontage* montage, bool bInterrup
 	state->SetIsAttacking(false);
 	CanNextCombo = false;
 	CurrentCombo = 0;
-	Cast<ALocalPlayerController>(OwnedCharacter->GetController())->OnAttackStop();
+	Cast<ALocalPlayerController>(OwnedCharacter->GetController())->AttackStop();
 	MSB_LOG(Warning,TEXT("montage end : %d"), bInterrupted);
 }
 

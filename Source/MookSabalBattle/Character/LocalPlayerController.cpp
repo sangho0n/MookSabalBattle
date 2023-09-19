@@ -24,13 +24,13 @@ void ALocalPlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 	InputComponent->BindAxis("MoveForward", this, &ALocalPlayerController::ForwardBack);
 	InputComponent->BindAxis("MoveRight", this, &ALocalPlayerController::LeftRight);
-	InputComponent->BindAction("SpaceBar", IE_Pressed, this, &ALocalPlayerController::SpacebarPressed);
+	InputComponent->BindAction("Jump", IE_Pressed, this, &ALocalPlayerController::Jump);
 	InputComponent->BindAxis("LookUp", this, &ALocalPlayerController::MouseVerticalChange);
 	InputComponent->BindAxis("Turn", this, &ALocalPlayerController::MouseHorizontalChange);
-	InputComponent->BindAction("Equip", IE_Pressed, this, &ALocalPlayerController::FKeyPressed);
-	InputComponent->BindAction("Attack", IE_Pressed, this, &ALocalPlayerController::OnAttack);
-	InputComponent->BindAction("Attack", IE_Released, this, &ALocalPlayerController::OnAttackStop);
-	InputComponent->BindAction("Reload", IE_Released, this, &ALocalPlayerController::OnReload);
+	InputComponent->BindAction("Equip", IE_Pressed, this, &ALocalPlayerController::Equip);
+	InputComponent->BindAction("Attack", IE_Pressed, this, &ALocalPlayerController::Attack);
+	InputComponent->BindAction("Attack", IE_Released, this, &ALocalPlayerController::AttackStop);
+	InputComponent->BindAction("Reload", IE_Released, this, &ALocalPlayerController::Reload);
 }
 
 void ALocalPlayerController::ForwardBack(float NewAxisValue)
@@ -55,7 +55,7 @@ void ALocalPlayerController::LeftRight(float NewAxisValue)
 	}
 }
 
-void ALocalPlayerController::SpacebarPressed()
+void ALocalPlayerController::Jump()
 {
 	if(!bEnableInputControl) return;
 	
@@ -90,7 +90,7 @@ void ALocalPlayerController::MouseHorizontalChange(float NewAxisValue)
 	AddYawInput(NewAxisValue);
 }
 
-void ALocalPlayerController::FKeyPressed()
+void ALocalPlayerController::Equip()
 {
 	if(!bEnableInputControl) return;
 
@@ -113,7 +113,7 @@ void ALocalPlayerController::FKeyPressed()
 	// We could write some code below here when we tend to implement ridings or sth else
 }
 
-void ALocalPlayerController::OnAttack()
+void ALocalPlayerController::Attack()
 {
 	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
@@ -139,7 +139,7 @@ void ALocalPlayerController::OnAttack()
 	}
 }
 
-void ALocalPlayerController::OnAttackStop()
+void ALocalPlayerController::AttackStop()
 {
 	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
@@ -152,7 +152,7 @@ void ALocalPlayerController::OnAttackStop()
 	}
 }
 
-void ALocalPlayerController::OnReload()
+void ALocalPlayerController::Reload()
 {
 	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
