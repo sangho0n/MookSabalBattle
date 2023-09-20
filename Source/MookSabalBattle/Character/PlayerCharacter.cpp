@@ -108,12 +108,16 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay(); 
 	CharacterState->OnHPIsZero.AddDynamic(this, &APlayerCharacter::Die);
 	
-	if(GetController()->IsLocalPlayerController() && IsValid(InGameUIClass))
+	if(GetController()->IsLocalPlayerController())
 	{
-		InGameUI = Cast<UInGameUI>(CreateWidget(GetWorld(), InGameUIClass));
-		InGameUI->AddToViewport();
-		InGameUI->BindCharacterStat(CharacterState);
+		if(IsValid(InGameUIClass))
+		{
+			InGameUI = Cast<UInGameUI>(CreateWidget(GetWorld(), InGameUIClass));
+			InGameUI->AddToViewport();
+			InGameUI->BindCharacterStat(CharacterState);
+		}
 	}
+
 	ChangeCharacterMode(CharacterState->CurrentMode);
 	CharacterState->bIsDead = false;
 	
@@ -256,7 +260,7 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 	{
 		CurrentWeapon->Destroy();
 	}
-	
+	CharacterState->ApplyDamage(50.0f);
 	CurrentWeapon = NewWeapon;
 	auto weaponMesh = CurrentWeapon->ReadyToEquip();
 

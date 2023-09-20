@@ -37,7 +37,6 @@ void UCharacterStateComponent::ApplyDamage(float damage)
 {
 	auto candidateHP = HP - damage;
 	HP = candidateHP > 0.0f ? candidateHP : 0.0f;
-	OnHPChanges.Broadcast(HP);
 	MSB_LOG(Warning, TEXT("curr hp : %f"), HP);
 	if(HP < 0.01)
 	{
@@ -45,5 +44,6 @@ void UCharacterStateComponent::ApplyDamage(float damage)
 		MSB_LOG(Warning, TEXT("before die"));
 		OnHPIsZero.Broadcast();
 	}
+	OnHPChanges.Broadcast(HP);
 }
 
