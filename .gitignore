@@ -84,11 +84,22 @@ Plugins/*/Intermediate/*
 # Cache files for the editor to use
 DerivedDataCache/*
 
-# to ignore paid packages
-Content/
-!Content/Collections
-!Content/Developers
-!Content/StarterContent
+# to ignore packages that have licensing issues
+Content/Directional_Movement_Animations
+Content/Frank_FightingGame
+Content/Main/Animation/Humanoid/Retargetted*
+Content/Main/Animation/Humanoid/ReTargetted*
+Content/Main/Animation/Humanoid/Gun/RTG*
+Content/Main/Animation/Humanoid/Melee/RTG*
+Content/Main/Animation/Humanoid/mixamo
+Content/Main/Animation/Humanoid/NonEquip/RTG*
+Content/Main/Maps
+Content/Main/UI/Fonts
+Content/Man
+Content/MiniSurvivalProps
+Content/Realistic_Starter_VFX_Pack_Vol2
+Content/StarterContent
+Content/Stylized_Egypt
 
 # backup files
 *.h~
