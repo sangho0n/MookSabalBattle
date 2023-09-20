@@ -555,6 +555,11 @@ void APlayerCharacter::Die()
 {
 	Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->PlayRandomDeadAnim();
 	CharacterState->bIsDead = true;
+	
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("NoCollision"));
+	GetMesh()->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
+	GetMesh()->SetSimulatePhysics(true);
+	OnGetDamage.Clear();
 }
 
 /*
