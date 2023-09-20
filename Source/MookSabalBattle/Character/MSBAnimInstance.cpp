@@ -194,6 +194,6 @@ void UMSBAnimInstance::ResetDelta()
 
 void UMSBAnimInstance::PlayRandomDeadAnim()
 {
-	RandomDeadIdx2 =FMath::RandRange(0,2);
-	RandomDeadIdx3 =FMath::RandRange(0,3);
+	RandomDeadIdx2 =FMath::RandRange(0,1);
+	RandomDeadIdx3 =FMath::RandRange(0,2);
 }
