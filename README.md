@@ -32,6 +32,24 @@ UE 5.2 버전을 사용하여 만든 1인 프로젝트 멀티플레이 TPS 게�
 브랜치명 및 커밋명은 [다음](https://github.com/sangho0n/MookSabalBattle/issues/1)을 따라 작성하였습니다. 또한 각 브랜치별 구현 예정 사항을 깃헙 이슈를 이용하여 등록, 관리하였습니다.
 
 # 구현 사항
+## Loco Motion
+c++ 애님인스턴스 클래스를 이용해 애니메이션 상태값를 관리하되, 효과적인 상태전이를 위해 애니메이션 블루프린트를 적극 활용함.
+
+캐릭터의 모드(비무장, 한손무기, 총)에 따른 애니메이션과, 일반적인 애니메이션을 상/하체로 블랜딩하여 다양한 움직임을 보일 수 있도록 구현함.
+
+![image](https://github.com/sangho0n/MookSabalBattle/assets/54069713/e8589323-388b-454b-a061-2e6096066fb9)
+
+### Directional Move
+총을 든 상태에서는 컨트롤러가 캐릭터를 회전시키지 않는다.(총구가 항상 전방을 향하도록 구현함). 이때 하체의 움직임을 블렌드스페이스를 이용하여 구현.
+
+![dimove](https://github.com/sangho0n/MookSabalBattle/assets/54069713/5f3852d7-b40b-42ee-9352-a29fb9c3e48d)
+
+(정지상태에서는 AimOffset을 활용해 총구가 전방을 향하도록 구현.)
+
+![AimOffset](https://github.com/sangho0n/MookSabalBattle/assets/54069713/b91809ab-ad60-4904-a470-3ddb97ccc9b7)
+
+
+## 공격
 ### 비무장 상태에서의 공격
 비무장 상태에서는 두 손과 발을 이용한 공격을 한다.
 
@@ -48,3 +66,5 @@ UE 5.2 버전을 사용하여 만든 1인 프로젝트 멀티플레이 TPS 게�
 총을 습득하면 이전까지의 움직임과 달리 캐릭터의 시선방향과 카메라의 방향이 일치하게 된다. 화면 중앙에 조준점이 추가된다.
 
 ![총-3](https://github.com/sangho0n/MookSabalBattle/assets/54069713/dc1c34eb-166b-439b-a42e-15f2bac4a566)
+
+## 피격
