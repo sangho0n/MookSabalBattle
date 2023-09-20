@@ -99,7 +99,6 @@ FHitResult AGun::Hit(APlayerCharacter* Causer)
 			PointDamageEvent.HitInfo = HitResult;
 			PointDamageEvent.ShotDirection = ToThis;
 
-			MSB_LOG(Warning, TEXT("shot %s with gun"), *HitResult.GetActor()->GetName());
 			Character->TakeDamage(this->Damage, PointDamageEvent, Causer->GetInstigatorController(), Causer);
 		}
 	}
@@ -123,7 +122,7 @@ bool AGun::CanFire(APlayerCharacter* Causer)
 	return true;
 }
 
-void AGun::ReloadGun()
+void AGun::FillBullets()
 {
 	Bullets = 45;
 }

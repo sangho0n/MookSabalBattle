@@ -45,5 +45,6 @@ public:
 
 	bool CanFire(APlayerCharacter* Causer);
 
-	void ReloadGun();
+	UFUNCTION()
+	void FillBullets();
 };

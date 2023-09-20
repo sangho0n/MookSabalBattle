@@ -34,114 +34,29 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-private:
 	bool bIsEquipped;
-	UPROPERTY(EditAnywhere, Category=Status, meta=(AllowPrivateAccess=true))
-	CharacterMode CurrentMode;
-	bool bIsEquippable;
-	bool bIsAttacking;
-	bool bIsReloading;
-	UPROPERTY(EditAnywhere, Category=Status, meta=(AllowPrivateAccess=true))
-	float HP;
-public:
-	const float MaxHP = 200.0f;
-private:
-	FString NickName;
-	bool bIsFriendly;
 
-public:
+	UPROPERTY(EditAnywhere, Category=Status)
+	CharacterMode CurrentMode;
+
+	bool bIsEquippable;
+
+	bool bIsAttacking;
+
+	bool bIsReloading;
+
+	bool bIsDead;
+
+	UPROPERTY(EditAnywhere, Category=Status)
+	float HP;
+
+	const float MaxHP = 200.0f;
+
+	FString NickName;
+
 	FOnHPIsZero OnHPIsZero;
+	
 	FOnHPChanges OnHPChanges;
 
-public:
 	void ApplyDamage(float damage);
-	
-#pragma region getter_setter
-public:
-	void SetIsEquipped(bool bIsEquipped_)
-	{
-		this->bIsEquipped = bIsEquipped_;
-	}
-
-	void SetCurrentMode(CharacterMode CurrentMode_)
-	{
-		this->CurrentMode = CurrentMode_;
-	}
-
-	[[nodiscard]]
-	bool IsEquipped() const
-	{
-		return bIsEquipped;
-	}
-
-	[[nodiscard]]
-	CharacterMode GetCurrentMode() const
-	{
-		return CurrentMode;
-	}
-	
-	[[nodiscard]]
-	bool IsEquippable() const
-	{
-		return bIsEquippable;
-	}
-
-	void SetIsEquippable(bool bIsEquippable_)
-	{
-		this->bIsEquippable = bIsEquippable_;
-	}
-	
-	[[nodiscard]]
-	bool IsAttacking() const
-	{
-		return bIsAttacking;
-	}
-
-	void SetIsAttacking(bool bIsAttacking_)
-	{
-		this->bIsAttacking = bIsAttacking_;
-	}
-	[[nodiscard]]
-	float GetHP() const
-	{
-		return HP;
-	}
-
-	void SetHP(float HP_)
-	{
-		this->HP = HP_;
-	}
-
-	[[nodiscard]]
-	FString GetNickName() const
-	{
-		return NickName;
-	}
-
-	void SetNickName(const FString& NickName_)
-	{
-		this->NickName = NickName_;
-	}
-
-	[[nodiscard]]
-	bool IsFriendly() const
-	{
-		return bIsFriendly;
-	}
-
-	void SetFriendly(bool flag)
-	{
-		bIsFriendly = flag;
-	}
-	[[nodiscard]]
-	bool IsReloading() const
-	{
-		return bIsReloading;
-	}
-
-	void SetIsReloading(bool bIsReloading_)
-	{
-		this->bIsReloading = bIsReloading_;
-	}
-#pragma endregion getter_setter
 };

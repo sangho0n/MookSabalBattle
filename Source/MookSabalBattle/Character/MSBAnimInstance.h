@@ -10,7 +10,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHitCheck, int32, CurrCombo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnOverDeltaOffset);
-DECLARE_MULTICAST_DELEGATE(FOnReloadAnimEnd);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackEnd);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReloadAnimEnd);
 /**
  * 
  */
@@ -122,28 +123,27 @@ public:
 
 	void JumpToNextSection();
 
-	void PlayMeleeSwing();
-
-	UFUNCTION(BlueprintCallable, Category=Attack)
-	void SetSwingEnd();
-
-	void PlayShot();
+	void PlayRandomMeleeSwing();
 	
-	UFUNCTION(BlueprintCallable, Category=Attack)
-	void SetReloadEnd();
+	void PlayRandomDeadAnim();
+
+	UFUNCTION(BlueprintCallable)
+	void ReloadEnd();
+	
+	UFUNCTION(BlueprintCallable)
+	void SwingEnd();
 
 private:
 	FOnHitCheck OnHitCheck;
 	
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category=Event, meta=(DisplayName="On Over Delta Offset"))
+	UPROPERTY(BlueprintAssignable, Category=Event, meta=(DisplayName="On Over Delta Offset"))
 	FOnOverDeltaOffset OnOverDeltaOffset;
 
 	UFUNCTION()
 	void ResetDelta();
 
-	UFUNCTION()
-	void PlayDeadAnim();
-
 public:
 	FOnReloadAnimEnd OnReloadAnimEnd;
+
+	FOnAttackEnd OnAttackEnd;
 };

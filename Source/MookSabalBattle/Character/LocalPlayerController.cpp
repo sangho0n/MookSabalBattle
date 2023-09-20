@@ -99,9 +99,9 @@ void ALocalPlayerController::Equip()
 	{
 		auto character = Cast<APlayerCharacter>(controllingPawn);
 		auto state = character->GetCharacterStateComponent();
-		if(!state->IsEquippable()) return;
+		if(!state->bIsEquippable) return;
 		
-		if(!state->IsEquipped())
+		if(!state->bIsEquipped)
 		{
 			character->EquipWeapon(character->OverlappedWeapon);
 		}
@@ -121,18 +121,18 @@ void ALocalPlayerController::Attack()
 		auto state = character->GetCharacterStateComponent();
 
 		// combo hit
-		if(state->GetCurrentMode() == CharacterMode::NON_EQUIPPED)
+		if(state->CurrentMode == CharacterMode::NON_EQUIPPED)
 		{
 			character->AttackNonEquip();
 			bEnableInputControl = false;
 		}
 		// swing
-		if(state->GetCurrentMode() == CharacterMode::MELEE)
+		if(state->CurrentMode == CharacterMode::MELEE)
 		{
 			character->SwingMelee();
 		}
 		// shot
-		if(state->GetCurrentMode() == CharacterMode::GUN)
+		if(state->CurrentMode == CharacterMode::GUN)
 		{
 			character->Shoot();
 		}
@@ -145,9 +145,9 @@ void ALocalPlayerController::AttackStop()
 	{
 		auto character = Cast<APlayerCharacter>(controllingPawn);
 		auto state = character->GetCharacterStateComponent();
-		if(state->GetCurrentMode() == CharacterMode::NON_EQUIPPED) 
+		if(state->CurrentMode == CharacterMode::NON_EQUIPPED) 
 			bEnableInputControl = true;
-		if(state->GetCurrentMode() == CharacterMode::GUN) 
+		if(state->CurrentMode == CharacterMode::GUN) 
 			character->StopShooting();
 	}
 }
@@ -158,7 +158,7 @@ void ALocalPlayerController::Reload()
 	{
 		auto character = Cast<APlayerCharacter>(controllingPawn);
 		auto state = character->GetCharacterStateComponent();
-		if(state->GetCurrentMode() == CharacterMode::GUN) 
+		if(state->CurrentMode == CharacterMode::GUN) 
 			character->ReloadGun();
 	}
 }

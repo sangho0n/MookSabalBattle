@@ -54,8 +54,6 @@ public:
 	void LeftRight(float NewAxisValue);
 	void LookUp(float NewAxisValue);
 	void Turn(float NewAxisValue);
-
-	CharacterMode GetCurrentMode();
 	
 	AWeapon* OverlappedWeapon;
 	
@@ -148,6 +146,12 @@ private:
 	UParticleSystem* BleedingParticle;
 
 	void ShowBleeding(FVector Location, FVector From, FVector Normal);
+
+	UFUNCTION()
+	void StopAttacking();
+	
+	UFUNCTION()
+	void EndReloading();
 
 public:
 	FVector GetCameraLocation();

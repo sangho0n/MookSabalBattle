@@ -47,7 +47,6 @@ void UMSBAnimInstance::NativeBeginPlay()
 	CanNextCombo = false;
 
 	OnHitCheck.AddDynamic(OwnedCharacter, &APlayerCharacter::Hit);
-	OwnedCharacter->GetCharacterStateComponent()->OnHPIsZero.AddDynamic(this, &UMSBAnimInstance::PlayDeadAnim);
 }
 
 
@@ -68,9 +67,10 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		
 		CurrentPawnSpeed = Velocity.Size();
 		bInAir = OwnedCharacter->GetMovementComponent()->IsFalling();
-		CurrentMode = state->GetCurrentMode();
-		bIsAttacking = state->IsAttacking();
-		bIsReload = state->IsReloading();
+		CurrentMode = state->CurrentMode;
+		bIsAttacking = state->bIsAttacking;
+		bIsReload = state->bIsReloading;
+		bIsDead = state->bIsDead;
 
 		if(nullptr != OwnedCharacter->CurrentWeapon && OwnedCharacter->CurrentWeapon->IsA(AMelee::StaticClass()))
 		{
@@ -78,29 +78,27 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			SwingPlayRate = CurrentMelee->AttackSpeed;
 		}
 
-		if(OwnedCharacter->GetCurrentMode() == CharacterMode::GUN)
+		if(CurrentMode == CharacterMode::GUN)
 		{
-
-			auto interpRotation = FRotator(Pitch, DeltaYaw, 0);
-			interpRotation = FMath::RInterpTo(interpRotation, deltaRotation, DeltaSeconds, 15.0f);
-			DeltaYaw = FMath::Clamp(interpRotation.Yaw, -180.0f, 180.0f);
-			Pitch = FMath::ClampAngle(interpRotation.Pitch, -90.0f, 90.0f);
-
-			if(DeltaYaw > 90.0f)
-			{
-				bIsCW = true;
-				OnOverDeltaOffset.Broadcast();
-			}
-			else if(DeltaYaw < -90.0f)
-			{
-				bIsCW = false;
-				OnOverDeltaOffset.Broadcast();
-			}
-			
 			if(CurrentPawnSpeed < 0.1)
 			{
 				// use aim offset
 				OwnedCharacter->bUseControllerRotationYaw=false;
+				auto interpRotation = FRotator(Pitch, DeltaYaw, 0);
+				interpRotation = FMath::RInterpTo(interpRotation, deltaRotation, DeltaSeconds, 15.0f);
+				DeltaYaw = FMath::Clamp(interpRotation.Yaw, -180.0f, 180.0f);
+				Pitch = FMath::ClampAngle(interpRotation.Pitch, -90.0f, 90.0f);
+
+				if(DeltaYaw > 90.0f)
+				{
+					bIsCW = true;
+					OnOverDeltaOffset.Broadcast();
+				}
+				else if(DeltaYaw < -90.0f)
+				{
+					bIsCW = false;
+					OnOverDeltaOffset.Broadcast();
+				}
 			}
 			else
 			{
@@ -115,8 +113,6 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 						FMath::Acos(FVector::DotProduct(Velocity, actorForward)));
 			}
 		}
-
-		//MSB_LOG(Warning,TEXT("yaw %f"), DeltaYaw);
 	
 		if(!bInAir) SetIntended(false);
 	}
@@ -130,28 +126,15 @@ bool UMSBAnimInstance::SetIntended(bool isIntended)
 
 void UMSBAnimInstance::PlayComboAnim()
 {
-	auto state = OwnedCharacter->GetCharacterStateComponent();
-	state->SetIsAttacking(true);
 	CanNextCombo = false;
 	CurrentCombo = 1;
 	
 	Montage_Play(ComboMontage);
 }
 
-void UMSBAnimInstance::PlayMeleeSwing()
+void UMSBAnimInstance::PlayRandomMeleeSwing()
 {
 	RandomMeleeIdx = FMath::RandRange(0, 1);
-
-	auto state = OwnedCharacter->GetCharacterStateComponent();
-
-	state->SetIsAttacking(true);
-
-}
-
-void UMSBAnimInstance::PlayShot()
-{
-	auto state = OwnedCharacter->GetCharacterStateComponent();
-	state->SetIsAttacking(true);
 }
 
 void UMSBAnimInstance::JumpToNextSection()
@@ -162,13 +145,10 @@ void UMSBAnimInstance::JumpToNextSection()
 
 void UMSBAnimInstance::OnComboMontageEnded(UAnimMontage* montage, bool bInterrupted)
 {
-	auto state = OwnedCharacter->GetCharacterStateComponent();
-
-	state->SetIsAttacking(false);
 	CanNextCombo = false;
 	CurrentCombo = 0;
 	Cast<ALocalPlayerController>(OwnedCharacter->GetController())->AttackStop();
-	MSB_LOG(Warning,TEXT("montage end : %d"), bInterrupted);
+	OnAttackEnd.Broadcast();
 }
 
 void UMSBAnimInstance::AnimNotify_HitCheck()
@@ -177,13 +157,8 @@ void UMSBAnimInstance::AnimNotify_HitCheck()
 	OnHitCheck.Broadcast(CurrentCombo);
 }
 
-
 void UMSBAnimInstance::AnimNotify_NextComboCheck()
 {
-	auto character = Cast<APlayerCharacter>(OwnedCharacter);
-	auto state = character->GetCharacterStateComponent();
-	auto controller = Cast<ALocalPlayerController>(character->GetController());
-
 	if(NextComboInputOn)
 	{
 		JumpToNextSection();
@@ -198,19 +173,15 @@ FName UMSBAnimInstance::GetNextComboSectionName()
 	return NextSection;
 }
 
-void UMSBAnimInstance::SetSwingEnd()
-{
-	auto character = Cast<APlayerCharacter>(OwnedCharacter);
-	auto state = character->GetCharacterStateComponent();
-	state->SetIsAttacking(false);
-}
-
-void UMSBAnimInstance::SetReloadEnd()
+void UMSBAnimInstance::ReloadEnd()
 {
 	OnReloadAnimEnd.Broadcast();
-	bIsReload = false;
 }
 
+void UMSBAnimInstance::SwingEnd()
+{
+	OnAttackEnd.Broadcast();
+}
 
 void UMSBAnimInstance::ResetDelta()
 {
@@ -221,9 +192,8 @@ void UMSBAnimInstance::ResetDelta()
 	OwnedCharacter->SetActorRotation(controlRotOnXY);
 }
 
-void UMSBAnimInstance::PlayDeadAnim()
+void UMSBAnimInstance::PlayRandomDeadAnim()
 {
 	RandomDeadIdx2 =FMath::RandRange(0,2);
 	RandomDeadIdx3 =FMath::RandRange(0,3);
-	bIsDead = true;
 }
