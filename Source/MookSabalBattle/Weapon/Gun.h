@@ -19,4 +19,32 @@ public:
 	AGun();
 
 	virtual void PostInitializeComponents() override;
+
+	UPROPERTY(BlueprintReadWrite)
+	int32 Bullets;
+	UPROPERTY(EditAnywhere)
+	float GunAttackLength;
+	UPROPERTY(EditAnywhere)
+	float GunAttackSpreadAngle;
+
+private:
+	FName MuzzleSocket;
+	FVector MuzzlePosInLocal;
+public:
+	FVector GetMuzzleLocationInWS();
+
+	void FireParticleOnMuzzle();
+
+private:
+	UParticleSystem* FireParticle;
+
+public:
+	FHitResult Hit(APlayerCharacter* Causer);
+
+	TSubclassOf<UCameraShakeBase> CamShakeShoot;
+
+	bool CanFire(APlayerCharacter* Causer);
+
+	UFUNCTION()
+	void FillBullets();
 };

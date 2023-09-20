@@ -19,8 +19,9 @@ void UCharacterStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+	HP = MaxHP;
+	bIsAttacking = false;
+	bIsReloading = false;
 }
 
 
@@ -30,5 +31,19 @@ void UCharacterStateComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+void UCharacterStateComponent::ApplyDamage(float damage)
+{
+	auto candidateHP = HP - damage;
+	HP = candidateHP > 0.0f ? candidateHP : 0.0f;
+	MSB_LOG(Warning, TEXT("curr hp : %f"), HP);
+	if(HP < 0.01)
+	{
+		HP = 0.0f;
+		MSB_LOG(Warning, TEXT("before die"));
+		OnHPIsZero.Broadcast();
+	}
+	OnHPChanges.Broadcast(HP);
 }
 

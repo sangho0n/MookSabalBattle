@@ -11,6 +11,9 @@
 #include "MookSabalBattle/Weapon/Sword.h"
 #include "MookSabalBattle/Weapon/Weapon.h"
 
+#include "DrawDebugHelpers.h"
+#include "Engine/DamageEvents.h"
+
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
@@ -49,13 +52,18 @@ APlayerCharacter::APlayerCharacter()
 		GetMesh()->SetAnimInstanceClass(ABP_HUMANOID.Class);
 	}
 	
-	// jump config
+	// Collision
+	SetCharacterAsAlly();
+	
+	// movement
 	auto movement = GetCharacterMovement();\
 	movement->AirControl = 0.5f;
 	movement->JumpZVelocity = 350.0f;
+	movement->MaxWalkSpeed = MaxWalkSpeed;
 
-	CharacterState->SetCurrentMode(CharacterMode::NON_EQUIPPED);
-	CharacterState->SetIsEquipped(false);
+	CharacterState->CurrentMode = CharacterMode::NON_EQUIPPED;
+	CharacterState->bIsEquipped = false;
+	CharacterState->bIsEquippable = false;
 	CurrentWeapon = nullptr; // Fist mode
 
 	// UI
@@ -64,21 +72,72 @@ APlayerCharacter::APlayerCharacter()
 	{
 		this->InGameUIClass = INGAMEUI.Class;
 	}
+
+	// Attack Collision
+	AttackCapsuleColliderRadius = 34.0f;
+	AttackCapsuleColliderHalfHeight = 30.0f;
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> BLEEDING(TEXT("/Game/Realistic_Starter_VFX_Pack_Vol2/Particles/Blood/P_Blood_Splat_Cone.P_Blood_Splat_Cone"));
+	if(BLEEDING.Succeeded())
+	{
+		BleedingParticle = BLEEDING.Object;
+	}
+
+	
+	// below code will be refactored after implement server
+	SetCharacterAsEnemy();
 }
+
+void APlayerCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	auto Collider = GetCapsuleComponent();
+
+	Collider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnCharacterBeginOverlapWithCharacter);
+	OnGetDamage.AddDynamic(this, &APlayerCharacter::OnHit);
+	Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnAttackEnd.AddDynamic(this, &APlayerCharacter::StopAttacking);
+	
+	PunchDamage = 7.0f;
+	KickDamage = 16.0f;
+}
+
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
-	Super::BeginPlay();
+	Super::BeginPlay(); 
+	CharacterState->OnHPIsZero.AddDynamic(this, &APlayerCharacter::Die);
 	
-	if(IsValid(InGameUIClass))
+	if(GetController()->IsLocalPlayerController())
 	{
-		InGameUI = Cast<UInGameUI>(CreateWidget(GetWorld(), InGameUIClass));
-		InGameUI->BindCharacterStat();
-
-		InGameUI->AddToViewport();
+		if(IsValid(InGameUIClass))
+		{
+			InGameUI = Cast<UInGameUI>(CreateWidget(GetWorld(), InGameUIClass));
+			InGameUI->AddToViewport();
+			InGameUI->BindCharacterStat(CharacterState);
+		}
 	}
-	ChangeCharacterMode(CharacterState->GetCurrentMode());
+
+	ChangeCharacterMode(CharacterState->CurrentMode);
+	CharacterState->bIsDead = false;
+	
+	// below code will be refactored after implement server
+	if(GetController()->IsLocalPlayerController())
+	{
+		SetCharacterAsAlly();	
+	}
+}
+
+void APlayerCharacter::SetCharacterAsAlly()
+{
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Ally"));
+	GetMesh()->SetCollisionProfileName(TEXT("CharacterMesh"));
+}
+
+void APlayerCharacter::SetCharacterAsEnemy()
+{
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn"));
+	GetMesh()->SetCollisionProfileName(TEXT("Enemy"));
 }
 
 // Called every frame
@@ -91,7 +150,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 	{
 		accTime += DeltaTime;
 		CurrentCamPos = FMath::Lerp(CurrentCamPos, DesiredCamPos, accTime);
-		MSB_LOG(Warning, TEXT("dfdf %s"), *CurrentCamPos.ToString());
 		Camera->SetRelativeLocation(CurrentCamPos);
 		if(FVector::Dist(DesiredCamPos, CurrentCamPos) < KINDA_SMALL_NUMBER) {bInterpingCamPos = false; accTime = 0.0f;}
 	}
@@ -138,7 +196,7 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::LookUp(float NewAxisValue)
 {
-	// look up animation
+
 }
 
 void APlayerCharacter::Turn(float NewAxisValue)
@@ -148,17 +206,18 @@ void APlayerCharacter::Turn(float NewAxisValue)
 
 void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 {
-	CharacterState->SetCurrentMode(NewMode);
-	auto CurrentMode = CharacterState->GetCurrentMode();
+	CharacterState->CurrentMode = NewMode;
+	auto CurrentMode = CharacterState->CurrentMode;
 	if(CurrentMode == CharacterMode::NON_EQUIPPED || CurrentMode == CharacterMode::MELEE)
 	{
-		// 3rd view mouse rotation
-		SpringArm->TargetArmLength = 400.0f;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
 		// Don't rotate when the controller rotates. Let that just affect the camera.
 		this->bUseControllerRotationPitch = false;
 		this->bUseControllerRotationRoll = false;
 		this->bUseControllerRotationYaw = false;
+		if(!Controller->IsLocalPlayerController()) return;
+		// 3rd view mouse rotation
+		SpringArm->TargetArmLength = 400.0f;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
 		SpringArm->bUsePawnControlRotation = true;
 		SpringArm->bInheritPitch = true;
 		SpringArm->bInheritRoll = true;
@@ -173,13 +232,14 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 	}
 	if(CurrentMode == CharacterMode::GUN)
 	{
-		// 3rd view mouse rotation
-		SpringArm->TargetArmLength = 400.0f;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
 		// Don't rotate when the controller rotates. Let that just affect the camera.
 		this->bUseControllerRotationPitch = false;
 		this->bUseControllerRotationRoll = false;
-		this->bUseControllerRotationYaw = true;
+		this->bUseControllerRotationYaw = false;
+		if(!Controller->IsLocalPlayerController()) return;
+		// 3rd view mouse rotation
+		SpringArm->TargetArmLength = 400.0f;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
 		SpringArm->bUsePawnControlRotation = false;
 		SpringArm->bInheritPitch = true;
 		SpringArm->bInheritRoll = true;
@@ -194,29 +254,23 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 	}
 }
 
-CharacterMode APlayerCharacter::GetCurrentMode()
-{
-	return CharacterState->GetCurrentMode();
-}
-
 bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 {
 	if(nullptr != CurrentWeapon)
 	{
 		CurrentWeapon->Destroy();
 	}
-	
+	CharacterState->ApplyDamage(50.0f);
 	CurrentWeapon = NewWeapon;
-	CharacterState->SetIsEquipped(true);
+	auto weaponMesh = CurrentWeapon->ReadyToEquip();
+
+	CharacterState->bIsEquipped = true;
 	if(CurrentWeapon->IsA(AGun::StaticClass()))
 	{
 		ChangeCharacterMode(CharacterMode::GUN);
 		FName socket("hand_rifle_rSocket");
 		if(GetMesh()->DoesSocketExist(socket))
 		{
-			auto weaponMesh = CurrentWeapon->GetWeaponMesh();
-			weaponMesh->SetSimulatePhysics(false);
-			weaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			weaponMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, socket);
 
 			auto weaponTransform = weaponMesh->GetRelativeTransform();
@@ -226,16 +280,21 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 			weaponTransform.ConcatenateRotation(rot6_5_pitch);
 			weaponMesh->SetRelativeTransform(weaponTransform);
 		}
+
+		auto Gun = Cast<AGun>(CurrentWeapon);
+		Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnReloadAnimEnd
+		.AddDynamic(Gun, &AGun::FillBullets);
+		Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnReloadAnimEnd
+		.AddDynamic(this, &APlayerCharacter::EndReloading);
 	}
 	else if (CurrentWeapon->IsA(AMelee::StaticClass()))
 	{
+		auto CurrentMelee = Cast<AMelee>(CurrentWeapon);
+		
 		ChangeCharacterMode(CharacterMode::MELEE);
 		FName socket("hand_sword_rSocket");
 		if(GetMesh()->DoesSocketExist(socket))
 		{
-			auto weaponMesh = CurrentWeapon->GetWeaponMesh();
-			weaponMesh->SetSimulatePhysics(false);
-			weaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			if(CurrentWeapon->IsA(AAxe::StaticClass()) || CurrentWeapon->IsA(APick::StaticClass()))
 			{
 				weaponMesh->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, socket);
@@ -257,18 +316,293 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 void APlayerCharacter::OnWeaponStartOverlap(AWeapon* OverlappedWeapon_)
 {
 	InGameUI->SetEquipVisible();
-	CharacterState->SetIsEquippable(true);
+	CharacterState->bIsEquippable = true;
 	this->OverlappedWeapon = OverlappedWeapon_;
 }
 
 void APlayerCharacter::OnWeaponEndOverlap()
 {
 	InGameUI->SetEquipInvisible();
-	CharacterState->SetIsEquippable(false);
+	CharacterState->bIsEquippable = false;
 }
 
 UCharacterStateComponent* APlayerCharacter::GetCharacterStateComponent()
 {
 	return this->CharacterState;
+}
+
+# pragma region attack
+void APlayerCharacter::AttackNonEquip()
+{
+	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
+	if(CharacterState->bIsAttacking)
+	{
+		animInstance->SetNextComboInputOn(true);
+		return;
+	}
+
+	CharacterState->bIsAttacking = true;
+	animInstance->PlayComboAnim();
+}
+
+void APlayerCharacter::Shoot()
+{
+	if(CharacterState->bIsAttacking || CharacterState->bIsReloading) return;
+	auto Gun = Cast<AGun>(CurrentWeapon);
+	if(!Gun->CanFire(this)) return;
+
+	bInterpingCamPos = true;
+	DesiredCamPos = CamPosWhenFireGun;
+
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed / 2.0f * 1.0f;
+	CharacterState->bIsAttacking = true;	
+}
+
+void APlayerCharacter::StopShooting()
+{
+	CharacterState->bIsAttacking = false;
+
+	bInterpingCamPos = true;
+	DesiredCamPos = CamPosWhenGunMode;
+
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+}
+
+void APlayerCharacter::ReloadGun()
+{
+	auto Gun = Cast<AGun>(CurrentWeapon);
+	if(CharacterState->bIsReloading
+		|| CharacterState->bIsAttacking
+		|| Gun->Bullets >= 45) return;
+	
+	CharacterState->bIsReloading = true;
+}
+
+
+void APlayerCharacter::SwingMelee()
+{
+	if(CharacterState->bIsAttacking) return;
+
+	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
+	animInstance->PlayRandomMeleeSwing();
+	CharacterState->bIsAttacking = true;
+}
+
+void APlayerCharacter::Hit(int32 CurrCombo)
+{
+	if(!GetController()->IsLocalPlayerController()) return;
+	
+	auto currentMode = CharacterState->CurrentMode;
+	if(currentMode == CharacterMode::NON_EQUIPPED)
+	{
+		if (CurrCombo <= 2) Punch();
+		else Kick();
+	}
+	else if(currentMode == CharacterMode::MELEE)
+	{
+		auto Melee = Cast<AMelee>(CurrentWeapon);
+		Melee->Hit(this); // return multiple results
+	}
+	else // gun
+	{
+		auto Gun = Cast<AGun>(CurrentWeapon);
+		Gun->Hit(this); // return single result
+		// ApplyRecoil
+		UGameplayStatics::PlayWorldCameraShake(
+			Camera,
+			Gun->CamShakeShoot,
+			GetCameraLocation(),
+			0.0f,
+			10.0f
+		);
+		AddControllerPitchInput(-0.5f);
+	}
+}
+
+void APlayerCharacter::Punch()
+{
+	TArray<FHitResult> HitResults;
+	auto Param_IgnoreSelf = FCollisionQueryParams();
+	Param_IgnoreSelf.AddIgnoredActor(this);
+
+	auto bResult = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		GetActorLocation(),
+		GetActorLocation() + GetActorForwardVector() * (AttackCapsuleColliderHalfHeight + AttackCapsuleColliderRadius) * 2,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		ECollisionChannel::ECC_GameTraceChannel4,
+		FCollisionShape::MakeCapsule(AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight));
+
+	if(bResult)
+	{
+		TArray<APlayerCharacter*> AlreadyHitActors;
+		for(auto res: HitResults)
+		{
+			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
+
+			auto Character = Cast<APlayerCharacter>(res.GetActor());
+			if(AlreadyHitActors.Contains(Character)) continue;
+			
+			AlreadyHitActors.Push(Character);
+			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
+			FPointDamageEvent PointDamageEvent;
+			PointDamageEvent.Damage = PunchDamage;
+			PointDamageEvent.HitInfo = res;
+			PointDamageEvent.ShotDirection = ToThis;
+
+			Character->TakeDamage(PunchDamage, PointDamageEvent, this->GetInstigatorController(), this);
+		}
+	}
+
+#if ENABLE_DRAW_DEBUG
+	DrawDebugCapsule(
+		GetWorld(),
+		GetActorLocation() + GetActorForwardVector() * (AttackCapsuleColliderHalfHeight + AttackCapsuleColliderRadius),
+		AttackCapsuleColliderHalfHeight,
+		AttackCapsuleColliderRadius,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		bResult ? FColor::Red : FColor::Green,
+		false,
+		1.0f
+	);
+#endif
+	
+}
+
+void APlayerCharacter::Kick()
+{
+	TArray<FHitResult> HitResults;
+	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
+	Param_IgnoreSelf.AddIgnoredActor(this);
+
+	auto bResult = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		GetActorLocation(),
+		GetActorLocation() + GetActorForwardVector() * (AttackCapsuleColliderHalfHeight + AttackCapsuleColliderRadius) * 2,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		ECollisionChannel::ECC_GameTraceChannel4,
+		FCollisionShape::MakeCapsule(AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight));
+		
+	if(bResult)
+	{
+		TArray<APlayerCharacter*> AlreadyHitActors;
+		for(auto res: HitResults)
+		{
+			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
+
+			auto Character = Cast<APlayerCharacter>(res.GetActor());
+			if(AlreadyHitActors.Contains(Character)) continue;
+			
+			AlreadyHitActors.Push(Character);
+			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
+			FPointDamageEvent PointDamageEvent;
+			PointDamageEvent.Damage = KickDamage;
+			PointDamageEvent.HitInfo = res;
+			PointDamageEvent.ShotDirection = ToThis;
+
+			Character->TakeDamage(KickDamage, PointDamageEvent, this->GetInstigatorController(), this);
+		}
+	}
+
+#if ENABLE_DRAW_DEBUG
+	DrawDebugCapsule(
+		GetWorld(),
+		GetActorLocation() + GetActorForwardVector() * (AttackCapsuleColliderHalfHeight + AttackCapsuleColliderRadius),
+		AttackCapsuleColliderHalfHeight,
+		AttackCapsuleColliderRadius,
+		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
+		bResult ? FColor::Red : FColor::Green,
+		false,
+		1.0f
+	);
+#endif
+}
+
+void APlayerCharacter::StopAttacking()
+{
+	CharacterState->bIsAttacking = false;
+}
+
+# pragma endregion
+
+void APlayerCharacter::OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if(!OtherActor->IsA(APlayerCharacter::StaticClass())) return;
+	
+	auto currentPos = GetActorLocation();
+	auto otherPos = OtherActor->GetActorLocation();
+	auto toOther = otherPos - currentPos; toOther.Normalize();
+
+	GetMovementComponent()->Velocity = -toOther * 500.0f;
+}
+
+float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	if(DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+	{
+		auto PointDamageEvent = (FPointDamageEvent*)&DamageEvent;
+		OnGetDamage.Broadcast(PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection);
+		ShowBleeding(PointDamageEvent->HitInfo.Location, PointDamageEvent->ShotDirection, PointDamageEvent->HitInfo.Normal);
+
+		if(this->GetController()->IsLocalPlayerController())
+		{
+			InGameUI->ShowDamageIndicator(DamageCauser);
+		}
+	}
+	
+	DamageAmount = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	CharacterState->ApplyDamage(DamageAmount);
+	return DamageAmount;
+}
+
+void APlayerCharacter::Die()
+{
+	Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->PlayRandomDeadAnim();
+	CharacterState->bIsDead = true;
+	
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("NoCollision"));
+	GetMesh()->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
+	GetMesh()->SetSimulatePhysics(true);
+	OnGetDamage.Clear();
+}
+
+/*
+ * APlayerCharacter::ShowBleeding
+ *
+ * Location : The location that particle spawned
+ * From : A vector from attacking point to `Location
+ * Normal : The normal of that mesh at location
+ *
+ * the particle must spawned on the `Location,
+ * and the rotation angle should be same as the angle between `Normal and `From
+ */
+void APlayerCharacter::ShowBleeding(FVector Location, FVector From, FVector Normal)
+{
+	FTransform Transform;
+	From.Normalize(); Normal.Normalize();
+	Transform.SetLocation(Location);
+	Transform.SetRotation(FRotationMatrix::MakeFromZ(
+		From + 2 * Normal * FVector::DotProduct(-From, Normal)).ToQuat()
+	);
+	UGameplayStatics::SpawnEmitterAtLocation(
+		GetWorld(),
+		BleedingParticle,
+		Transform
+	);
+}
+
+FVector APlayerCharacter::GetCameraLocation()
+{
+	return Camera->GetComponentLocation();
+}
+
+FVector APlayerCharacter::GetCameraDirection()
+{
+	return Camera->GetComponentRotation().Vector();
+}
+
+void APlayerCharacter::EndReloading()
+{
+	CharacterState->bIsReloading = false;
 }
 

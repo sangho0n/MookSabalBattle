@@ -6,6 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "CharacterStateComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHPIsZero);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnHPChanges, float);
+
 UENUM(BlueprintType)
 enum class CharacterMode
 {
@@ -17,7 +20,6 @@ enum class CharacterMode
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MOOKSABALBATTLE_API UCharacterStateComponent : public UActorComponent
 {
-private:
 	GENERATED_BODY()
 
 public:	
@@ -32,57 +34,29 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-private:
 	bool bIsEquipped;
+
+	UPROPERTY(EditAnywhere, Category=Status)
 	CharacterMode CurrentMode;
+
 	bool bIsEquippable;
+
 	bool bIsAttacking;
 
-private:
-#pragma region getter_setter
-public:
-	void SetIsEquipped(bool bIsEquipped_)
-	{
-		this->bIsEquipped = bIsEquipped_;
-	}
+	bool bIsReloading;
 
-	void SetCurrentMode(CharacterMode CurrentMode_)
-	{
-		this->CurrentMode = CurrentMode_;
-	}
+	bool bIsDead;
 
-	[[nodiscard]]
-	bool IsEquipped() const
-	{
-		return bIsEquipped;
-	}
+	UPROPERTY(EditAnywhere, Category=Status)
+	float HP;
 
-	[[nodiscard]]
-	CharacterMode GetCurrentMode() const
-	{
-		return CurrentMode;
-	}
+	const float MaxHP = 200.0f;
+
+	FString NickName;
+
+	FOnHPIsZero OnHPIsZero;
 	
-	[[nodiscard]]
-	bool IsEquippable() const
-	{
-		return bIsEquippable;
-	}
+	FOnHPChanges OnHPChanges;
 
-	void SetIsEquippable(bool bIsEquippable_)
-	{
-		this->bIsEquippable = bIsEquippable_;
-	}
-	
-	[[nodiscard]]
-	bool IsAttacking() const
-	{
-		return bIsAttacking;
-	}
-
-	void SetIsAttacking(bool bIsAttacking_)
-	{
-		this->bIsAttacking = bIsAttacking_;
-	}
-#pragma endregion getter_setter
+	void ApplyDamage(float damage);
 };

@@ -89,3 +89,6 @@ Content/
 !Content/Collections
 !Content/Developers
 !Content/StarterContent
+
+# backup files
+*.h~

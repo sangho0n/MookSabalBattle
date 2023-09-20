@@ -8,24 +8,29 @@ AWeapon::AWeapon()
 {
 	SM_Weapon = CreateDefaultSubobject<UStaticMeshComponent>("DefaultWeapon");
 	Collider = CreateDefaultSubobject<UBoxComponent>("Collider");
-	RootComponent = Collider;
-	Collider->InitBoxExtent(FVector(51.0, 30.0, 42.0));
-	
-	SM_Weapon->SetCollisionProfileName(TEXT("NoCollision"));
-	Collider->SetCollisionProfileName(TEXT("CharacterOverlap"));
+	RootComponent = SM_Weapon;
+	Collider->SetupAttachment(RootComponent);
+
 	LocalPlayer = nullptr;
+	SM_Weapon->SetRelativeLocation(FVector(0, 0, 100));
+
+	OffsetFromLand = FVector(0.0f, 0.0f, 10.0f);
 }
 
 // Called when the game starts or when spawned
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
+	SM_Weapon->SetSimulatePhysics(true);
+	SM_Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 }
 
 void AWeapon::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	
+	SM_Weapon->SetCollisionProfileName(TEXT("IgnoreOnlyPawn"));
+	Collider->SetCollisionProfileName(TEXT("Weapon"));
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnCharacterBeginOverlap);
 	Collider->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnCharacterEndOverlap);
 }
@@ -61,8 +66,17 @@ void AWeapon::Destroyed()
 	Super::Destroyed();
 }
 
-UStaticMeshComponent* AWeapon::GetWeaponMesh()
+UStaticMeshComponent* AWeapon::ReadyToEquip()
 {
-	return this->SM_Weapon;
-}
+	// collider config
+	Collider->DestroyComponent();
+	SM_Weapon->SetSimulatePhysics(false);
+	SM_Weapon->SetCollisionProfileName("CharacterOverlap");
+	
+	// mesh config
+	auto mesh = this->SM_Weapon;
+	mesh->SetSimulatePhysics(false);
+	mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	return mesh;
+}
