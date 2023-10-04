@@ -104,26 +104,55 @@ void APlayerCharacter::PostInitializeComponents()
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
-	Super::BeginPlay(); 
-	CharacterState->OnHPIsZero.AddDynamic(this, &APlayerCharacter::Die);
+	Super::BeginPlay();
+
+	FTimerHandle TimerHandle;
+	float DelayInSeconds = 2.0f;
+	FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &APlayerCharacter::InitPlayer);
+	GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, DelayInSeconds, false);
+}
+
+void APlayerCharacter::InitPlayer()
+{
+	CharacterState = Cast<ACharacterState>(GetPlayerState());
+	check(nullptr != CharacterState);
 	
-	if(GetController()->IsLocalPlayerController())
+	if(HasAuthority())
+	{
+		CharacterState->OnHPIsZero.AddDynamic(this, &APlayerCharacter::Die);
+	}
+	else
+	{
+		FString DebugMsg = FString::Printf(TEXT("나는 클라이언트 폰이야 %s"),
+			*GetDebugName(this));
+		GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Blue, DebugMsg);
+	}
+	
+	if(IsLocallyControlled())
 	{
 		if(IsValid(InGameUIClass))
 		{
 			InGameUI = Cast<UInGameUI>(CreateWidget(GetWorld(), InGameUIClass));
 			InGameUI->AddToViewport();
+			MSB_LOG_LOCATION(Warning);
 			InGameUI->BindCharacterStat(CharacterState);
 		}
+		// 수정할것
+		CharacterState->bIsRedTeam = true;
+	}
+	else
+	{
+		CharacterState->bIsRedTeam = false;
 	}
 
-	ChangeCharacterMode(CharacterState->CurrentMode);
-	CharacterState->bIsDead = false;
-	
-	// below code will be refactored after implement server
-	if(GetController()->IsLocalPlayerController())
+	ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
+	if(CharacterState->bIsRedTeam)
 	{
-		SetCharacterAsAlly();	
+		SetCharacterAsAlly();
+	}
+	else
+	{
+		SetCharacterAsEnemy();
 	}
 }
 
