@@ -51,18 +51,12 @@ APlayerCharacter::APlayerCharacter()
 		GetMesh()->SetAnimInstanceClass(ABP_HUMANOID.Class);
 	}
 	
-	// Collision
-	SetCharacterAsAlly();
-	
 	// movement
-	auto movement = GetCharacterMovement();\
+	auto movement = GetCharacterMovement();
 	movement->AirControl = 0.5f;
 	movement->JumpZVelocity = 350.0f;
 	movement->MaxWalkSpeed = MaxWalkSpeed;
 
-	CharacterState->CurrentMode = CharacterMode::NON_EQUIPPED;
-	CharacterState->bIsEquipped = false;
-	CharacterState->bIsEquippable = false;
 	CurrentWeapon = nullptr; // Fist mode
 
 	// UI
@@ -81,9 +75,6 @@ APlayerCharacter::APlayerCharacter()
 		BleedingParticle = BLEEDING.Object;
 	}
 
-	
-	// below code will be refactored after implement server
-	SetCharacterAsEnemy();
 }
 
 void APlayerCharacter::PostInitializeComponents()
@@ -172,6 +163,7 @@ void APlayerCharacter::SetCharacterAsEnemy()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if(!IsValid(CharacterState)) return;
 
 	// cam pos change
 	if(bInterpingCamPos)
@@ -183,16 +175,9 @@ void APlayerCharacter::Tick(float DeltaTime)
 	}
 }
 
-// Called to bind functionality to input
-void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-	
-}
-
 void APlayerCharacter::ForwardBack(float NewAxisValue)
 {
-	if(nullptr != Controller && NewAxisValue != 0.0)
+	if(NewAxisValue != 0.0)
 	{
 		const auto Rotation = Controller->GetControlRotation();
 		const FRotator XYRotation(0, Rotation.Yaw, 0);
@@ -204,7 +189,7 @@ void APlayerCharacter::ForwardBack(float NewAxisValue)
 
 void APlayerCharacter::LeftRight(float NewAxisValue)
 {
-	if(nullptr != Controller && NewAxisValue != 0.0)
+	if(NewAxisValue != 0.0)
 	{
 		const auto Rotation = Controller->GetControlRotation();
 		const FRotator XYRotation(0, Rotation.Yaw, 0);
@@ -352,7 +337,7 @@ void APlayerCharacter::OnWeaponEndOverlap()
 	CharacterState->bIsEquippable = false;
 }
 
-UCharacterStateComponent* APlayerCharacter::GetCharacterStateComponent()
+ACharacterState* APlayerCharacter::GetCharacterStateComponent()
 {
 	return this->CharacterState;
 }
