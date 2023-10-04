@@ -3,6 +3,7 @@
 
 #include "Gun.h"
 #include "Engine/DamageEvents.h"
+#include "Net/UnrealNetwork.h"
 
 AGun::AGun() : Super()
 {
@@ -35,6 +36,14 @@ AGun::AGun() : Super()
 	}
 }
 
+void AGun::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AGun, Bullets);
+}
+
+
 void AGun::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -44,12 +53,12 @@ void AGun::PostInitializeComponents()
 	Damage = 3.0f;
 }
 
-FVector AGun::GetMuzzleLocationInWS()
+void AGun::FireParticleOnMuzzle_Server_Implementation()
 {
-	return SM_Weapon->GetSocketLocation(MuzzleSocket);
+	FireParticleOnMuzzle_Multicast();
 }
 
-void AGun::FireParticleOnMuzzle()
+void AGun::FireParticleOnMuzzle_Multicast_Implementation()
 {
 	UGameplayStatics::SpawnEmitterAttached(FireParticle,
 		SM_Weapon,
@@ -60,18 +69,21 @@ void AGun::FireParticleOnMuzzle()
 		);
 }
 
-FHitResult AGun::Hit(APlayerCharacter* Causer)
+
+// called on client
+FPointDamageEvent AGun::Hit(APlayerCharacter* Causer)
 {
 	FHitResult HitResult;
+	FPointDamageEvent DamageEvent;
 	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
-	Param_IgnoreSelf.AddIgnoredActor(this);
+	Param_IgnoreSelf.AddIgnoredActor(Causer);
 	Param_IgnoreSelf.bTraceComplex = true;
 	
-	if(!CanFire(Causer)) { return HitResult;}
-	Bullets--;
+	if(!CanFire(Causer)) { return DamageEvent;}
+	Bullets--; MulticastBulltes(Bullets);
 	MSB_LOG(Warning, TEXT("current bullets : %d"), Bullets);
 
-	FireParticleOnMuzzle();
+	FireParticleOnMuzzle_Server();
 	bool bHit = false;
 	bool bBlocked = false;
 	auto CameraLocation = Causer->GetCameraLocation();
@@ -90,16 +102,23 @@ FHitResult AGun::Hit(APlayerCharacter* Causer)
 		if(!HitResult.GetActor()->IsA(APlayerCharacter::StaticClass())) {bHit = false;}
 		else
 		{
-			bHit = true;
 			auto Character = Cast<APlayerCharacter>(HitResult.GetActor());
+			if(Character->IsSameTeam(Causer)) bHit = false;
+			else
+			{
+				bHit = true;
+				if(HitResult.BoneName.IsEqual(TEXT("head"))) Damage *= 1.5f;
 
-			auto ToThis = this->GetActorLocation() - HitResult.Location; ToThis.Normalize();
-			FPointDamageEvent PointDamageEvent;
-			PointDamageEvent.Damage = this->Damage;
-			PointDamageEvent.HitInfo = HitResult;
-			PointDamageEvent.ShotDirection = ToThis;
-
-			Character->TakeDamage(this->Damage, PointDamageEvent, Causer->GetInstigatorController(), Causer);
+				auto ToThis = this->GetActorLocation() - HitResult.Location; ToThis.Normalize();
+				FPointDamageEvent PointDamageEvent;
+				PointDamageEvent.Damage = this->Damage;
+				PointDamageEvent.HitInfo = HitResult;
+				PointDamageEvent.ShotDirection = ToThis;
+				
+				//Character->TakeDamage(Damage, PointDamageEvent, this->GetInstigatorController(), Causer);
+				DamageEvent = PointDamageEvent;
+			}
+			
 		}
 	}
 #if ENABLE_DRAW_DEBUG
@@ -113,16 +132,21 @@ FHitResult AGun::Hit(APlayerCharacter* Causer)
 	);
 #endif
 
-	return HitResult;
+	return DamageEvent;
 }
 
 bool AGun::CanFire(APlayerCharacter* Causer)
 {
-	if(Bullets <= 0) {Causer->StopShooting(); return false;}
+	if(Bullets <= 0) {Causer->StopShooting_Server(); return false;}
 	return true;
 }
 
 void AGun::FillBullets()
 {
-	Bullets = 45;
+	Bullets = 45; MulticastBulltes(Bullets);
+}
+
+void AGun::MulticastBulltes_Implementation(int32 ClientBullets)
+{
+	Bullets = ClientBullets;
 }

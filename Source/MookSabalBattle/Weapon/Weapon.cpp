@@ -10,11 +10,12 @@ AWeapon::AWeapon()
 	Collider = CreateDefaultSubobject<UBoxComponent>("Collider");
 	RootComponent = SM_Weapon;
 	Collider->SetupAttachment(RootComponent);
-
-	LocalPlayer = nullptr;
 	SM_Weapon->SetRelativeLocation(FVector(0, 0, 100));
 
 	OffsetFromLand = FVector(0.0f, 0.0f, 10.0f);
+	bIsPossessed = false;
+
+	SetReplicates(true);
 }
 
 // Called when the game starts or when spawned
@@ -23,6 +24,9 @@ void AWeapon::BeginPlay()
 	Super::BeginPlay();
 	SM_Weapon->SetSimulatePhysics(true);
 	SM_Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	SM_Weapon->SetRenderCustomDepth(true);
+	SM_Weapon->CustomDepthStencilValue = OUT_LINE::Weapon;
+	bIsPossessed = false;
 }
 
 void AWeapon::PostInitializeComponents()
@@ -30,6 +34,7 @@ void AWeapon::PostInitializeComponents()
 	Super::PostInitializeComponents();
 	
 	SM_Weapon->SetCollisionProfileName(TEXT("IgnoreOnlyPawn"));
+	SM_Weapon->SetUseCCD(true);
 	Collider->SetCollisionProfileName(TEXT("Weapon"));
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnCharacterBeginOverlap);
 	Collider->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnCharacterEndOverlap);
@@ -38,45 +43,49 @@ void AWeapon::PostInitializeComponents()
 
 void AWeapon::OnCharacterBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if(OtherActor->IsA(APlayerCharacter::StaticClass()) && OtherActor->GetInstigatorController()->IsLocalPlayerController())
+	if(OtherActor->IsA(APlayerCharacter::StaticClass()))
 	{
-		LocalPlayer = Cast<APlayerCharacter>(OtherActor);
-		MSB_LOG(Warning, TEXT("begin"));
-		MSB_LOG(Warning, TEXT("dd %s"), *SM_Weapon->GetName());
-		// show equip UI
-		LocalPlayer->OnWeaponStartOverlap(this);
+		auto Character = Cast<APlayerCharacter>(OtherActor);
+		if(Character->IsLocallyControlled())
+		{
+			// show equip UI
+			Character->OnWeaponStartOverlap_Server(this);
+		}
 	}
 }
 
 void AWeapon::OnCharacterEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if(OtherActor->IsA(APlayerCharacter::StaticClass()) && OtherActor->GetInstigatorController()->IsLocalPlayerController())
+	if(OtherActor->IsA(APlayerCharacter::StaticClass()))
 	{
-		// hide equip UI
-		MSB_LOG(Warning, TEXT("end"));
-		LocalPlayer->OnWeaponEndOverlap();
-		return;
+		auto Character = Cast<APlayerCharacter>(OtherActor);
+		if(Character->IsLocallyControlled())
+		{
+			// hide equip UI
+			MSB_LOG(Warning, TEXT("end"));
+			Character->OnWeaponEndOverlap_Server();
+		}
 	}
 }
 
 void AWeapon::Destroyed()
 {
-	if(nullptr != LocalPlayer)
-		OnCharacterEndOverlap(nullptr, LocalPlayer, nullptr, -1);
 	Super::Destroyed();
 }
 
-UStaticMeshComponent* AWeapon::ReadyToEquip()
+UStaticMeshComponent* AWeapon::ReadyToEquip(APlayerCharacter* Player)
 {
+	bIsPossessed = true;
+	
 	// collider config
 	Collider->DestroyComponent();
 	SM_Weapon->SetSimulatePhysics(false);
 	SM_Weapon->SetCollisionProfileName("CharacterOverlap");
 	
 	// mesh config
-	auto mesh = this->SM_Weapon;
-	mesh->SetSimulatePhysics(false);
-	mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	auto Mesh = this->SM_Weapon;
+	Mesh->SetSimulatePhysics(false);
+	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	return mesh;
+	return Mesh;
 }

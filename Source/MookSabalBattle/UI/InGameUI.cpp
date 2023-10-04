@@ -56,14 +56,19 @@ void UInGameUI::UpdateFadeOutEffect(UCanvasPanel* Canvas, bool& bIsFading, float
 	Canvas->SetRenderOpacity(Opacity);
 }
 
-void UInGameUI::BindCharacterStat(UCharacterStateComponent* State)
+/**
+ * @brief Bind HP with HP Bar percentage, and init opacities.
+ * Called on each client(or listen server), the actor who is locally controlled.
+ * 
+ * @param State 
+ */
+void UInGameUI::BindCharacterStat(ACharacterState* State)
 {
 	State->OnHPChanges.AddLambda([this, State](float HP)-> void
 	{
 		HPBar->SetPercent(HP / State->MaxHP);
 	});
 	State->OnHPChanges.AddUObject(this, &UInGameUI::ShowBleeding);
-	State->OnHPChanges.Broadcast(200.0f);
 
 	this->Canvas_Bleeding->SetRenderOpacity(0.0f);
 	this->Canvas_DamageIndicator->SetRenderOpacity(0.0f);
@@ -94,7 +99,6 @@ void UInGameUI::SetAimInvisible()
 
 void UInGameUI::ShowBleeding(float HP)
 {
-	MSB_LOG(Warning, TEXT("asdfasdfasdfasdf"));
 	if(HP > Bleeding1Offset)
 	{
 		Image_Bleeding1->SetRenderOpacity(0);
@@ -102,7 +106,6 @@ void UInGameUI::ShowBleeding(float HP)
 		return;
 	}
 
-	MSB_LOG(Warning, TEXT("asdfasdfasdfasdf"));
 	Image_Bleeding1->SetRenderOpacity((Bleeding1Offset - HP)/Bleeding1Offset);
 	if(HP < Bleeding2Offset)
 		Image_Bleeding2->SetRenderOpacity((Bleeding2Offset - HP)/Bleeding2Offset * MaxBleeding2Opacity);
@@ -138,7 +141,6 @@ float UInGameUI::CalcDamageIndicatorAngle()
 		Angle = -FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(OffsetVector, ShotDirection)));
 	}
 
-	MSB_LOG(Warning, TEXT("got attack from : %f"), Angle);
 	return Angle;
 }
 
