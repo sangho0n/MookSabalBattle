@@ -3,7 +3,7 @@
 #pragma once
 
 #include "../MookSabalBattle.h"
-#include "MookSabalBattle/Character/CharacterStateComponent.h"
+#include "MookSabalBattle/Character/CharacterState.h"
 #include "GameFramework/Character.h"
 #include "MookSabalBattle/UI/InGameUI.h"
 #include "PlayerCharacter.generated.h"
@@ -19,6 +19,9 @@ public:
 	// Sets default values for this character's properties
 	APlayerCharacter();
 
+	
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -28,12 +31,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void PostInitializeComponents() override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
-
 private:
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	USpringArmComponent* SpringArm;
@@ -44,10 +43,10 @@ private:
 public:
 	UPROPERTY(VisibleAnywhere, Category=Weapon)
 	AWeapon* CurrentWeapon;
-private:
-
-	UPROPERTY(VisibleAnywhere, Category=State)
-	UCharacterStateComponent* CharacterState;
+	
+protected:
+	UPROPERTY(VisibleAnywhere, Category=State, Replicated)
+	ACharacterState* CharacterState;
 
 public:
 	void ForwardBack(float NewAxisValue);
@@ -65,13 +64,17 @@ private:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	UCharacterStateComponent* GetCharacterStateComponent();
+	ACharacterState* GetCharacterStateComponent();
 	
-	UFUNCTION(BlueprintCallable)
-	bool EquipWeapon(AWeapon* NewWeapon);
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void EquipWeapon_Server(AWeapon* NewWeapon);
+	UFUNCTION(NetMulticast, Reliable)
+	void EquipWeapon_Multicast();
 	
-	UFUNCTION(BlueprintCallable)
-	void OnWeaponStartOverlap(AWeapon* OverlappedWeapon);
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void OnWeaponStartOverlap(AWeapon* OverlappedWeapon_);
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
+	void OnWeaponStartOverlap_Multicast(AWeapon* OverlappedWeapon_);
 	
 	UFUNCTION(BlueprintCallable)
 	void OnWeaponEndOverlap();
@@ -88,14 +91,23 @@ private:
 public:
 	virtual void Jump() override;
 
-	UFUNCTION(BlueprintCallable)
-	void AttackNonEquip();
-	UFUNCTION(BlueprintCallable)
-	void Shoot();
-	UFUNCTION(BlueprintCallable)
-	void StopShooting();
-	UFUNCTION(BlueprintCallable)
-	void SwingMelee();
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void AttackNonEquip_Server();
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Shoot_Server();
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void StopShooting_Server();
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void SwingMelee_Server();
+	
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
+	void AttackNonEquip_Multicast();
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
+	void Shoot_Multicast();
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
+	void StopShooting_Multicast();
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
+	void SwingMelee_Multicast();
 
 	UFUNCTION(BlueprintCallable)
 	void Hit(int32 CurrCombo);
@@ -156,5 +168,12 @@ private:
 public:
 	FVector GetCameraLocation();
 	FVector GetCameraDirection();
-	void ReloadGun();
+
+	UFUNCTION(Server, Reliable)
+	void ReloadGun_Server();
+	UFUNCTION(NetMulticast, Reliable)
+	void ReloadGun_Multicast();
+
+	UFUNCTION()
+	void InitPlayer();
 };

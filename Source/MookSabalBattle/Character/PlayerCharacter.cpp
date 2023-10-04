@@ -12,7 +12,10 @@
 #include "MookSabalBattle/Weapon/Weapon.h"
 
 #include "DrawDebugHelpers.h"
+#include "LocalPlayerController.h"
 #include "Engine/DamageEvents.h"
+#include "Net/UnrealNetwork.h"
+#include "Engine/Engine.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -130,6 +133,7 @@ void APlayerCharacter::InitPlayer()
 		}
 		// 수정할것
 		CharacterState->bIsRedTeam = true;
+		Cast<ALocalPlayerController>(GetController())->InitPlayer();
 	}
 	else
 	{
@@ -146,6 +150,15 @@ void APlayerCharacter::InitPlayer()
 		SetCharacterAsEnemy();
 	}
 }
+
+
+void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APlayerCharacter, CharacterState);
+}
+
 
 void APlayerCharacter::SetCharacterAsAlly()
 {
@@ -182,8 +195,9 @@ void APlayerCharacter::ForwardBack(float NewAxisValue)
 		const auto Rotation = Controller->GetControlRotation();
 		const FRotator XYRotation(0, Rotation.Yaw, 0);
 
-		const auto Forward = FRotationMatrix(XYRotation).GetUnitAxis(EAxis::X);
+		const FVector Forward = FRotationMatrix(XYRotation).GetUnitAxis(EAxis::X);
 		AddMovementInput(Forward, NewAxisValue);
+		//GetCharacterMovement()->AddInputVector(Forward*NewAxisValue, false);
 	}
 }
 
@@ -265,17 +279,27 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 	}
 }
 
-bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
+void APlayerCharacter::EquipWeapon_Server_Implementation(AWeapon* NewWeapon)
+{
+	// if Already possessed by other character or not available
+	MSB_LOG(Warning,TEXT("b is possesse %s, is valid %s, is equippable %s")
+		,NewWeapon->bIsPossessed?TEXT("true"):TEXT("false")
+		,IsValid(NewWeapon)?TEXT("true"):TEXT("false"),
+		CharacterState->IsEquippable()?TEXT("true"):TEXT("false"));
+	if(NewWeapon->bIsPossessed || !IsValid(NewWeapon) || !CharacterState->IsEquippable()) return;
+	
+	EquipWeapon_Multicast();
+}
+
+void APlayerCharacter::EquipWeapon_Multicast_Implementation()
 {
 	if(nullptr != CurrentWeapon)
 	{
 		CurrentWeapon->Destroy();
 	}
-	CharacterState->ApplyDamage(50.0f);
-	CurrentWeapon = NewWeapon;
-	auto weaponMesh = CurrentWeapon->ReadyToEquip();
+	CurrentWeapon = OverlappedWeapon;
+	auto weaponMesh = CurrentWeapon->ReadyToEquip(this);
 
-	CharacterState->bIsEquipped = true;
 	if(CurrentWeapon->IsA(AGun::StaticClass()))
 	{
 		ChangeCharacterMode(CharacterMode::GUN);
@@ -294,9 +318,9 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 
 		auto Gun = Cast<AGun>(CurrentWeapon);
 		Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnReloadAnimEnd
-		.AddDynamic(Gun, &AGun::FillBullets);
+			.AddDynamic(Gun, &AGun::FillBullets);
 		Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnReloadAnimEnd
-		.AddDynamic(this, &APlayerCharacter::EndReloading);
+			.AddDynamic(this, &APlayerCharacter::EndReloading);
 	}
 	else if (CurrentWeapon->IsA(AMelee::StaticClass()))
 	{
@@ -321,20 +345,27 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 			}
 		}
 	}
-	return true;
 }
 
-void APlayerCharacter::OnWeaponStartOverlap(AWeapon* OverlappedWeapon_)
+void APlayerCharacter::OnWeaponStartOverlap_Implementation(AWeapon* OverlappedWeapon_)
 {
-	InGameUI->SetEquipVisible();
-	CharacterState->bIsEquippable = true;
+	this->OverlappedWeapon = OverlappedWeapon_;
+	OnWeaponStartOverlap_Multicast(OverlappedWeapon_);
+}
+
+void APlayerCharacter::OnWeaponStartOverlap_Multicast_Implementation(AWeapon* OverlappedWeapon_)
+{
+	CharacterState->SetEquippable(true);
+	if(IsLocallyControlled())
+		InGameUI->SetEquipVisible();
 	this->OverlappedWeapon = OverlappedWeapon_;
 }
+
 
 void APlayerCharacter::OnWeaponEndOverlap()
 {
 	InGameUI->SetEquipInvisible();
-	CharacterState->bIsEquippable = false;
+	CharacterState->SetEquippable(false);
 }
 
 ACharacterState* APlayerCharacter::GetCharacterStateComponent()
@@ -343,65 +374,137 @@ ACharacterState* APlayerCharacter::GetCharacterStateComponent()
 }
 
 # pragma region attack
-void APlayerCharacter::AttackNonEquip()
+void APlayerCharacter::AttackNonEquip_Server_Implementation()
+{
+	// auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
+	// if(CharacterState->IsAttacking())
+	// {
+	// 	animInstance->SetNextComboInputOn(true);
+	// }
+	// else
+	// {
+	// 	CharacterState->SetAttacking(true);
+	// 	animInstance->PlayComboAnim();
+	// }
+	AttackNonEquip_Multicast();
+}
+
+void APlayerCharacter::Shoot_Server_Implementation()
+{
+	if(CharacterState->IsAttacking() || CharacterState->bIsReloading) return;
+	// auto Gun = Cast<AGun>(CurrentWeapon);
+	// if(!Gun->CanFire(this)) return;
+	//
+	// if(IsLocallyControlled())
+	// {
+	// 	bInterpingCamPos = true;
+	// 	DesiredCamPos = CamPosWhenFireGun;
+	// }
+	//
+	// GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed / 2.0f * 1.0f;
+	// CharacterState->SetAttacking(true);
+	Shoot_Multicast();
+}
+
+void APlayerCharacter::StopShooting_Server_Implementation()
+{
+	// if(IsLocallyControlled())
+	// {
+	// 	bInterpingCamPos = true;
+	// 	DesiredCamPos = CamPosWhenGunMode;
+	// }
+	//
+	// GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+	// CharacterState->SetAttacking(false);
+	StopShooting_Multicast();
+}
+
+void APlayerCharacter::SwingMelee_Server_Implementation()
+{
+	if(CharacterState->IsAttacking()) return;
+	//
+	// auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
+	// animInstance->PlayRandomMeleeSwing();
+	//
+	// CharacterState->SetAttacking(true);
+	SwingMelee_Multicast();
+}
+void APlayerCharacter::AttackNonEquip_Multicast_Implementation()
 {
 	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
-	if(CharacterState->bIsAttacking)
+	if(CharacterState->IsAttacking())
 	{
 		animInstance->SetNextComboInputOn(true);
-		return;
 	}
-
-	CharacterState->bIsAttacking = true;
-	animInstance->PlayComboAnim();
+	else
+	{
+		CharacterState->SetAttacking(true);
+		animInstance->PlayComboAnim();
+	}
 }
 
-void APlayerCharacter::Shoot()
+void APlayerCharacter::Shoot_Multicast_Implementation()
 {
-	if(CharacterState->bIsAttacking || CharacterState->bIsReloading) return;
 	auto Gun = Cast<AGun>(CurrentWeapon);
 	if(!Gun->CanFire(this)) return;
-
-	bInterpingCamPos = true;
-	DesiredCamPos = CamPosWhenFireGun;
-
-	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed / 2.0f * 1.0f;
-	CharacterState->bIsAttacking = true;	
+	
+	if(IsLocallyControlled())
+	{
+		bInterpingCamPos = true;
+		DesiredCamPos = this->CamPosWhenFireGun;
+	}
+	
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed / 2.0f;
+	CharacterState->SetAttacking(true);
 }
 
-void APlayerCharacter::StopShooting()
+void APlayerCharacter::StopShooting_Multicast_Implementation()
 {
-	CharacterState->bIsAttacking = false;
-
-	bInterpingCamPos = true;
-	DesiredCamPos = CamPosWhenGunMode;
+	if(IsLocallyControlled())
+	{
+		bInterpingCamPos = true;
+		DesiredCamPos = this->CamPosWhenGunMode;
+	}
 
 	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+	CharacterState->SetAttacking(false);
 }
 
-void APlayerCharacter::ReloadGun()
+void APlayerCharacter::SwingMelee_Multicast_Implementation()
+{
+	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
+	animInstance->PlayRandomMeleeSwing();
+
+	CharacterState->SetAttacking(true);
+}
+
+void APlayerCharacter::ReloadGun_Server_Implementation()
 {
 	auto Gun = Cast<AGun>(CurrentWeapon);
 	if(CharacterState->bIsReloading
-		|| CharacterState->bIsAttacking
+		|| CharacterState->IsAttacking()
 		|| Gun->Bullets >= 45) return;
-	
+
+	ReloadGun_Multicast();
+}
+
+void APlayerCharacter::ReloadGun_Multicast_Implementation()
+{
 	CharacterState->bIsReloading = true;
 }
 
-
-void APlayerCharacter::SwingMelee()
-{
-	if(CharacterState->bIsAttacking) return;
-
-	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
-	animInstance->PlayRandomMeleeSwing();
-	CharacterState->bIsAttacking = true;
-}
-
+/**
+ * @brief Method for hit detection.
+ * It is bound to the OnHitCheck delegate of the anim instance, and
+ * the OnHitCheck delegate is broadcasted by AnimNotify_HitCheck.
+ *
+ *  Call the appropriate method with given param and CharacterState->CurrentMode
+ * 
+ * @param CurrCombo 
+ */
 void APlayerCharacter::Hit(int32 CurrCombo)
 {
-	if(!GetController()->IsLocalPlayerController()) return;
+	if(!IsLocallyControlled()) return;
 	
 	auto currentMode = CharacterState->CurrentMode;
 	if(currentMode == CharacterMode::NON_EQUIPPED)
@@ -531,7 +634,7 @@ void APlayerCharacter::Kick()
 
 void APlayerCharacter::StopAttacking()
 {
-	CharacterState->bIsAttacking = false;
+	CharacterState->SetAttacking(false);
 }
 
 # pragma endregion
@@ -555,7 +658,7 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 		OnGetDamage.Broadcast(PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection);
 		ShowBleeding(PointDamageEvent->HitInfo.Location, PointDamageEvent->ShotDirection, PointDamageEvent->HitInfo.Normal);
 
-		if(this->GetController()->IsLocalPlayerController())
+		if(IsLocallyControlled())
 		{
 			InGameUI->ShowDamageIndicator(DamageCauser);
 		}
@@ -616,4 +719,3 @@ void APlayerCharacter::EndReloading()
 {
 	CharacterState->bIsReloading = false;
 }
-

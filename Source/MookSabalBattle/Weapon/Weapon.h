@@ -43,9 +43,11 @@ public:
 	virtual void OnCharacterEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	UStaticMeshComponent* ReadyToEquip();
+	UStaticMeshComponent* ReadyToEquip(APlayerCharacter* Player);
 
 	void AfterEquip();
 
 	float Damage;
+
+	bool bIsPossessed;
 };

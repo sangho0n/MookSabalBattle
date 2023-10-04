@@ -6,7 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/CanvasPanel.h"
 #include "Components/ProgressBar.h"
-#include "MookSabalBattle/Character/CharacterStateComponent.h"
+#include "MookSabalBattle/Character/CharacterState.h"
 #include "InGameUI.generated.h"
 
 /**
@@ -22,7 +22,7 @@ public:
 
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	
-	void BindCharacterStat(UCharacterStateComponent* State);
+	void BindCharacterStat(ACharacterState* State);
 
 private:
 

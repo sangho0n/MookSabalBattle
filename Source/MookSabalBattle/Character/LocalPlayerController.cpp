@@ -5,23 +5,34 @@
 
 #include "MSBAnimInstance.h"
 #include "PlayerCharacter.h"
+#include "Net/UnrealNetwork.h"
 
 void ALocalPlayerController::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+	bEnableInputControl = false;
+	bIsPossessingPawnInitialized = false;
 }
+
+void ALocalPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ALocalPlayerController, bEnableInputControl);
+}
+
 
 void ALocalPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-
-	controllingPawn = InPawn;
-	bEnableInputControl = true;
+	bEnableInputControl = false;
+	bIsPossessingPawnInitialized = false;
 }
 
 void ALocalPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
+	
 	InputComponent->BindAxis("MoveForward", this, &ALocalPlayerController::ForwardBack);
 	InputComponent->BindAxis("MoveRight", this, &ALocalPlayerController::LeftRight);
 	InputComponent->BindAction("Jump", IE_Pressed, this, &ALocalPlayerController::Jump);
@@ -36,10 +47,12 @@ void ALocalPlayerController::SetupInputComponent()
 void ALocalPlayerController::ForwardBack(float NewAxisValue)
 {
 	if(!bEnableInputControl) return;
-	
-	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	if(!bIsPossessingPawnInitialized) return;
+
+	auto ControllingPawn = GetPawn();
+	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
-		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto character = Cast<APlayerCharacter>(ControllingPawn);
 		character->ForwardBack(NewAxisValue);
 	}
 }
@@ -47,32 +60,40 @@ void ALocalPlayerController::ForwardBack(float NewAxisValue)
 void ALocalPlayerController::LeftRight(float NewAxisValue)
 {
 	if(!bEnableInputControl) return;
+	if(!bIsPossessingPawnInitialized) return;
 	
-	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	auto ControllingPawn = GetPawn();
+	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
-		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto character = Cast<APlayerCharacter>(ControllingPawn);
 		character->LeftRight(NewAxisValue);
+
 	}
 }
 
 void ALocalPlayerController::Jump()
 {
 	if(!bEnableInputControl) return;
+	if(!bIsPossessingPawnInitialized) return;
 	
-	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	auto ControllingPawn = GetPawn();
+	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
-		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto character = Cast<APlayerCharacter>(ControllingPawn);
 		character->Jump();
+
 	}
 }
 
 void ALocalPlayerController::MouseVerticalChange(float NewAxisValue)
 {
 	if(!bEnableInputControl) return;
+	if(!bIsPossessingPawnInitialized) return;
 	
-	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	auto ControllingPawn = GetPawn();
+	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
-		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto character = Cast<APlayerCharacter>(ControllingPawn);
 		character->LookUp(NewAxisValue);
 	}
 	AddPitchInput(NewAxisValue);
@@ -81,10 +102,12 @@ void ALocalPlayerController::MouseVerticalChange(float NewAxisValue)
 void ALocalPlayerController::MouseHorizontalChange(float NewAxisValue)
 {
 	if(!bEnableInputControl) return;
+	if(!bIsPossessingPawnInitialized) return;
 	
-	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	auto ControllingPawn = GetPawn();
+	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
-		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto character = Cast<APlayerCharacter>(ControllingPawn);
 		character->Turn(NewAxisValue);
 	}
 	AddYawInput(NewAxisValue);
@@ -93,73 +116,90 @@ void ALocalPlayerController::MouseHorizontalChange(float NewAxisValue)
 void ALocalPlayerController::Equip()
 {
 	if(!bEnableInputControl) return;
-
+	if(!bIsPossessingPawnInitialized) return;
 	
-	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	auto ControllingPawn = GetPawn();
+	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
-		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto character = Cast<APlayerCharacter>(ControllingPawn);
 		auto state = character->GetCharacterStateComponent();
-		if(!state->bIsEquippable) return;
-		
+		MSB_LOG(Warning, TEXT("is equippable? %s"), state->IsEquippable()?TEXT("true"):TEXT("false"));
+		if(!state->IsEquippable()) return;
+		MSB_LOG_LOCATION(Warning);
+
 		if(!state->bIsEquipped)
 		{
-			character->EquipWeapon(character->OverlappedWeapon);
+			character->EquipWeapon_Server(character->OverlappedWeapon);
 		}
 		else // equipped
 		{
-			character->EquipWeapon(character->OverlappedWeapon);
+			character->EquipWeapon_Server(character->OverlappedWeapon);
 		}
 	}
 	// We could write some code below here when we tend to implement ridings or sth else
 }
 
 void ALocalPlayerController::Attack()
-{
-	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+{	
+	if(!bIsPossessingPawnInitialized) return;
+	
+	auto ControllingPawn = GetPawn();
+	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
-		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto character = Cast<APlayerCharacter>(ControllingPawn);
 		auto state = character->GetCharacterStateComponent();
 
 		// combo hit
 		if(state->CurrentMode == CharacterMode::NON_EQUIPPED)
 		{
-			character->AttackNonEquip();
 			bEnableInputControl = false;
+			character->AttackNonEquip_Server();
 		}
 		// swing
 		if(state->CurrentMode == CharacterMode::MELEE)
 		{
-			character->SwingMelee();
+			character->SwingMelee_Server();
 		}
 		// shot
 		if(state->CurrentMode == CharacterMode::GUN)
 		{
-			character->Shoot();
+			character->Shoot_Server();
 		}
 	}
 }
 
 void ALocalPlayerController::AttackStop()
 {
-	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	if(!bIsPossessingPawnInitialized) return;
+	
+	auto ControllingPawn = GetPawn();
+	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
-		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto character = Cast<APlayerCharacter>(ControllingPawn);
 		auto state = character->GetCharacterStateComponent();
 		if(state->CurrentMode == CharacterMode::NON_EQUIPPED) 
 			bEnableInputControl = true;
 		if(state->CurrentMode == CharacterMode::GUN) 
-			character->StopShooting();
+			character->StopShooting_Server();
 	}
 }
 
 void ALocalPlayerController::Reload()
 {
-	if(controllingPawn->IsA(APlayerCharacter::StaticClass()))
+	if(!bEnableInputControl) return;
+	if(!bIsPossessingPawnInitialized) return;
+	
+	auto ControllingPawn = GetPawn();
+	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
-		auto character = Cast<APlayerCharacter>(controllingPawn);
+		auto character = Cast<APlayerCharacter>(ControllingPawn);
 		auto state = character->GetCharacterStateComponent();
 		if(state->CurrentMode == CharacterMode::GUN) 
-			character->ReloadGun();
+			character->ReloadGun_Server();
 	}
 }
 
+void ALocalPlayerController::InitPlayer()
+{
+	bIsPossessingPawnInitialized = true;
+}

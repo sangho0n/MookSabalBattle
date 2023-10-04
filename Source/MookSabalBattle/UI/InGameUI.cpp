@@ -56,7 +56,7 @@ void UInGameUI::UpdateFadeOutEffect(UCanvasPanel* Canvas, bool& bIsFading, float
 	Canvas->SetRenderOpacity(Opacity);
 }
 
-void UInGameUI::BindCharacterStat(UCharacterStateComponent* State)
+void UInGameUI::BindCharacterStat(ACharacterState* State)
 {
 	State->OnHPChanges.AddLambda([this, State](float HP)-> void
 	{
@@ -94,7 +94,6 @@ void UInGameUI::SetAimInvisible()
 
 void UInGameUI::ShowBleeding(float HP)
 {
-	MSB_LOG(Warning, TEXT("asdfasdfasdfasdf"));
 	if(HP > Bleeding1Offset)
 	{
 		Image_Bleeding1->SetRenderOpacity(0);
@@ -102,7 +101,6 @@ void UInGameUI::ShowBleeding(float HP)
 		return;
 	}
 
-	MSB_LOG(Warning, TEXT("asdfasdfasdfasdf"));
 	Image_Bleeding1->SetRenderOpacity((Bleeding1Offset - HP)/Bleeding1Offset);
 	if(HP < Bleeding2Offset)
 		Image_Bleeding2->SetRenderOpacity((Bleeding2Offset - HP)/Bleeding2Offset * MaxBleeding2Opacity);

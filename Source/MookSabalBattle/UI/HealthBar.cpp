@@ -3,7 +3,7 @@
 
 #include "HealthBar.h"
 
-#include "MookSabalBattle/Character/CharacterStateComponent.h"
+#include "MookSabalBattle/Character/CharacterState.h"
 
 void UHealthBar::NativeConstruct()
 {
@@ -25,8 +25,9 @@ void UHealthBar::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	UpdateFadeOutEffect(Canvas_Health, bIsFadeOut, AccTimeForFadeOut, InDeltaTime, 2.0f);
 }
 
-void UHealthBar::BindCharacterStat(UCharacterStateComponent* State)
+void UHealthBar::BindCharacterStat(ACharacterState* State)
 {
+	// TODO 여기서 ACharacterState NPE 잡기
 	State->OnHPChanges.AddLambda([this, State](float HP) -> void
 	{
 		HealthBar->SetPercent(HP / State->MaxHP);

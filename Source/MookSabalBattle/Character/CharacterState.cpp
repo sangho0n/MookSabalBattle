@@ -69,3 +69,14 @@ bool ACharacterState::IsAttacking()
 	return bIsAttacking;
 }
 
+void ACharacterState::SetEquippable(bool flag)
+{
+	bIsEquippable = flag;
+	MSB_LOG(Warning, TEXT("equippable set %s"), bIsEquippable?TEXT("true"):TEXT("false"));
+}
+
+bool ACharacterState::IsEquippable()
+{
+	return bIsEquippable;
+}
+

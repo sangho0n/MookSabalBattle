@@ -118,7 +118,7 @@ FHitResult AGun::Hit(APlayerCharacter* Causer)
 
 bool AGun::CanFire(APlayerCharacter* Causer)
 {
-	if(Bullets <= 0) {Causer->StopShooting(); return false;}
+	if(Bullets <= 0) {Causer->StopShooting_Server(); return false;}
 	return true;
 }
 

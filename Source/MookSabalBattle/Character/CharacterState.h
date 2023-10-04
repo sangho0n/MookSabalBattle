@@ -38,18 +38,18 @@ public:
 	UPROPERTY(Replicated, EditAnywhere, Category=Status)
 	CharacterMode  CurrentMode;
 
-	UPROPERTY(Replicated)
+private:
+	UPROPERTY(VisibleAnywhere, Replicated, Category=Status)
 	bool bIsEquippable;
 
-private:
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated, VisibleAnywhere, Category=Status)
 	bool bIsAttacking;
 
 public:
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated, VisibleAnywhere, Category=Status)
 	bool bIsReloading;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated, VisibleAnywhere, Category=Status)
 	bool bIsDead;
 
 	UPROPERTY(Replicated, EditAnywhere, Category=Status)
@@ -68,5 +68,7 @@ public:
 
 public:
 	void SetAttacking(bool flag);
+	void SetEquippable(bool flag);
 	bool IsAttacking();
+	bool IsEquippable();
 };

@@ -17,10 +17,11 @@ class MOOKSABALBATTLE_API ALocalPlayerController : public APlayerController
 public:
 	virtual void PostInitializeComponents() override;
 	virtual void OnPossess(APawn* InPawn) override;
-
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
 protected:
 	virtual void SetupInputComponent() override;
-
+	
 private:
 	void ForwardBack(float NewAxisValue);
 	void LeftRight(float NewAxisValue);
@@ -32,6 +33,10 @@ private:
 	void Reload();
 public:
 	void AttackStop();
+	void InitPlayer();
 private:
+	UPROPERTY(Replicated)
 	bool bEnableInputControl;
+	UPROPERTY(Replicated)
+	bool bIsPossessingPawnInitialized;
 };
