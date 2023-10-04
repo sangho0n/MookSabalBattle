@@ -23,7 +23,6 @@ APlayerCharacter::APlayerCharacter()
 	// set cam and spring arm
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>("CAMERA");
-	CharacterState = CreateDefaultSubobject<UCharacterStateComponent>(TEXT("STATE"));
 
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
@@ -214,11 +213,10 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		this->bUseControllerRotationPitch = false;
 		this->bUseControllerRotationRoll = false;
 		this->bUseControllerRotationYaw = false;
-		if(!Controller->IsLocalPlayerController()) return;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		if(!IsLocallyControlled()) return;
 		// 3rd view mouse rotation
 		SpringArm->TargetArmLength = 400.0f;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-		SpringArm->bUsePawnControlRotation = true;
 		SpringArm->bInheritPitch = true;
 		SpringArm->bInheritRoll = true;
 		SpringArm->bInheritYaw = true;
@@ -236,11 +234,10 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		this->bUseControllerRotationPitch = false;
 		this->bUseControllerRotationRoll = false;
 		this->bUseControllerRotationYaw = false;
-		if(!Controller->IsLocalPlayerController()) return;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		if(!IsLocallyControlled()) return;
 		// 3rd view mouse rotation
 		SpringArm->TargetArmLength = 400.0f;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-		SpringArm->bUsePawnControlRotation = false;
 		SpringArm->bInheritPitch = true;
 		SpringArm->bInheritRoll = true;
 		SpringArm->bInheritYaw = true;

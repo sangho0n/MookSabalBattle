@@ -38,24 +38,30 @@ void AWeapon::PostInitializeComponents()
 
 void AWeapon::OnCharacterBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if(OtherActor->IsA(APlayerCharacter::StaticClass()) && OtherActor->GetInstigatorController()->IsLocalPlayerController())
+	if(OtherActor->IsA(APlayerCharacter::StaticClass()))
 	{
-		LocalPlayer = Cast<APlayerCharacter>(OtherActor);
-		MSB_LOG(Warning, TEXT("begin"));
-		MSB_LOG(Warning, TEXT("dd %s"), *SM_Weapon->GetName());
-		// show equip UI
-		LocalPlayer->OnWeaponStartOverlap(this);
+		auto Character = Cast<APlayerCharacter>(OtherActor);
+		if(Character->IsLocallyControlled())
+		{
+			MSB_LOG(Warning, TEXT("begin"));
+			MSB_LOG(Warning, TEXT("dd %s"), *SM_Weapon->GetName());
+			// show equip UI
+			Character->OnWeaponStartOverlap(this);
+		}
 	}
 }
 
 void AWeapon::OnCharacterEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if(OtherActor->IsA(APlayerCharacter::StaticClass()) && OtherActor->GetInstigatorController()->IsLocalPlayerController())
+	if(OtherActor->IsA(APlayerCharacter::StaticClass()))
 	{
-		// hide equip UI
-		MSB_LOG(Warning, TEXT("end"));
-		LocalPlayer->OnWeaponEndOverlap();
-		return;
+		auto Character = Cast<APlayerCharacter>(OtherActor);
+		if(Character->IsLocallyControlled())
+		{
+			// hide equip UI
+			MSB_LOG(Warning, TEXT("end"));
+			Character->OnWeaponEndOverlap();
+		}
 	}
 }
 
