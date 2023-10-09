@@ -113,10 +113,15 @@ public:
 	void Hit(int32 CurrCombo);
 
 private:
+	UFUNCTION(Server, Reliable)
+	void ApplyDamageEventsOnServer(const TArray<FPointDamageEvent> &HitResults);
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastHitEffect(FPointDamageEvent HitResult, APlayerCharacter* Causer);
+	
 	UFUNCTION()
-	void Punch();
+	TArray<FPointDamageEvent> Punch();
 	UFUNCTION()
-	void Kick();
+	TArray<FPointDamageEvent> Kick();
 
 	UPROPERTY(EditAnywhere)
 	float AttackCapsuleColliderHalfHeight;
@@ -129,10 +134,12 @@ private:
 	void OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 public:
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void SetCharacterAsBlueTeam();
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void SetCharacterAsRedTeam();
 	UFUNCTION(BlueprintCallable)
-	void SetCharacterAsAlly();
-	UFUNCTION(BlueprintCallable)
-	void SetCharacterAsEnemy();
+	bool IsSameTeam(APlayerCharacter* OtherPlayer);
 
 private:
 	UFUNCTION()

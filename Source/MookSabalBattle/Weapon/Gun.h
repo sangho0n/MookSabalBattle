@@ -39,7 +39,7 @@ private:
 	UParticleSystem* FireParticle;
 
 public:
-	FHitResult Hit(APlayerCharacter* Causer);
+	FPointDamageEvent Hit(APlayerCharacter* Causer);
 
 	TSubclassOf<UCameraShakeBase> CamShakeShoot;
 

@@ -51,6 +51,7 @@ FVector AGun::GetMuzzleLocationInWS()
 
 void AGun::FireParticleOnMuzzle()
 {
+	// TODO: 총 발사 파티클 동기화
 	UGameplayStatics::SpawnEmitterAttached(FireParticle,
 		SM_Weapon,
 		MuzzleSocket,
@@ -60,14 +61,15 @@ void AGun::FireParticleOnMuzzle()
 		);
 }
 
-FHitResult AGun::Hit(APlayerCharacter* Causer)
+FPointDamageEvent AGun::Hit(APlayerCharacter* Causer)
 {
 	FHitResult HitResult;
+	FPointDamageEvent DamageEvent;
 	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
-	Param_IgnoreSelf.AddIgnoredActor(this);
+	Param_IgnoreSelf.AddIgnoredActor(Causer);
 	Param_IgnoreSelf.bTraceComplex = true;
 	
-	if(!CanFire(Causer)) { return HitResult;}
+	if(!CanFire(Causer)) { return DamageEvent;}
 	Bullets--;
 	MSB_LOG(Warning, TEXT("current bullets : %d"), Bullets);
 
@@ -90,16 +92,23 @@ FHitResult AGun::Hit(APlayerCharacter* Causer)
 		if(!HitResult.GetActor()->IsA(APlayerCharacter::StaticClass())) {bHit = false;}
 		else
 		{
-			bHit = true;
 			auto Character = Cast<APlayerCharacter>(HitResult.GetActor());
+			if(Character->IsSameTeam(Causer)) bHit = false;
+			else
+			{
+				bHit = true;
+				if(HitResult.BoneName.IsEqual(TEXT("head"))) Damage *= 1.5f;
 
-			auto ToThis = this->GetActorLocation() - HitResult.Location; ToThis.Normalize();
-			FPointDamageEvent PointDamageEvent;
-			PointDamageEvent.Damage = this->Damage;
-			PointDamageEvent.HitInfo = HitResult;
-			PointDamageEvent.ShotDirection = ToThis;
-
-			Character->TakeDamage(this->Damage, PointDamageEvent, Causer->GetInstigatorController(), Causer);
+				auto ToThis = this->GetActorLocation() - HitResult.Location; ToThis.Normalize();
+				FPointDamageEvent PointDamageEvent;
+				PointDamageEvent.Damage = this->Damage;
+				PointDamageEvent.HitInfo = HitResult;
+				PointDamageEvent.ShotDirection = ToThis;
+				
+				//Character->TakeDamage(Damage, PointDamageEvent, this->GetInstigatorController(), Causer);
+				DamageEvent = PointDamageEvent;
+			}
+			
 		}
 	}
 #if ENABLE_DRAW_DEBUG
@@ -113,7 +122,7 @@ FHitResult AGun::Hit(APlayerCharacter* Causer)
 	);
 #endif
 
-	return HitResult;
+	return DamageEvent;
 }
 
 bool AGun::CanFire(APlayerCharacter* Causer)

@@ -69,7 +69,7 @@ APlayerCharacter::APlayerCharacter()
 		this->InGameUIClass = INGAMEUI.Class;
 	}
 
-	// Attack Collision
+	// Collision
 	AttackCapsuleColliderRadius = 34.0f;
 	AttackCapsuleColliderHalfHeight = 30.0f;
 	static ConstructorHelpers::FObjectFinder<UParticleSystem> BLEEDING(TEXT("/Game/Realistic_Starter_VFX_Pack_Vol2/Particles/Blood/P_Blood_Splat_Cone.P_Blood_Splat_Cone"));
@@ -77,7 +77,9 @@ APlayerCharacter::APlayerCharacter()
 	{
 		BleedingParticle = BLEEDING.Object;
 	}
-
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn"));
+	GetMesh()->SetCollisionProfileName(TEXT("Humanoid"));
+	OverlappedAlly = {};
 }
 
 void APlayerCharacter::PostInitializeComponents()
@@ -87,7 +89,8 @@ void APlayerCharacter::PostInitializeComponents()
 	auto Collider = GetCapsuleComponent();
 
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnCharacterBeginOverlapWithCharacter);
-	OnGetDamage.AddDynamic(this, &APlayerCharacter::OnHit);
+	Collider->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnCharacterEndOverlapWithCharacter);
+	OnGetDamage.AddDynamic(this, &APlayerCharacter::OnHit); // blueprint
 	Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnAttackEnd.AddDynamic(this, &APlayerCharacter::StopAttacking);
 	
 	PunchDamage = 7.0f;
@@ -141,14 +144,6 @@ void APlayerCharacter::InitPlayer()
 	}
 
 	ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
-	if(CharacterState->bIsRedTeam)
-	{
-		SetCharacterAsAlly();
-	}
-	else
-	{
-		SetCharacterAsEnemy();
-	}
 }
 
 
@@ -160,16 +155,14 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 }
 
 
-void APlayerCharacter::SetCharacterAsAlly()
+void APlayerCharacter::SetCharacterAsBlueTeam_Implementation()
 {
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Ally"));
-	GetMesh()->SetCollisionProfileName(TEXT("CharacterMesh"));
+	CharacterState->bIsRedTeam = false;
 }
 
-void APlayerCharacter::SetCharacterAsEnemy()
+void APlayerCharacter::SetCharacterAsRedTeam_Implementation()
 {
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn"));
-	GetMesh()->SetCollisionProfileName(TEXT("Enemy"));
+	CharacterState->bIsRedTeam = true;
 }
 
 // Called every frame
@@ -507,20 +500,23 @@ void APlayerCharacter::Hit(int32 CurrCombo)
 	if(!IsLocallyControlled()) return;
 	
 	auto currentMode = CharacterState->CurrentMode;
+	TArray<FPointDamageEvent> DamageEvents = {}; 
 	if(currentMode == CharacterMode::NON_EQUIPPED)
 	{
-		if (CurrCombo <= 2) Punch();
-		else Kick();
+		if (CurrCombo <= 2) DamageEvents.Append(Punch());
+		else  DamageEvents.Append(Kick());
 	}
 	else if(currentMode == CharacterMode::MELEE)
 	{
 		auto Melee = Cast<AMelee>(CurrentWeapon);
-		Melee->Hit(this); // return multiple results
-	}
+		DamageEvents.Append(Melee->Hit(this));
+	} 
 	else // gun
 	{
 		auto Gun = Cast<AGun>(CurrentWeapon);
-		Gun->Hit(this); // return single result
+		auto DamageEvent = Gun->Hit(this);
+		DamageEvents.Add(Gun->Hit(this));
+		
 		// ApplyRecoil
 		UGameplayStatics::PlayWorldCameraShake(
 			Camera,
@@ -531,11 +527,13 @@ void APlayerCharacter::Hit(int32 CurrCombo)
 		);
 		AddControllerPitchInput(-0.5f);
 	}
+	ApplyDamageEventsOnServer(DamageEvents);
 }
 
-void APlayerCharacter::Punch()
+TArray<FPointDamageEvent> APlayerCharacter::Punch()
 {
 	TArray<FHitResult> HitResults;
+	TArray<FPointDamageEvent> DamageEvents;
 	auto Param_IgnoreSelf = FCollisionQueryParams();
 	Param_IgnoreSelf.AddIgnoredActor(this);
 
@@ -545,7 +543,8 @@ void APlayerCharacter::Punch()
 		GetActorLocation() + GetActorForwardVector() * (AttackCapsuleColliderHalfHeight + AttackCapsuleColliderRadius) * 2,
 		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
 		ECollisionChannel::ECC_GameTraceChannel4,
-		FCollisionShape::MakeCapsule(AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight));
+		FCollisionShape::MakeCapsule(AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight),
+		Param_IgnoreSelf);
 
 	if(bResult)
 	{
@@ -553,9 +552,9 @@ void APlayerCharacter::Punch()
 		for(auto res: HitResults)
 		{
 			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
-
+			
 			auto Character = Cast<APlayerCharacter>(res.GetActor());
-			if(AlreadyHitActors.Contains(Character)) continue;
+			if(AlreadyHitActors.Contains(Character) || Character->IsSameTeam(this)) continue;
 			
 			AlreadyHitActors.Push(Character);
 			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
@@ -564,7 +563,8 @@ void APlayerCharacter::Punch()
 			PointDamageEvent.HitInfo = res;
 			PointDamageEvent.ShotDirection = ToThis;
 
-			Character->TakeDamage(PunchDamage, PointDamageEvent, this->GetInstigatorController(), this);
+			//Character->TakeDamage(PunchDamage, PointDamageEvent, this->GetInstigatorController(), this);
+			DamageEvents.Add(PointDamageEvent);
 		}
 	}
 
@@ -580,12 +580,14 @@ void APlayerCharacter::Punch()
 		1.0f
 	);
 #endif
-	
+
+	return DamageEvents;
 }
 
-void APlayerCharacter::Kick()
+TArray<FPointDamageEvent> APlayerCharacter::Kick()
 {
 	TArray<FHitResult> HitResults;
+	TArray<FPointDamageEvent> DamageEvents;
 	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
 	Param_IgnoreSelf.AddIgnoredActor(this);
 
@@ -595,7 +597,8 @@ void APlayerCharacter::Kick()
 		GetActorLocation() + GetActorForwardVector() * (AttackCapsuleColliderHalfHeight + AttackCapsuleColliderRadius) * 2,
 		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
 		ECollisionChannel::ECC_GameTraceChannel4,
-		FCollisionShape::MakeCapsule(AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight));
+		FCollisionShape::MakeCapsule(AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight),
+		Param_IgnoreSelf);
 		
 	if(bResult)
 	{
@@ -605,7 +608,7 @@ void APlayerCharacter::Kick()
 			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
 
 			auto Character = Cast<APlayerCharacter>(res.GetActor());
-			if(AlreadyHitActors.Contains(Character)) continue;
+			if(AlreadyHitActors.Contains(Character)|| Character->IsSameTeam(this)) continue;
 			
 			AlreadyHitActors.Push(Character);
 			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
@@ -614,7 +617,8 @@ void APlayerCharacter::Kick()
 			PointDamageEvent.HitInfo = res;
 			PointDamageEvent.ShotDirection = ToThis;
 
-			Character->TakeDamage(KickDamage, PointDamageEvent, this->GetInstigatorController(), this);
+			//Character->TakeDamage(KickDamage, PointDamageEvent, this->GetInstigatorController(), this);
+			DamageEvents.Add(PointDamageEvent);
 		}
 	}
 
@@ -630,7 +634,36 @@ void APlayerCharacter::Kick()
 		1.0f
 	);
 #endif
+	return DamageEvents;
 }
+
+// Server RPC
+void APlayerCharacter::ApplyDamageEventsOnServer_Implementation(const TArray<FPointDamageEvent> &HitResults)
+{
+	for(auto Result : HitResults)
+	{
+		if(Result.Damage < KINDA_SMALL_NUMBER) continue;
+
+		auto DamagedCharacter = Cast<APlayerCharacter>(Result.HitInfo.GetActor());
+		DamagedCharacter->TakeDamage(Result.Damage, Result, GetInstigatorController(), this);
+		DamagedCharacter->MulticastHitEffect(Result, this);
+		MSB_LOG(Warning, TEXT("%s took %f damage"), *DamagedCharacter->GetName(), Result.Damage);
+	}
+}
+
+void APlayerCharacter::MulticastHitEffect_Implementation(FPointDamageEvent HitResult, APlayerCharacter* Causer)
+{
+	auto PointDamageEvent = (FPointDamageEvent*)&HitResult;
+	OnGetDamage.Broadcast(PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection);
+	ShowBleeding(PointDamageEvent->HitInfo.Location, PointDamageEvent->ShotDirection, PointDamageEvent->HitInfo.Normal);
+
+	if(IsLocallyControlled())
+	{
+		InGameUI->ShowDamageIndicator(Causer);
+	}
+}
+
+
 
 void APlayerCharacter::StopAttacking()
 {
@@ -639,31 +672,47 @@ void APlayerCharacter::StopAttacking()
 
 # pragma endregion
 
+/**
+ * @brief method for collision handling between players
+ * when capsule collider(set as Pawn profile name) begin overlap,
+ * they pushes each other
+ *
+ * If overlapped actor is an ally, it continuously applies a gentle force to push them apart until they separate.
+ * If it's an enemy, a strong impulse is applied the moment they overlap to make them immediately move away from each other.
+ */
 void APlayerCharacter::OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if(!OtherActor->IsA(APlayerCharacter::StaticClass())) return;
-	
-	auto currentPos = GetActorLocation();
-	auto otherPos = OtherActor->GetActorLocation();
-	auto toOther = otherPos - currentPos; toOther.Normalize();
 
-	GetMovementComponent()->Velocity = -toOther * 500.0f;
+	auto Character = Cast<APlayerCharacter>(OtherActor);
+	if(!Character->IsSameTeam(this))
+	{
+		auto CurrentPos = GetActorLocation();
+		auto OtherPos = OtherActor->GetActorLocation();
+		auto ToOther = OtherPos - CurrentPos; ToOther.Normalize();
+
+		GetMovementComponent()->Velocity = -ToOther * 500.0f;
+	}
+	else
+	{
+		OverlappedAlly.Add(Character);
+	}
 }
 
+void APlayerCharacter::OnCharacterEndOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if(!OtherActor->IsA(APlayerCharacter::StaticClass())) return;
+
+	auto Character = Cast<APlayerCharacter>(OtherActor);
+	if(Character->IsSameTeam(this))
+	{
+		OverlappedAlly.Remove(Character);
+	}
+}
+
+// should be called on server
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	if(DamageEvent.IsOfType(FPointDamageEvent::ClassID))
-	{
-		auto PointDamageEvent = (FPointDamageEvent*)&DamageEvent;
-		OnGetDamage.Broadcast(PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection);
-		ShowBleeding(PointDamageEvent->HitInfo.Location, PointDamageEvent->ShotDirection, PointDamageEvent->HitInfo.Normal);
-
-		if(IsLocallyControlled())
-		{
-			InGameUI->ShowDamageIndicator(DamageCauser);
-		}
-	}
-	
 	DamageAmount = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	CharacterState->ApplyDamage(DamageAmount);
 	return DamageAmount;
@@ -675,20 +724,21 @@ void APlayerCharacter::Die()
 	CharacterState->bIsDead = true;
 	
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("NoCollision"));
-	GetMesh()->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
-	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	if(nullptr != CurrentWeapon)
+	{
+		CurrentWeapon->Destroy();
+	}
 	OnGetDamage.Clear();
 }
-
-/*
- * APlayerCharacter::ShowBleeding
- *
- * Location : The location that particle spawned
- * From : A vector from attacking point to `Location
- * Normal : The normal of that mesh at location
- *
- * the particle must spawned on the `Location,
- * and the rotation angle should be same as the angle between `Normal and `From
+/**
+ * @brief method for show bleeding particles
+ * the particle must spawned on the Location.
+ * the direction should be a replicated vector of From via Normal
+ * 
+ * @param Location The location that particle spawned
+ * @param From A vector from attacking point to Location
+ * @param Normal The normal of that mesh at location
  */
 void APlayerCharacter::ShowBleeding(FVector Location, FVector From, FVector Normal)
 {
@@ -701,9 +751,14 @@ void APlayerCharacter::ShowBleeding(FVector Location, FVector From, FVector Norm
 	UGameplayStatics::SpawnEmitterAtLocation(
 		GetWorld(),
 		BleedingParticle,
-		Transform
+		Location,
+		FRotationMatrix::MakeFromZ(From + 2 * Normal * FVector::DotProduct(-From, Normal)).Rotator(),
+		FVector(1),
+		true
 	);
+	MSB_LOG(Warning,TEXT("bleeding"));
 }
+
 
 FVector APlayerCharacter::GetCameraLocation()
 {
@@ -719,3 +774,13 @@ void APlayerCharacter::EndReloading()
 {
 	CharacterState->bIsReloading = false;
 }
+
+bool APlayerCharacter::IsSameTeam(APlayerCharacter* OtherPlayer)
+{
+	auto ThisTeam = CharacterState->bIsRedTeam;
+	auto OtherTeam = OtherPlayer->GetCharacterStateComponent()->bIsRedTeam;
+	
+	if(!(ThisTeam ^ OtherTeam)) return true;
+	return false;
+}
+

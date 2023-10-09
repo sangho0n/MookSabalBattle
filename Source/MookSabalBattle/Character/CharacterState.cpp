@@ -45,18 +45,11 @@ void ACharacterState::BeginPlay()
 
 void ACharacterState::ApplyDamage(float damage)
 {
-	if(!GetOwner()->HasAuthority()) return;
-	
-	auto candidateHP = HP - damage;
-	HP = candidateHP > 0.0f ? candidateHP : 0.0f;
-	MSB_LOG(Warning, TEXT("curr hp : %f"), HP);
-	if(HP < 0.01)
-	{
-		HP = 0.0f;
-		MSB_LOG(Warning, TEXT("before die"));
-		OnHPIsZero.Broadcast();
-	}
-	OnHPChanges.Broadcast(HP);
+	//if(!GetOwner()->HasAuthority()) return;
+	auto candidateHP = GetHP() - damage;
+	SetHP(candidateHP > 0.0f ? candidateHP : 0.0f);
+	MSB_LOG(Warning, TEXT("hp changed : %f"), GetHP());
+	OnHPChanges.Broadcast(GetHP());
 }
 
 void ACharacterState::SetAttacking(bool flag)
@@ -78,5 +71,15 @@ void ACharacterState::SetEquippable(bool flag)
 bool ACharacterState::IsEquippable()
 {
 	return bIsEquippable;
+}
+
+void ACharacterState::SetHP(float flag)
+{
+	HP = flag;
+}
+
+float ACharacterState::GetHP()
+{
+	return HP;
 }
 

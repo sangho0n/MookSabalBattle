@@ -51,10 +51,10 @@ public:
 
 	UPROPERTY(Replicated, VisibleAnywhere, Category=Status)
 	bool bIsDead;
-
+private:
 	UPROPERTY(Replicated, EditAnywhere, Category=Status)
 	float HP;
-
+public:
 	const float MaxHP = 200.0f;
 
 	UPROPERTY(Replicated, EditAnywhere, Category=Status)
@@ -64,11 +64,14 @@ public:
 	
 	FOnHPChanges OnHPChanges;
 
+	UFUNCTION()
 	void ApplyDamage(float damage);
 
 public:
 	void SetAttacking(bool flag);
 	void SetEquippable(bool flag);
+	void SetHP(float flag);
 	bool IsAttacking();
 	bool IsEquippable();
+	float GetHP();
 };
