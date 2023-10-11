@@ -31,12 +31,11 @@ private:
 	const float FadeOutTime = 0.6f;
 	float AccTimeForFadeOut;
 	bool bIsFadeOut;
-
 	
 	UFUNCTION()
 	void UpdateFadeOutEffect(UCanvasPanel* Canvas,  bool& bIsFading, float& AccTime, const float InDeltaTime, float Threshold = 0.0f);
 
 public:
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void ShowHealthBar(float HP);
 };

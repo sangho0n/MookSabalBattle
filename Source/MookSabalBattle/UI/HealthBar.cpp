@@ -25,9 +25,14 @@ void UHealthBar::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	UpdateFadeOutEffect(Canvas_Health, bIsFadeOut, AccTimeForFadeOut, InDeltaTime, 2.0f);
 }
 
+/**
+ * @brief Bind HP and HealthBar percentage
+ * Called on each client(or listen server), by the actors possessed by other clients.
+ * 
+ * @param State 
+ */
 void UHealthBar::BindCharacterStat(ACharacterState* State)
 {
-	// TODO 여기서 ACharacterState NPE 잡기
 	State->OnHPChanges.AddLambda([this, State](float HP) -> void
 	{
 		HealthBar->SetPercent(HP / State->MaxHP);
@@ -56,11 +61,9 @@ void UHealthBar::UpdateFadeOutEffect(UCanvasPanel* Canvas, bool& bIsFading, floa
 
 void UHealthBar::ShowHealthBar(float HP)
 {
-	MSB_LOG(Warning, TEXT("show 헬스바"));
 	bIsFadeOut = true;
 	AccTimeForFadeOut = 0.0f;
 	
 	Canvas_Health->SetVisibility(ESlateVisibility::Visible);
 	Canvas_Health->SetRenderOpacity(1.0f);
 }
-

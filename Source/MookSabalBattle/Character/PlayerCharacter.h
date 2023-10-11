@@ -115,7 +115,7 @@ public:
 
 private:
 	UFUNCTION(Server, Reliable)
-	void ApplyDamageEventsOnServer(const TArray<FPointDamageEvent> &HitResults);
+	void ApplyDamageEventsOnServer(APlayerCharacter* const &Causer, const TArray<FPointDamageEvent> &HitResults);
 	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastHitEffect(FPointDamageEvent HitResult, APlayerCharacter* Causer);
 	

@@ -560,7 +560,8 @@ void APlayerCharacter::Hit(int32 CurrCombo)
 		);
 		AddControllerPitchInput(-0.5f);
 	}
-	ApplyDamageEventsOnServer(DamageEvents);
+	
+	ApplyDamageEventsOnServer(this, DamageEvents);
 }
 
 TArray<FPointDamageEvent> APlayerCharacter::Punch()
@@ -671,15 +672,15 @@ TArray<FPointDamageEvent> APlayerCharacter::Kick()
 }
 
 // Server RPC
-void APlayerCharacter::ApplyDamageEventsOnServer_Implementation(const TArray<FPointDamageEvent> &HitResults)
+void APlayerCharacter::ApplyDamageEventsOnServer_Implementation(APlayerCharacter* const &Causer, const TArray<FPointDamageEvent> &HitResults)
 {
 	for(auto Result : HitResults)
 	{
 		if(Result.Damage < KINDA_SMALL_NUMBER) continue;
 
 		auto DamagedCharacter = Cast<APlayerCharacter>(Result.HitInfo.GetActor());
-		DamagedCharacter->TakeDamage(Result.Damage, Result, GetInstigatorController(), this);
-		DamagedCharacter->MulticastHitEffect(Result, this);
+		DamagedCharacter->TakeDamage(Result.Damage, Result, GetInstigatorController(), Causer);
+		DamagedCharacter->MulticastHitEffect(Result, Causer);
 		MSB_LOG(Warning, TEXT("%s took %f damage"), *DamagedCharacter->GetName(), Result.Damage);
 	}
 }
