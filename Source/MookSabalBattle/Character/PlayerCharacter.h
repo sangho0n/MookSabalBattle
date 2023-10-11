@@ -155,8 +155,10 @@ public:
 	bool IsSameTeam(APlayerCharacter* OtherPlayer);
 
 private:
-	UFUNCTION()
-	void Die();
+	UFUNCTION(Server, Reliable)
+	void Die_Server();
+	UFUNCTION(NetMulticast, Reliable)
+	void Die_Multicast();
 
 public:
 	UPROPERTY()

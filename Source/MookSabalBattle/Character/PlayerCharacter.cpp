@@ -751,12 +751,22 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	return DamageAmount;
 }
 
-void APlayerCharacter::Die()
+// Server RPC
+void APlayerCharacter::Die_Server_Implementation()
+{
+	if(nullptr != CurrentWeapon)
+	{
+		CurrentWeapon->Destroy();
+	}
+	
+	Die_Multicast();
+}
+void APlayerCharacter::Die_Multicast_Implementation()
 {
 	Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->PlayRandomDeadAnim();
-	CharacterState->bIsDead = true;
+	CharacterState->SetDead(true);
 	
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("NoCollision"));
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("IgnoreOnlyPawn"));
 	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
 	if(nullptr != CurrentWeapon)
 	{
@@ -764,6 +774,7 @@ void APlayerCharacter::Die()
 	}
 	OnGetDamage.Clear();
 }
+
 /**
  * @brief method for show bleeding particles
  * the particle must spawned on the Location.
