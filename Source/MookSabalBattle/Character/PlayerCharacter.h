@@ -132,8 +132,20 @@ private:
 	float KickDamage;
 	
 	UFUNCTION()
-	void OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnCharacterEndOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, 
+	AActor* OtherActor, 
+	UPrimitiveComponent* OtherComp, 
+	int32 OtherBodyIndex);
 
+	TArray<APlayerCharacter*> OverlappedAlly;
+	
 public:
 	UFUNCTION(BlueprintCallable, Server, Reliable)
 	void SetCharacterAsBlueTeam();

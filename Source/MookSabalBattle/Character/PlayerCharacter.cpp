@@ -200,6 +200,18 @@ void APlayerCharacter::Tick(float DeltaTime)
 		Camera->SetRelativeLocation(CurrentCamPos);
 		if(FVector::Dist(DesiredCamPos, CurrentCamPos) < KINDA_SMALL_NUMBER) {bInterpingCamPos = false; accTime = 0.0f;}
 	}
+
+	if(!OverlappedAlly.IsEmpty())
+	{
+		for(auto OtherActor : OverlappedAlly)
+		{
+			auto CurrentPos = GetActorLocation();
+			auto OtherPos = OtherActor->GetActorLocation();
+			auto ToOther = OtherPos - CurrentPos; ToOther.Normalize();
+
+			GetMovementComponent()->Velocity += -ToOther * 10.0f;
+		}
+	}
 }
 
 void APlayerCharacter::ForwardBack(float NewAxisValue)
