@@ -19,8 +19,9 @@ public:
 	AGun();
 
 	virtual void PostInitializeComponents() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Replicated)
 	int32 Bullets;
 	UPROPERTY(EditAnywhere)
 	float GunAttackLength;
@@ -31,8 +32,6 @@ private:
 	FName MuzzleSocket;
 	FVector MuzzlePosInLocal;
 public:
-	FVector GetMuzzleLocationInWS();
-
 	void FireParticleOnMuzzle();
 
 private:
@@ -47,4 +46,11 @@ public:
 
 	UFUNCTION()
 	void FillBullets();
+
+private:
+	UFUNCTION(Server, Reliable)
+	void MulticastBulltes(int32 ClientBullets);
+
+public:
+	int32 GetBulletCount(){return Bullets;}
 };

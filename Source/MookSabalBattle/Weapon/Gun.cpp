@@ -3,6 +3,7 @@
 
 #include "Gun.h"
 #include "Engine/DamageEvents.h"
+#include "Net/UnrealNetwork.h"
 
 AGun::AGun() : Super()
 {
@@ -35,6 +36,14 @@ AGun::AGun() : Super()
 	}
 }
 
+void AGun::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AGun, Bullets);
+}
+
+
 void AGun::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -42,11 +51,6 @@ void AGun::PostInitializeComponents()
 	GunAttackLength = 7000.0f;
 	GunAttackSpreadAngle = 3.0f;
 	Damage = 3.0f;
-}
-
-FVector AGun::GetMuzzleLocationInWS()
-{
-	return SM_Weapon->GetSocketLocation(MuzzleSocket);
 }
 
 void AGun::FireParticleOnMuzzle()
@@ -61,6 +65,7 @@ void AGun::FireParticleOnMuzzle()
 		);
 }
 
+// called on client
 FPointDamageEvent AGun::Hit(APlayerCharacter* Causer)
 {
 	FHitResult HitResult;
@@ -70,7 +75,7 @@ FPointDamageEvent AGun::Hit(APlayerCharacter* Causer)
 	Param_IgnoreSelf.bTraceComplex = true;
 	
 	if(!CanFire(Causer)) { return DamageEvent;}
-	Bullets--;
+	Bullets--; MulticastBulltes(Bullets);
 	MSB_LOG(Warning, TEXT("current bullets : %d"), Bullets);
 
 	FireParticleOnMuzzle();
@@ -133,5 +138,10 @@ bool AGun::CanFire(APlayerCharacter* Causer)
 
 void AGun::FillBullets()
 {
-	Bullets = 45;
+	Bullets = 45; MulticastBulltes(Bullets);
+}
+
+void AGun::MulticastBulltes_Implementation(int32 ClientBullets)
+{
+	Bullets = ClientBullets;
 }

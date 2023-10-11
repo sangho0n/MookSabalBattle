@@ -371,6 +371,7 @@ void APlayerCharacter::EquipWeapon_Multicast_Implementation()
 			}
 		}
 	}
+	CurrentWeapon->SetOwner(this);
 }
 
 void APlayerCharacter::OnWeaponStartOverlap_Implementation(AWeapon* OverlappedWeapon_)
@@ -548,7 +549,7 @@ void APlayerCharacter::Hit(int32 CurrCombo)
 	{
 		auto Gun = Cast<AGun>(CurrentWeapon);
 		auto DamageEvent = Gun->Hit(this);
-		DamageEvents.Add(Gun->Hit(this));
+		DamageEvents.Add(DamageEvent);
 		
 		// ApplyRecoil
 		UGameplayStatics::PlayWorldCameraShake(

@@ -16,6 +16,8 @@ AWeapon::AWeapon()
 
 	OffsetFromLand = FVector(0.0f, 0.0f, 10.0f);
 	bIsPossessed = false;
+
+	SetReplicates(true);
 }
 
 // Called when the game starts or when spawned
@@ -33,6 +35,7 @@ void AWeapon::PostInitializeComponents()
 	Super::PostInitializeComponents();
 	
 	SM_Weapon->SetCollisionProfileName(TEXT("IgnoreOnlyPawn"));
+	SM_Weapon->SetUseCCD(true);
 	Collider->SetCollisionProfileName(TEXT("Weapon"));
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnCharacterBeginOverlap);
 	Collider->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnCharacterEndOverlap);
