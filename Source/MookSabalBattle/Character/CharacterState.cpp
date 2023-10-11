@@ -43,14 +43,22 @@ void ACharacterState::BeginPlay()
 	bIsReloading = false;
 }
 
+// only called on Server
 void ACharacterState::ApplyDamage(float damage)
 {
 	//if(!GetOwner()->HasAuthority()) return;
+	MulticastDamage(damage);
+	if(GetHP() < KINDA_SMALL_NUMBER) OnHPIsZero.Broadcast();
+}
+
+void ACharacterState::MulticastDamage_Implementation(float damage)
+{
 	auto candidateHP = GetHP() - damage;
-	SetHP(candidateHP > 0.0f ? candidateHP : 0.0f);
+	SetHP(candidateHP > KINDA_SMALL_NUMBER ? candidateHP : 0.0f);
 	MSB_LOG(Warning, TEXT("hp changed : %f"), GetHP());
 	OnHPChanges.Broadcast(GetHP());
 }
+
 
 void ACharacterState::SetAttacking(bool flag)
 {

@@ -70,8 +70,8 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		bInAir = OwnedCharacter->GetMovementComponent()->IsFalling();
 		CurrentMode = state->CurrentMode;
 		bIsAttacking = state->IsAttacking();
-		bIsReload = state->bIsReloading;
-		bIsDead = state->bIsDead;
+		bIsReload = state->IsReloading();
+		bIsDead = state->IsDead();
 
 		if(nullptr != OwnedCharacter->CurrentWeapon && OwnedCharacter->CurrentWeapon->IsA(AMelee::StaticClass()))
 		{

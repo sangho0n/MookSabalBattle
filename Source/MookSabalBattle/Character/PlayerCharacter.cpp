@@ -178,12 +178,12 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 
 void APlayerCharacter::SetCharacterAsBlueTeam_Implementation()
 {
-	CharacterState->bIsRedTeam = false;
+	CharacterState->SetTeam(false);
 }
 
 void APlayerCharacter::SetCharacterAsRedTeam_Implementation()
 {
-	CharacterState->bIsRedTeam = true;
+	CharacterState->SetTeam(true);
 }
 
 // Called every frame
@@ -405,7 +405,7 @@ void APlayerCharacter::AttackNonEquip_Server_Implementation()
 
 void APlayerCharacter::Shoot_Server_Implementation()
 {
-	if(CharacterState->IsAttacking() || CharacterState->bIsReloading) return;
+	if(CharacterState->IsAttacking() || CharacterState->IsReloading()) return;
 	// auto Gun = Cast<AGun>(CurrentWeapon);
 	// if(!Gun->CanFire(this)) return;
 	//
@@ -495,7 +495,7 @@ void APlayerCharacter::SwingMelee_Multicast_Implementation()
 void APlayerCharacter::ReloadGun_Server_Implementation()
 {
 	auto Gun = Cast<AGun>(CurrentWeapon);
-	if(CharacterState->bIsReloading
+	if(CharacterState->IsReloading()
 		|| CharacterState->IsAttacking()
 		|| Gun->Bullets >= 45) return;
 
@@ -504,7 +504,7 @@ void APlayerCharacter::ReloadGun_Server_Implementation()
 
 void APlayerCharacter::ReloadGun_Multicast_Implementation()
 {
-	CharacterState->bIsReloading = true;
+	CharacterState->SetReload(true);
 }
 
 /**
@@ -793,13 +793,13 @@ FVector APlayerCharacter::GetCameraDirection()
 
 void APlayerCharacter::EndReloading()
 {
-	CharacterState->bIsReloading = false;
+	CharacterState->SetReload(false);
 }
 
 bool APlayerCharacter::IsSameTeam(APlayerCharacter* OtherPlayer)
 {
-	auto ThisTeam = CharacterState->bIsRedTeam;
-	auto OtherTeam = OtherPlayer->GetCharacterStateComponent()->bIsRedTeam;
+	auto ThisTeam = CharacterState->IsRedTeam();
+	auto OtherTeam = OtherPlayer->GetCharacterStateComponent()->IsRedTeam();
 	
 	if(!(ThisTeam ^ OtherTeam)) return true;
 	return false;
