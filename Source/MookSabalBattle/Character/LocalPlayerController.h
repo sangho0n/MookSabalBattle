@@ -35,8 +35,8 @@ public:
 	void AttackStop();
 	void InitPlayer();
 private:
-	UPROPERTY(Replicated)
+UPROPERTY(Replicated)
 	bool bEnableInputControl;
-	UPROPERTY(Replicated)
+UPROPERTY(Replicated)
 	bool bIsPossessingPawnInitialized;
 };

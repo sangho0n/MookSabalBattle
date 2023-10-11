@@ -18,6 +18,13 @@ AMookSabalBattleGameModeBase::AMookSabalBattleGameModeBase()
 	PlayerStateClass = ACharacterState::StaticClass();
 }
 
+void AMookSabalBattleGameModeBase::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	OnAllPlayerReplicationFinished.BindUObject(this, &AMookSabalBattleGameModeBase::InitAllPlayers);
+}
+
+
 void AMookSabalBattleGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
 	Super::InitGame(MapName, Options, ErrorMessage);
@@ -26,6 +33,8 @@ void AMookSabalBattleGameModeBase::InitGame(const FString& MapName, const FStrin
 	{
 		FreePlayerStarts.Add(*it);
 	}
+	RepFinishedPlayerCount = 0;
+	MaxPlayerCount = 2;
 }
 
 void AMookSabalBattleGameModeBase::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
@@ -46,7 +55,7 @@ FString AMookSabalBattleGameModeBase::InitNewPlayer(APlayerController* NewPlayer
 		return FString(TEXT("No free player starts"));
 	}
 
-	NewPlayerController->StartSpot = FreePlayerStarts.Pop();;
+	NewPlayerController->StartSpot = FreePlayerStarts.Pop();
 	PlayerControllers.Add(NewPlayerController);
 	
 	return Super::InitNewPlayer(NewPlayerController, UniqueId, Options, Portal);
@@ -55,4 +64,23 @@ FString AMookSabalBattleGameModeBase::InitNewPlayer(APlayerController* NewPlayer
 void AMookSabalBattleGameModeBase::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
+}
+
+void AMookSabalBattleGameModeBase::InitAllPlayers()
+{
+	MSB_LOG(Warning, TEXT("total controller : %d"), PlayerControllers.Num());
+
+	int flag = 0;
+	for(auto Controller : PlayerControllers)
+	{
+		auto Character = Cast<APlayerCharacter>(Controller->GetPawn());
+		Character->InitPlayer(TEXT("default name"), flag%2==0?true:false);
+		flag++;
+	}
+}
+
+void AMookSabalBattleGameModeBase::IncreaseRepFinishedPlayerCount()
+{
+	RepFinishedPlayerCount++;
+	if(RepFinishedPlayerCount == MaxPlayerCount) OnAllPlayerReplicationFinished.Execute();
 }

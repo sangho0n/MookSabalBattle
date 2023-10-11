@@ -19,6 +19,7 @@ void ALocalPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ALocalPlayerController, bEnableInputControl);
+	DOREPLIFETIME(ALocalPlayerController, bIsPossessingPawnInitialized);
 }
 
 
@@ -202,4 +203,5 @@ void ALocalPlayerController::Reload()
 void ALocalPlayerController::InitPlayer()
 {
 	bIsPossessingPawnInitialized = true;
+	bEnableInputControl = true;
 }

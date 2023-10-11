@@ -16,6 +16,7 @@
 #include "Engine/DamageEvents.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h"
+#include "MookSabalBattle/MookSabalBattleGameModeBase.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -92,6 +93,11 @@ void APlayerCharacter::PostInitializeComponents()
 	Collider->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnCharacterEndOverlapWithCharacter);
 	OnGetDamage.AddDynamic(this, &APlayerCharacter::OnHit); // blueprint
 	Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnAttackEnd.AddDynamic(this, &APlayerCharacter::StopAttacking);
+	if(HasAuthority())
+	{
+		auto GameMode = Cast<AMookSabalBattleGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+		OnNewPlayerReplicationFinished.BindUObject(GameMode, &AMookSabalBattleGameModeBase::IncreaseRepFinishedPlayerCount);
+	}
 	
 	PunchDamage = 7.0f;
 	KickDamage = 16.0f;
@@ -102,29 +108,48 @@ void APlayerCharacter::PostInitializeComponents()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	GetMesh()->SetVisibility(false);
 
+	// wait for some seconds for replications
 	FTimerHandle TimerHandle;
 	float DelayInSeconds = 2.0f;
-	FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &APlayerCharacter::InitPlayer);
+	FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &APlayerCharacter::AfterReplication);
 	GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, DelayInSeconds, false);
 }
 
-void APlayerCharacter::InitPlayer()
+void APlayerCharacter::AfterReplication()
 {
+	if(HasAuthority())
+		OnNewPlayerReplicationFinished.Execute();
+}
+
+// NetMulticast RPC (called on both listen server and client)
+void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool bIsRedTeam)
+{
+	GetMesh()->SetVisibility(true);
 	CharacterState = Cast<ACharacterState>(GetPlayerState());
 	check(nullptr != CharacterState);
 	
 	if(HasAuthority())
 	{
-		CharacterState->OnHPIsZero.AddDynamic(this, &APlayerCharacter::Die);
+		CharacterState->OnHPIsZero.AddDynamic(this, &APlayerCharacter::Die_Server);
+		CharacterState->SetPlayerName(UserName);
+		CharacterState->SetTeam(bIsRedTeam);
 	}
-	else
-	{
-		FString DebugMsg = FString::Printf(TEXT("나는 클라이언트 폰이야 %s"),
-			*GetDebugName(this));
-		GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Blue, DebugMsg);
-	}
+
+	InitWidgets();
 	
+	if(IsLocallyControlled())
+	{
+		Cast<ALocalPlayerController>(GetController())->InitPlayer();
+	}
+
+	ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
+}
+
+void APlayerCharacter::InitWidgets_Implementation()
+{
+	// InGame UI
 	if(IsLocallyControlled())
 	{
 		if(IsValid(InGameUIClass))
@@ -134,16 +159,12 @@ void APlayerCharacter::InitPlayer()
 			MSB_LOG_LOCATION(Warning);
 			InGameUI->BindCharacterStat(CharacterState);
 		}
-		// 수정할것
-		CharacterState->bIsRedTeam = true;
-		Cast<ALocalPlayerController>(GetController())->InitPlayer();
-	}
-	else
-	{
-		CharacterState->bIsRedTeam = false;
 	}
 
-	ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
+	// HealthBar(by blueprint)
+	// TODO : 모두 잘 되는데 왜 서버에서 클라 캐릭터를 때리면 안나오는 것일까..?
+	// 첫번째 때릴 때는 잘 나오지만, 클라에서 때린 후 서버에서 다시 때리면 안나옴
+	// 로그는 잘 띄워지는데...
 }
 
 

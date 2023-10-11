@@ -9,6 +9,7 @@
 #include "PlayerCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGetDamage, FName, BoneName, FVector, HitFrom);
+DECLARE_DELEGATE(FOnNewPlayerReplicationFinished);
 
 UCLASS()
 class MOOKSABALBATTLE_API APlayerCharacter : public ACharacter
@@ -181,6 +182,13 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void ReloadGun_Multicast();
 
+	FOnNewPlayerReplicationFinished OnNewPlayerReplicationFinished;
+private:
 	UFUNCTION()
-	void InitPlayer();
+	void AfterReplication();
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void InitPlayer(const FString &UserName, bool bIsRedTeam);
+	UFUNCTION(BlueprintNativeEvent)
+	void InitWidgets();
 };
