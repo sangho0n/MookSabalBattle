@@ -8,6 +8,8 @@
 #include "Components/CanvasPanel.h"
 #include "Components/TextBlock.h"
 #include "Components/EditableTextBox.h"
+#include "MookSabalBattle/SocketNetworking/TCPClient.h"
+#include "MookSabalBattle/SocketNetworking/TCPServer.h"
 #include "LobbyUI.generated.h"
 
 /**
@@ -56,7 +58,7 @@ private:
 
 	void ShowOnJoinCanvas();
 
-	void TryJoin(FString IP, FString NickName);
+	void TryJoin(FString ServerIP, FString NickName);
 
 	void SyncPlayerCount();
 
@@ -72,7 +74,13 @@ private:
 
 	void UpdateWaitCanvas(float InDeltaTime);
 
+	UFUNCTION()
+	void AddPlayerCount();
+
 	bool bStartWaiting;
 	bool bIsHost;
 	float AccWaitTime;
+
+	UTCPServer* ServerManager;
+	UTCPClient* ClientManager;
 };

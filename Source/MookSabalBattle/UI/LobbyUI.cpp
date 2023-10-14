@@ -95,9 +95,14 @@ void ULobbyUI::ShowWaitingCanvas()
 
 void ULobbyUI::TryHost(FString IP, FString NickName)
 {
+	MSB_LOG(Warning, TEXT("try host"));
 	// wait until all players join
-
-	// 
+	AsyncTask(ENamedThreads::AnyThread, [this]()->void
+       	{
+       		if(nullptr == ServerManager) ServerManager = NewObject<UTCPServer>();
+       		ServerManager->OnNewClientJoinLobby.AddUObject(this, &ULobbyUI::AddPlayerCount);
+       		ServerManager->StartHost();
+       	});
 }
 
 
@@ -176,9 +181,15 @@ void ULobbyUI::ConfirmHostPressed()
 	}
 }
 
-void ULobbyUI::TryJoin(FString IP, FString NickName)
+void ULobbyUI::TryJoin(FString ServerIP, FString NickName)
 {
-	// 소켓통신하기
+	MSB_LOG(Warning, TEXT("try join"));
+	// wait until all players join
+	AsyncTask(ENamedThreads::AnyThread, [this, ServerIP]()->void
+		   {
+			   if(nullptr == ClientManager) ClientManager = NewObject<UTCPClient>();
+			   ClientManager->Join(ServerIP);
+		   });
 }
 
 void ULobbyUI::SyncPlayerCount()
@@ -210,3 +221,9 @@ void ULobbyUI::UpdateWaitCanvas(float InDeltaTime)
 	Image_Waiting->SetRenderTransformAngle(AccWaitTime * 100.0f);
 	// TODO : update PlayerCount
 }
+
+void ULobbyUI::AddPlayerCount()
+{
+	// 호출은 됐어
+}
+
