@@ -44,10 +44,27 @@ void UTCPClient::Join(FString ServerIP)
 			auto DeserializedMessage = DeserializeToTCPMessage(ReceivedData);
 		
 			delete[] ReceivedData;
-			check(DeserializedMessage.Type==2); // TODO Why received ack type is 0?
+			if(DeserializedMessage.Type==2) // ack
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black,
+					TEXT("메시지 타입 : %d") + DeserializedMessage.Type);
+			}
+			else if (DeserializedMessage.Type==3) // adjust player count
+			{
+				AsyncTask(ENamedThreads::GameThread, [this, DeserializedMessage]()->void
+				{
+					OnPlayerCountUpdate.Broadcast(DeserializedMessage.PlayerCount);
+				});
+				// TODO max player 박아놓은 거 바꾸기
+				if(DeserializedMessage.PlayerCount == 2)
+				{
+					AsyncTask(ENamedThreads::GameThread, [this, DeserializedMessage]()->void
+					{
+						OnMaxPlayerJoined.Broadcast();
+					});
+				}
+			}
 		}
 	}
-	
-	delete[] ReceivedData;	
 	
 }
