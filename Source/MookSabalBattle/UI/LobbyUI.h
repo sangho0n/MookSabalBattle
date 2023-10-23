@@ -60,8 +60,6 @@ private:
 
 	void TryJoin(FString ServerIP, FString NickName);
 
-	void SyncPlayerCount();
-
 	UFUNCTION()
 	void ExitPressed();
 	
@@ -75,7 +73,7 @@ private:
 	void UpdateWaitCanvas(float InDeltaTime);
 
 	UFUNCTION()
-	void AddPlayerCount();
+	void UpdatePlayerCount(int32 CurrentCount);
 
 	bool bStartWaiting;
 	bool bIsHost;
@@ -83,4 +81,9 @@ private:
 
 	UTCPServer* ServerManager;
 	UTCPClient* ClientManager;
+
+	UFUNCTION()
+	void EnterGameOnServer();
+	UFUNCTION()
+	void EnterGameOnClient();
 };

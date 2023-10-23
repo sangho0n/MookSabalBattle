@@ -192,11 +192,6 @@ void ULobbyUI::TryJoin(FString ServerIP, FString NickName)
 		   });
 }
 
-void ULobbyUI::SyncPlayerCount()
-{
-	
-}
-
 void ULobbyUI::ExitPressed()
 {
 	Exit();
@@ -222,8 +217,20 @@ void ULobbyUI::UpdateWaitCanvas(float InDeltaTime)
 	// TODO : update PlayerCount
 }
 
-void ULobbyUI::AddPlayerCount()
+void ULobbyUI::UpdatePlayerCount(int32 CurrentCount)
 {
-	// 호출은 됐어
+	// TODO : max player 2 박아놓은 거 수정
+	Text_PlayerCount->SetText(FText::Format(
+		FText::FromString("{0} / 2"), CurrentCount
+	));
 }
 
+void ULobbyUI::EnterGameOnServer()
+{
+	
+}
+
+void ULobbyUI::EnterGameOnClient()
+{
+	
+}
