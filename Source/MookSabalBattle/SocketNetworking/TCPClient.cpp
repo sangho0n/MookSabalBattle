@@ -6,6 +6,12 @@
 #include "Common/TcpSocketBuilder.h"
 #include "Interfaces/IPv4/IPv4Address.h"
 
+UTCPClient::~UTCPClient()
+{
+	UTCPSocketBase::~UTCPSocketBase();
+}
+
+
 void UTCPClient::Join(FString ServerIP)
 {
 	// 클라이언트 소켓 생성

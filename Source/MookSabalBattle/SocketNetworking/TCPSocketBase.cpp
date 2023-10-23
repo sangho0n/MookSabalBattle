@@ -16,11 +16,7 @@ UTCPSocketBase::~UTCPSocketBase()
 {
 	if(nullptr != Socket)
 		Socket->Close();
-}
-
-bool UTCPSocketBase::SendMessage()
-{
-	return true;
+	SocketSubsystem->DestroySocket(Socket);
 }
 
 FString UTCPSocketBase::ReceiveMessage()

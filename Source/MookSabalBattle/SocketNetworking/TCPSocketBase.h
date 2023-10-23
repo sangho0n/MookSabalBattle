@@ -40,7 +40,6 @@ public:
 	UTCPSocketBase(const FObjectInitializer& ObjectInitializer);
 	~UTCPSocketBase();
 	
-	virtual bool SendMessage();
 	virtual FString ReceiveMessage();
 	
 protected:
