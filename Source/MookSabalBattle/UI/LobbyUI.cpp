@@ -97,10 +97,11 @@ void ULobbyUI::TryHost(FString IP, FString NickName)
 {
 	MSB_LOG(Warning, TEXT("try host"));
 	// wait until all players join
-	AsyncTask(ENamedThreads::AnyThread, [this]()->void
+	AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [this]()->void
        	{
        		if(nullptr == ServerManager) ServerManager = NewObject<UTCPServer>();
-       		ServerManager->OnNewClientJoinLobby.AddUObject(this, &ULobbyUI::AddPlayerCount);
+       		ServerManager->OnPlayerCountUpdate.AddUObject(this, &ULobbyUI::UpdatePlayerCount);
+			ServerManager->OnMaxPlayerJoined.AddDynamic(this, &ULobbyUI::EnterGameOnServer);
        		ServerManager->StartHost();
        	});
 }
@@ -185,9 +186,11 @@ void ULobbyUI::TryJoin(FString ServerIP, FString NickName)
 {
 	MSB_LOG(Warning, TEXT("try join"));
 	// wait until all players join
-	AsyncTask(ENamedThreads::AnyThread, [this, ServerIP]()->void
+	AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [this, ServerIP]()->void
 		   {
 			   if(nullptr == ClientManager) ClientManager = NewObject<UTCPClient>();
+		       ClientManager->OnPlayerCountUpdate.AddUObject(this, &ULobbyUI::UpdatePlayerCount);
+		       ClientManager->OnMaxPlayerJoined.AddDynamic(this, &ULobbyUI::EnterGameOnClient);
 			   ClientManager->Join(ServerIP);
 		   });
 }

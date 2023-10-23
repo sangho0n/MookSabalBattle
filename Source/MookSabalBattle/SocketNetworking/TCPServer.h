@@ -6,8 +6,6 @@
 #include "TCPSocketBase.h"
 #include "TCPServer.generated.h"
 
-DECLARE_MULTICAST_DELEGATE(FOnNewClientJoinLobby)
-DECLARE_MULTICAST_DELEGATE(FOnClientExitLobby)
 /**
  * 
  */
@@ -27,10 +25,9 @@ public:
 private:
 	void FindAvailablePort(TSharedRef<FInternetAddr> Addr);
 
+	void ListenClient();
+
 	FSocket* ListenSocket;
 	TArray<FSocket*> ConnectionSockets;
 
-public:
-	FOnNewClientJoinLobby OnNewClientJoinLobby;
-	FOnClientExitLobby OnClientExitLobby;
 };

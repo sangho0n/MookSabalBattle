@@ -27,29 +27,7 @@ void UTCPClient::Join(FString ServerIP)
 	Socket->Connect(ServerAddress.Get());
 
 	// 서버에 데이터 보내기
-
-	FTCPMessage Join(0);
-	int32 BytesShouldBeSent = sizeof(FTCPMessage);
-	int32 BytesSent = 0;
-
-	FBufferArchive Arch;
-	Arch << Join;
-	uint8* BufferStart = Arch.GetData();
-
-	bool flag = false;
-	while (BytesShouldBeSent > 0)
-	{
-		if(Socket->Send(BufferStart, BytesShouldBeSent, BytesSent))
-		{
-			BytesShouldBeSent -= BytesSent;
-			BufferStart += BytesSent;
-			flag = true;
-		}
-		else
-		{
-			flag = false;
-		}
-	}
+	SendMessageTypeOf(Socket, 0);
 
 	// 서버로부터 응답 받기
 	uint32 DataSize = sizeof(FTCPMessage);
