@@ -100,10 +100,18 @@ void UTCPServer::ListenClient()
 				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black, TEXT("메시지 도착"));
 			
 				if(DeserializedMessage.Type == 0) // 0 means join request
-					{
+				{
 					ConnectionSockets.Add(ConnectionSocket);
 					SendMessageTypeOf(ConnectionSocket, 2, ConnectionSockets.Num() + 1); // 2 means ack response
 
+					for (auto Sock : ConnectionSockets)
+					{
+						SendMessageTypeOf(Sock, 3, ConnectionSockets.Num() + 1); // 3 means adjust player count
+					}
+					GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black,
+						TEXT("클라이언트의 조인 요청"));
+
+					
 					AsyncTask(ENamedThreads::GameThread, [this, DeserializedMessage]()->void
 					{
 						OnPlayerCountUpdate.Broadcast(ConnectionSockets.Num() + 1);
@@ -114,17 +122,10 @@ void UTCPServer::ListenClient()
 					{
 						AsyncTask(ENamedThreads::GameThread, [this, DeserializedMessage]()->void
 						{
-							OnMaxPlayerJoined.Broadcast();
+							OnMaxPlayerJoined.Broadcast(FString("dummy server ip"));
 						});
 					}
-
-					for (auto Sock : ConnectionSockets)
-					{
-						SendMessageTypeOf(Sock, 3, ConnectionSockets.Num() + 1); // 3 means adjust player count
-					}
-					GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black,
-						TEXT("클라이언트의 조인 요청"));
-					}
+				}
 				else
 				{
 					//MSB_LOG(Warning, TEXT("Undefined behavior of join"));
