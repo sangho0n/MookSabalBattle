@@ -38,7 +38,7 @@ struct FTCPMessage
 };
 
 UCLASS()
-class MOOKSABALBATTLE_API UTCPSocketBase : public UNetConnection
+class MOOKSABALBATTLE_API UTCPSocketBase : public UObject
 {
 	GENERATED_BODY()
 public:
