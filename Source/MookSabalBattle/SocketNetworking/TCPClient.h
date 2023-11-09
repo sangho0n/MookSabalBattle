@@ -15,7 +15,7 @@ class MOOKSABALBATTLE_API UTCPClient : public UTCPSocketBase
 	GENERATED_BODY()
 
 public:
-	~UTCPClient();
+	static void CloseSocket();
 	
-	void Join(FString ServerIP);
+	static void Join(FString ServerIP);
 };

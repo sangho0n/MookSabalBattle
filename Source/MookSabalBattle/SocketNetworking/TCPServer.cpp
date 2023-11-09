@@ -8,26 +8,30 @@
 #include "Interfaces/IPv4/IPv4Endpoint.h"
 #include "MookSabalBattle/MookSabalBattleGameModeBase.h"
 
-UTCPServer::~UTCPServer()
-{
-	UTCPSocketBase::~UTCPSocketBase();
+FSocket* UTCPServer::ListenSocket = nullptr;
+TArray<FSocket*> UTCPServer::ConnectionSockets = {};
 
+void UTCPServer::CloseSocket()
+{
+	isSocketConnectionValid = false;
 	if(nullptr != ListenSocket)
 	{
+		ListenSocket->Shutdown(ESocketShutdownMode::ReadWrite);
 		ListenSocket->Close();
+		SocketSubsystem->DestroySocket(ListenSocket);
+		ListenSocket = nullptr;
 	}
-	SocketSubsystem->DestroySocket(ListenSocket);
 
 	if(!ConnectionSockets.IsEmpty())
 	{
 		for (auto Sock : ConnectionSockets)
 		{
+			Sock->Shutdown(ESocketShutdownMode::ReadWrite);
 			Sock->Close();
 			SocketSubsystem->DestroySocket(Sock);
 		}
 		ConnectionSockets.Empty();
 	}
-	
 }
 
 
@@ -38,16 +42,9 @@ TSharedRef<FInternetAddr> UTCPServer::GetLocalHostIPv4()
 	return Addr;
 }
 
-void UTCPServer::PostInitProperties()
-{
-	Super::PostInitProperties();
-	
-	ConnectionSockets = {};
-}
-
-
 void UTCPServer::StartHost()
 {
+	ConnectionSockets = {};
 	// 서버 소켓 생성
 	auto Addr = GetLocalHostIPv4(); FindAvailablePort(Addr);
 	auto Endpoint = FIPv4Endpoint(Addr);
@@ -58,7 +55,8 @@ void UTCPServer::StartHost()
 	
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black, TEXT("호스팅 시작"));
 
-	AsyncTask(ENamedThreads::AnyThread, [this]()->void{ListenClient();});
+	isSocketConnectionValid = true;
+	AsyncTask(ENamedThreads::AnyThread, []()->void{ListenClient();});
 }
 
 void UTCPServer::FindAvailablePort(TSharedRef<FInternetAddr> Addr)
@@ -76,31 +74,31 @@ void UTCPServer::FindAvailablePort(TSharedRef<FInternetAddr> Addr)
 void UTCPServer::ListenClient()
 {
 	// start listen
-	while (true)
+	while (isSocketConnectionValid)
 	{
 		TSharedRef<FInternetAddr> RemoteAddress = SocketSubsystem->CreateInternetAddr();
 		auto ConnectionSocket = ListenSocket->Accept(*RemoteAddress, TEXT("Connection"));
 		
 		// 클라이언트와의 통신을 처리합니다.
-		while (ConnectionSocket != nullptr)
+		while (isSocketConnectionValid && ConnectionSocket != nullptr)
 		{
 			// 메시지 수신 및 처리
 			uint32 DataSize = sizeof(FTCPMessage);
 			uint8* ReceivedData = new uint8[DataSize];
-			
-			if (ConnectionSocket->HasPendingData(DataSize))
+		
+			if (isSocketConnectionValid && ConnectionSocket->HasPendingData(DataSize))
 			{
 				int32 ReadData = 0;
 				ConnectionSocket->Recv(ReceivedData, DataSize, ReadData);
 
-				
+			
 				// 역직렬화
 				auto DeserializedMessage = DeserializeToTCPMessage(ReceivedData);
 
 				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black, TEXT("메시지 도착"));
-			
+		
 				if(DeserializedMessage.Type == 0) // 0 means join request
-				{
+					{
 					ConnectionSockets.Add(ConnectionSocket);
 					SendMessageTypeOf(ConnectionSocket, 2, ConnectionSockets.Num() + 1); // 2 means ack response
 
@@ -111,8 +109,8 @@ void UTCPServer::ListenClient()
 					GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black,
 						TEXT("클라이언트의 조인 요청"));
 
-					
-					AsyncTask(ENamedThreads::GameThread, [this, DeserializedMessage]()->void
+				
+					AsyncTask(ENamedThreads::GameThread, [DeserializedMessage]()->void
 					{
 						OnPlayerCountUpdate.Broadcast(ConnectionSockets.Num() + 1);
 					});
@@ -120,12 +118,12 @@ void UTCPServer::ListenClient()
 					// TODO max player 박아놓은 거 고치기
 					if((ConnectionSockets.Num() + 1) == 2)
 					{
-						AsyncTask(ENamedThreads::GameThread, [this, DeserializedMessage]()->void
+						AsyncTask(ENamedThreads::GameThread, [DeserializedMessage]()->void
 						{
 							OnMaxPlayerJoined.Broadcast(FString("dummy server ip"));
 						});
 					}
-				}
+					}
 				else
 				{
 					//MSB_LOG(Warning, TEXT("Undefined behavior of join"));
@@ -136,5 +134,7 @@ void UTCPServer::ListenClient()
 			}
 		}
 	}
+
+	CloseSocket();
 }
 

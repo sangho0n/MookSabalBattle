@@ -16,6 +16,8 @@ AMookSabalBattleGameModeBase::AMookSabalBattleGameModeBase()
 	}
 	PlayerControllerClass = ALocalPlayerController::StaticClass();
 	PlayerStateClass = ACharacterState::StaticClass();
+
+	bUseSeamlessTravel = true;
 }
 
 void AMookSabalBattleGameModeBase::PostInitializeComponents()
@@ -35,6 +37,7 @@ void AMookSabalBattleGameModeBase::InitGame(const FString& MapName, const FStrin
 	}
 	RepFinishedPlayerCount = 0;
 	MaxPlayerCount = 2;
+	PlayerControllers = {};
 }
 
 void AMookSabalBattleGameModeBase::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
@@ -63,6 +66,7 @@ FString AMookSabalBattleGameModeBase::InitNewPlayer(APlayerController* NewPlayer
 
 void AMookSabalBattleGameModeBase::PostLogin(APlayerController* NewPlayer)
 {
+	MSB_LOG(Warning, TEXT("new player loggined. current player num is : %d"), PlayerControllers.Num());
 	Super::PostLogin(NewPlayer);
 }
 

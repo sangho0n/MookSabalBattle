@@ -76,12 +76,8 @@ private:
 	void UpdatePlayerCount(int32 CurrentCount);
 
 	bool bStartWaiting;
-	bool bIsHost;
+public:
+	static bool bIsHost;
+private:
 	float AccWaitTime;
-
-	UPROPERTY()
-	UTCPServer* ServerManager;
-	UPROPERTY()
-	UTCPClient* ClientManager;
-
 };

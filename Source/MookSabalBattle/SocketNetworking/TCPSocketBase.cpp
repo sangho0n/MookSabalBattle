@@ -5,18 +5,29 @@
 #include "Sockets.h"
 #include "SocketSubsystem.h"
 
+FSocket* UTCPSocketBase::Socket = nullptr;
 ISocketSubsystem* UTCPSocketBase::SocketSubsystem;
+TArray<int32> UTCPSocketBase::PortCandidates = {11111};
+bool UTCPSocketBase::isSocketConnectionValid;
+FOnPlayerCountUpdate UTCPSocketBase::OnPlayerCountUpdate;
+FOnMaxPlayerJoined UTCPSocketBase::OnMaxPlayerJoined;
 
 UTCPSocketBase::UTCPSocketBase(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	SocketSubsystem = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM);	
+	SocketSubsystem = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM);
+	isSocketConnectionValid = true;
 }
 
-UTCPSocketBase::~UTCPSocketBase()
+void UTCPSocketBase::CloseSocket()
 {
+	isSocketConnectionValid = false;
 	if(nullptr != Socket)
+	{
+		Socket->Shutdown(ESocketShutdownMode::ReadWrite);
 		Socket->Close();
-	SocketSubsystem->DestroySocket(Socket);
+		SocketSubsystem->DestroySocket(Socket);
+		Socket = nullptr;
+	}
 }
 
 FString UTCPSocketBase::ReceiveMessage()
