@@ -10,6 +10,7 @@
 
 FSocket* UTCPServer::ListenSocket = nullptr;
 TArray<FSocket*> UTCPServer::ConnectionSockets = {};
+bool UTCPServer::OnServerExit = false;
 
 void UTCPServer::CloseSocket()
 {
@@ -98,7 +99,8 @@ void UTCPServer::ListenClient()
 				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black, TEXT("메시지 도착"));
 		
 				if(DeserializedMessage.Type == 0) // 0 means join request
-					{
+				{
+					// TODO max player 비교 후 참가시킬지 말지 결정
 					ConnectionSockets.Add(ConnectionSocket);
 					SendMessageTypeOf(ConnectionSocket, 2, ConnectionSockets.Num() + 1); // 2 means ack response
 
@@ -116,14 +118,28 @@ void UTCPServer::ListenClient()
 					});
 
 					// TODO max player 박아놓은 거 고치기
-					if((ConnectionSockets.Num() + 1) == 2)
+					if((ConnectionSockets.Num() + 1) == 3)
 					{
 						AsyncTask(ENamedThreads::GameThread, [DeserializedMessage]()->void
 						{
 							OnMaxPlayerJoined.Broadcast(FString("dummy server ip"));
 						});
 					}
+				}
+				else if(DeserializedMessage.Type == 1) // 1 means exit
+				{
+					int32 CurrentSocketIndex = ConnectionSockets.Find(ConnectionSocket);
+					ConnectionSockets.RemoveAt(CurrentSocketIndex);
+
+					for (auto Sock : ConnectionSockets)
+					{
+						SendMessageTypeOf(Sock, 3, ConnectionSockets.Num() + 1); // type for adjust player count
 					}
+					AsyncTask(ENamedThreads::GameThread, []()->void
+					{
+						OnPlayerCountUpdate.Broadcast(ConnectionSockets.Num() + 1);
+					});
+				}
 				else
 				{
 					//MSB_LOG(Warning, TEXT("Undefined behavior of join"));
@@ -132,9 +148,26 @@ void UTCPServer::ListenClient()
 
 				}
 			}
+
+			if (OnServerExit)
+			{
+				for(auto Sock : ConnectionSockets)
+				{
+					SendMessageTypeOf(Sock, 4);
+				}
+				isSocketConnectionValid = false;
+				OnServerExit = false;
+			}
+
+			delete[] ReceivedData;
 		}
 	}
 
 	CloseSocket();
+}
+
+void UTCPServer::Exit()
+{
+	OnServerExit = true;
 }
 
