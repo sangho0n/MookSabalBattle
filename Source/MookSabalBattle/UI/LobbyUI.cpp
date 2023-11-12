@@ -196,8 +196,7 @@ void ULobbyUI::TryJoin(FString ServerIP, FString NickName)
 		   {
 			   if(nullptr == ClientManager) ClientManager = NewObject<UTCPClient>();
 		       ClientManager->OnPlayerCountUpdate.AddUObject(this, &ULobbyUI::UpdatePlayerCount);
-		       ClientManager->OnMaxPlayerJoined.AddDynamic(GameInstance, &UMSBGameInstance::EnterGameOnClient);
-			   //ClientManager->OnMaxPlayerJoined.AddDynamic(ClientManager, &UTCPClient::CloseSocket);
+		       ClientManager->OnMaxPlayerJoined.AddDynamic(this, &ULobbyUI::EnterGameOnClient);
 			   ClientManager->Join(ServerIP);
 		   });
 }

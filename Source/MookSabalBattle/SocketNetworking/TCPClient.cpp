@@ -58,9 +58,9 @@ void UTCPClient::Join(FString ServerIP)
 				// TODO max player 박아놓은 거 바꾸기
 				if(DeserializedMessage.PlayerCount == 2)
 				{
-					AsyncTask(ENamedThreads::GameThread, [this, ServerIP]()->void
+					AsyncTask(ENamedThreads::GameThread, [this, DeserializedMessage]()->void
 					{
-						OnMaxPlayerJoined.Broadcast(ServerIP);
+						OnMaxPlayerJoined.Broadcast();
 					});
 				}
 			}

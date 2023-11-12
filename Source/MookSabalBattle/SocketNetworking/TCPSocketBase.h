@@ -8,7 +8,7 @@
 
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerCountUpdate, int32)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxPlayerJoined, FString, ServerIP);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMaxPlayerJoined);
 /**
  * 
  */
