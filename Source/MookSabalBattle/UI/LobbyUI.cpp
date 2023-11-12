@@ -5,7 +5,6 @@
 
 #include "SocketSubsystem.h"
 #include "Common/TcpSocketBuilder.h"
-#include "MookSabalBattle/MSBGameInstance.h"
 #include "MookSabalBattle/SocketNetworking/TCPServer.h"
 
 void ULobbyUI::NativeConstruct()
@@ -98,14 +97,11 @@ void ULobbyUI::TryHost(FString IP, FString NickName)
 {
 	MSB_LOG(Warning, TEXT("try host"));
 	// wait until all players join
-	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
-	AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [this, GameInstance]()->void
+	AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [this]()->void
        	{
        		if(nullptr == ServerManager) ServerManager = NewObject<UTCPServer>();
        		ServerManager->OnPlayerCountUpdate.AddUObject(this, &ULobbyUI::UpdatePlayerCount);
-			check(GameInstance);
-			ServerManager->OnMaxPlayerJoined.AddDynamic(GameInstance, &UMSBGameInstance::EnterGameOnServer);
-			//ServerManager->OnMaxPlayerJoined.AddDynamic(ServerManager, &UTCPServer::CloseSocket);
+			ServerManager->OnMaxPlayerJoined.AddDynamic(this, &ULobbyUI::EnterGameOnServer);
        		ServerManager->StartHost();
        	});
 }
@@ -189,10 +185,8 @@ void ULobbyUI::ConfirmHostPressed()
 void ULobbyUI::TryJoin(FString ServerIP, FString NickName)
 {
 	MSB_LOG(Warning, TEXT("try join"));
-	Text_HostIP->SetText(FText::FromString(ServerIP));
 	// wait until all players join
-	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
-	AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [this, ServerIP, GameInstance]()->void
+	AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [this, ServerIP]()->void
 		   {
 			   if(nullptr == ClientManager) ClientManager = NewObject<UTCPClient>();
 		       ClientManager->OnPlayerCountUpdate.AddUObject(this, &ULobbyUI::UpdatePlayerCount);
@@ -223,6 +217,7 @@ void ULobbyUI::UpdateWaitCanvas(float InDeltaTime)
 	AccWaitTime += InDeltaTime;
 
 	Image_Waiting->SetRenderTransformAngle(AccWaitTime * 100.0f);
+	// TODO : update PlayerCount
 }
 
 void ULobbyUI::UpdatePlayerCount(int32 CurrentCount)
@@ -233,3 +228,12 @@ void ULobbyUI::UpdatePlayerCount(int32 CurrentCount)
 	));
 }
 
+void ULobbyUI::EnterGameOnServer()
+{
+	
+}
+
+void ULobbyUI::EnterGameOnClient()
+{
+	
+}

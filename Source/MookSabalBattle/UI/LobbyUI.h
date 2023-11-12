@@ -79,9 +79,11 @@ private:
 	bool bIsHost;
 	float AccWaitTime;
 
-	UPROPERTY()
 	UTCPServer* ServerManager;
-	UPROPERTY()
 	UTCPClient* ClientManager;
 
+	UFUNCTION()
+	void EnterGameOnServer();
+	UFUNCTION()
+	void EnterGameOnClient();
 };
