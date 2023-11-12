@@ -18,8 +18,6 @@ class MOOKSABALBATTLE_API UTCPServer : public UTCPSocketBase
 
 public:
 	virtual void PostInitProperties() override;
-
-	~UTCPServer();
 	
 	static TSharedRef<FInternetAddr> GetLocalHostIPv4();
 

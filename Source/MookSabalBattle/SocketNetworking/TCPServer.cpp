@@ -8,29 +8,6 @@
 #include "Interfaces/IPv4/IPv4Endpoint.h"
 #include "MookSabalBattle/MookSabalBattleGameModeBase.h"
 
-UTCPServer::~UTCPServer()
-{
-	UTCPSocketBase::~UTCPSocketBase();
-
-	if(nullptr != ListenSocket)
-	{
-		ListenSocket->Close();
-	}
-	SocketSubsystem->DestroySocket(ListenSocket);
-
-	if(!ConnectionSockets.IsEmpty())
-	{
-		for (auto Sock : ConnectionSockets)
-		{
-			Sock->Close();
-			SocketSubsystem->DestroySocket(Sock);
-		}
-		ConnectionSockets.Empty();
-	}
-	
-}
-
-
 TSharedRef<FInternetAddr> UTCPServer::GetLocalHostIPv4()
 {
 	bool bCanBindAll;
