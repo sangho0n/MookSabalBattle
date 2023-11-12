@@ -6,9 +6,6 @@
 #include "Engine/NetConnection.h"
 #include "TCPSocketBase.generated.h"
 
-
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnPlayerCountUpdate, int32)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMaxPlayerJoined);
 /**
  * 
  */
@@ -20,9 +17,7 @@ struct FTCPMessage
 	// 0 : join
 	// 1 : exit
 	// 2 : ack
-	// 3 : adjust player count
-	// 4 : expel
-	// 5 : start game
+	// 3 : expel
 	uint32 PlayerCount;
 	
 	FTCPMessage() : Type(0), PlayerCount(1){}
@@ -58,9 +53,4 @@ protected:
 
 	TArray<uint8> ConvertMemLocToArray(uint8* MemLoc);
 
-	void SendMessageTypeOf(FSocket* Sock, uint32 Type, uint32 PlayerCount=0);
-
-public:
-	FOnPlayerCountUpdate OnPlayerCountUpdate;
-	FOnMaxPlayerJoined OnMaxPlayerJoined;
 };
