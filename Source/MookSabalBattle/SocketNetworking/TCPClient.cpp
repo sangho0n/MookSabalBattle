@@ -6,9 +6,9 @@
 #include "Common/TcpSocketBuilder.h"
 #include "Interfaces/IPv4/IPv4Address.h"
 
-void UTCPClient::CloseSocket()
+UTCPClient::~UTCPClient()
 {
-	Super::CloseSocket();
+	UTCPSocketBase::~UTCPSocketBase();
 }
 
 
@@ -25,7 +25,6 @@ void UTCPClient::Join(FString ServerIP)
 	Socket = FTcpSocketBuilder(TEXT("YourClientSocketName"))
 		.AsReusable().BoundToPort(11112);
 	Socket->Connect(ServerAddress.Get());
-	isSocketConnectionValid = true;
 
 	// 서버에 데이터 보내기
 	SendMessageTypeOf(Socket, 0);
@@ -34,7 +33,7 @@ void UTCPClient::Join(FString ServerIP)
 	uint32 DataSize = sizeof(FTCPMessage);
 	uint8* ReceivedData = new uint8[DataSize];
 
-	while(isSocketConnectionValid)
+	while(true)
 	{
 		if(Socket->Wait(ESocketWaitConditions::WaitForRead, FTimespan::FromSeconds(5)))
 		{
@@ -52,14 +51,14 @@ void UTCPClient::Join(FString ServerIP)
 			}
 			else if (DeserializedMessage.Type==3) // adjust player count
 			{
-				AsyncTask(ENamedThreads::GameThread, [DeserializedMessage]()->void
+				AsyncTask(ENamedThreads::GameThread, [this, DeserializedMessage]()->void
 				{
 					OnPlayerCountUpdate.Broadcast(DeserializedMessage.PlayerCount);
 				});
 				// TODO max player 박아놓은 거 바꾸기
 				if(DeserializedMessage.PlayerCount == 2)
 				{
-					AsyncTask(ENamedThreads::GameThread, [ServerIP]()->void
+					AsyncTask(ENamedThreads::GameThread, [this, ServerIP]()->void
 					{
 						OnMaxPlayerJoined.Broadcast(ServerIP);
 					});
@@ -67,6 +66,5 @@ void UTCPClient::Join(FString ServerIP)
 			}
 		}
 	}
-
-	CloseSocket();
+	
 }

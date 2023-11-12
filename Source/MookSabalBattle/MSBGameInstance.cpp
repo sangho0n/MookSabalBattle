@@ -3,8 +3,6 @@
 
 #include "MSBGameInstance.h"
 
-#include "UI/LobbyUI.h"
-
 IOnlineSubsystem* UMSBGameInstance::OnlineSubsystem;
 
 void UMSBGameInstance::Init()
@@ -16,12 +14,11 @@ void UMSBGameInstance::Init()
 
 void UMSBGameInstance::EnterGameOnServer(FString ServerIP)
 {
-	// below code should be deleted when deploying
-	if(!ULobbyUI::bIsHost) return;
-	
+	MSB_LOG(Warning, TEXT("ddd"));
 	FTimerHandle TimerHandle;
-	float DelayInSeconds = 2.0f;
-	auto TimerDelegate = FTimerDelegate::CreateUObject(this, &UMSBGameInstance::EnterGame);
+	float DelayInSeconds = 3.0f;
+	//auto TimerDelegate = FTimerDelegate::CreateUObject(this, &UMSBGameInstance::EnterGame);
+	FTimerDelegate TimerDelegate;
 	TimerDelegate.BindUObject(this, &UMSBGameInstance::EnterGame);
 	
 	MSB_LOG(Warning, TEXT("ddd"));
@@ -29,19 +26,21 @@ void UMSBGameInstance::EnterGameOnServer(FString ServerIP)
 	check(TimerDelegate.IsBound());
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, DelayInSeconds, false);
 
+	
 }
 
 void UMSBGameInstance::EnterGame()
 {
-	MSB_LOG(Warning, TEXT("try enter game"));
+	MSB_LOG(Warning, TEXT("ddd"));
 	GetWorld()->ServerTravel(DessertMap+TEXT("?listen"), true);
+
 }
+
 
 void UMSBGameInstance::EnterGameOnClient(FString ServerIP)
 {
-	// below code should be deleted when deploying
-	if(ULobbyUI::bIsHost) return;
-	
+
 	auto PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	PlayerController->ClientTravel(ServerIP, TRAVEL_Absolute);
+	PlayerController->ClientTravel(ServerIP+TEXT(":7777"), TRAVEL_Absolute);
+	MSB_LOG(Warning, TEXT("ddd"));
 }

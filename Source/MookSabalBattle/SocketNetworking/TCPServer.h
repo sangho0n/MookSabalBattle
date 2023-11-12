@@ -15,17 +15,19 @@ class MOOKSABALBATTLE_API UTCPServer : public UTCPSocketBase
 	GENERATED_BODY()
 
 public:
-	static void CloseSocket();
+	virtual void PostInitProperties() override;
+
+	~UTCPServer();
 	
 	static TSharedRef<FInternetAddr> GetLocalHostIPv4();
 
-	static void StartHost();
+	void StartHost();
 private:
-	static void FindAvailablePort(TSharedRef<FInternetAddr> Addr);
+	void FindAvailablePort(TSharedRef<FInternetAddr> Addr);
 
-	static void ListenClient();
+	void ListenClient();
 
-	static FSocket* ListenSocket;
-	static TArray<FSocket*> ConnectionSockets;
+	FSocket* ListenSocket;
+	TArray<FSocket*> ConnectionSockets;
 
 };

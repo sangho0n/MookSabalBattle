@@ -3,9 +3,10 @@
 
 #include "LobbyUI.h"
 
+#include "SocketSubsystem.h"
+#include "Common/TcpSocketBuilder.h"
 #include "MookSabalBattle/MSBGameInstance.h"
-
-bool ULobbyUI::bIsHost;
+#include "MookSabalBattle/SocketNetworking/TCPServer.h"
 
 void ULobbyUI::NativeConstruct()
 {
@@ -71,6 +72,16 @@ void ULobbyUI::ShowOnHostCanvas()
 	Canvas_OnHost->SetVisibility(ESlateVisibility::Visible);
 	auto HostIP = UTCPServer::GetLocalHostIPv4();
 	Text_HostIP->SetText(FText::FromString(HostIP->ToString(false)));
+
+	// test
+	uint32 IP; int32 PORT;
+	HostIP->GetIp(IP); HostIP->GetPort(PORT);
+	FIPv4Endpoint Endpoint(IP, PORT);
+	auto ListenserSocket = FTcpSocketBuilder(TEXT("ListenerSocket"))
+		.AsReusable()
+		.BoundToEndpoint(Endpoint)
+		.Listening(3);
+	
 }
 
 void ULobbyUI::ShowWaitingCanvas()
@@ -86,15 +97,16 @@ void ULobbyUI::ShowWaitingCanvas()
 void ULobbyUI::TryHost(FString IP, FString NickName)
 {
 	MSB_LOG(Warning, TEXT("try host"));
-	bIsHost = true;
 	// wait until all players join
 	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
 	AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [this, GameInstance]()->void
        	{
-       		UTCPServer::OnPlayerCountUpdate.AddUObject(this, &ULobbyUI::UpdatePlayerCount);
+       		if(nullptr == ServerManager) ServerManager = NewObject<UTCPServer>();
+       		ServerManager->OnPlayerCountUpdate.AddUObject(this, &ULobbyUI::UpdatePlayerCount);
 			check(GameInstance);
-			UTCPServer::OnMaxPlayerJoined.AddDynamic(GameInstance, &UMSBGameInstance::EnterGameOnServer);
-       		UTCPServer::StartHost();
+			ServerManager->OnMaxPlayerJoined.AddDynamic(GameInstance, &UMSBGameInstance::EnterGameOnServer);
+			//ServerManager->OnMaxPlayerJoined.AddDynamic(ServerManager, &UTCPServer::CloseSocket);
+       		ServerManager->StartHost();
        	});
 }
 
@@ -182,9 +194,11 @@ void ULobbyUI::TryJoin(FString ServerIP, FString NickName)
 	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
 	AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [this, ServerIP, GameInstance]()->void
 		   {
-		       UTCPClient::OnPlayerCountUpdate.AddUObject(this, &ULobbyUI::UpdatePlayerCount); 
-		       UTCPClient::OnMaxPlayerJoined.AddDynamic(GameInstance, &UMSBGameInstance::EnterGameOnClient);;
-			   UTCPClient::Join(ServerIP);
+			   if(nullptr == ClientManager) ClientManager = NewObject<UTCPClient>();
+		       ClientManager->OnPlayerCountUpdate.AddUObject(this, &ULobbyUI::UpdatePlayerCount);
+		       ClientManager->OnMaxPlayerJoined.AddDynamic(GameInstance, &UMSBGameInstance::EnterGameOnClient);
+			   //ClientManager->OnMaxPlayerJoined.AddDynamic(ClientManager, &UTCPClient::CloseSocket);
+			   ClientManager->Join(ServerIP);
 		   });
 }
 

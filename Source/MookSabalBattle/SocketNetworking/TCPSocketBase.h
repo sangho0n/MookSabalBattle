@@ -22,6 +22,7 @@ struct FTCPMessage
 	// 2 : ack
 	// 3 : adjust player count
 	// 4 : expel
+	// 5 : start game
 	uint32 PlayerCount;
 	
 	FTCPMessage() : Type(0), PlayerCount(1){}
@@ -42,27 +43,24 @@ class MOOKSABALBATTLE_API UTCPSocketBase : public UObject
 	GENERATED_BODY()
 public:
 	UTCPSocketBase(const FObjectInitializer& ObjectInitializer);
+	~UTCPSocketBase();
 	
-	static void CloseSocket();
-	
-	static FString ReceiveMessage();
+	virtual FString ReceiveMessage();
 	
 protected:
-	static FSocket* Socket;
+	FSocket* Socket;
 
 	static ISocketSubsystem* SocketSubsystem;
 
-	static TArray<int32> PortCandidates;
+	TArray<int32> PortCandidates = {11111};
 	
-	static FTCPMessage DeserializeToTCPMessage(uint8* MemLoc);
+	FTCPMessage DeserializeToTCPMessage(uint8* MemLoc);
 
-	static TArray<uint8> ConvertMemLocToArray(uint8* MemLoc);
+	TArray<uint8> ConvertMemLocToArray(uint8* MemLoc);
 
-	static void SendMessageTypeOf(FSocket* Sock, uint32 Type, uint32 PlayerCount=0);
-
-	static bool isSocketConnectionValid;
+	void SendMessageTypeOf(FSocket* Sock, uint32 Type, uint32 PlayerCount=0);
 
 public:
-	static FOnPlayerCountUpdate OnPlayerCountUpdate;
-	static FOnMaxPlayerJoined OnMaxPlayerJoined;
+	FOnPlayerCountUpdate OnPlayerCountUpdate;
+	FOnMaxPlayerJoined OnMaxPlayerJoined;
 };
