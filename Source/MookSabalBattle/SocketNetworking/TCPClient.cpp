@@ -44,6 +44,7 @@ void UTCPClient::Join(FString ServerIP)
 			// 역직렬화
 			auto DeserializedMessage = DeserializeToTCPMessage(ReceivedData);
 		
+			delete[] ReceivedData;
 			if(DeserializedMessage.Type==2) // ack
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black,
@@ -56,7 +57,7 @@ void UTCPClient::Join(FString ServerIP)
 					OnPlayerCountUpdate.Broadcast(DeserializedMessage.PlayerCount);
 				});
 				// TODO max player 박아놓은 거 바꾸기
-				if(DeserializedMessage.PlayerCount == 3)
+				if(DeserializedMessage.PlayerCount == 2)
 				{
 					AsyncTask(ENamedThreads::GameThread, [ServerIP]()->void
 					{
@@ -64,20 +65,8 @@ void UTCPClient::Join(FString ServerIP)
 					});
 				}
 			}
-			else if(DeserializedMessage.Type == 4) // Expel
-			{
-				isSocketConnectionValid = false;
-			}
 		}
 	}
 
-	delete[] ReceivedData;
 	CloseSocket();
 }
-
-void UTCPClient::Exit()
-{
-	SendMessageTypeOf(Socket, 1); // type for exit
-	isSocketConnectionValid = false;
-}
-

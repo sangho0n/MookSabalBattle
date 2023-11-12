@@ -18,6 +18,4 @@ public:
 	static void CloseSocket();
 	
 	static void Join(FString ServerIP);
-	
-	static void Exit();
 };

@@ -63,8 +63,6 @@ void ULobbyUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 
 void ULobbyUI::HostPressed()
 {
-	Button_Join->SetIsEnabled(false);
-	Button_Host->SetIsEnabled(false);
 	ShowOnHostCanvas();
 }
 
@@ -204,16 +202,7 @@ void ULobbyUI::ExitPressed()
 
 void ULobbyUI::Exit()
 {
-	UTCPSocketBase::OnPlayerCountUpdate.Clear();
-	UTCPSocketBase::OnMaxPlayerJoined.Clear();
-	if(bIsHost) // TODO : static이라 에디터에서 둘 다 띄우면 분기 안됨 주의
-	{
-		UTCPServer::Exit();
-	}
-	else
-	{
-		UTCPClient::Exit();
-	}
+	
 }
 
 void ULobbyUI::UpdateWaitCanvas(float InDeltaTime)
@@ -227,7 +216,7 @@ void ULobbyUI::UpdatePlayerCount(int32 CurrentCount)
 {
 	// TODO : max player 2 박아놓은 거 수정
 	Text_PlayerCount->SetText(FText::Format(
-		FText::FromString("{0} / 3"), CurrentCount
+		FText::FromString("{0} / 2"), CurrentCount
 	));
 }
 

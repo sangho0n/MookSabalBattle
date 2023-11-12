@@ -20,9 +20,6 @@ public:
 	static TSharedRef<FInternetAddr> GetLocalHostIPv4();
 
 	static void StartHost();
-
-	static void Exit();
-	
 private:
 	static void FindAvailablePort(TSharedRef<FInternetAddr> Addr);
 
@@ -31,5 +28,4 @@ private:
 	static FSocket* ListenSocket;
 	static TArray<FSocket*> ConnectionSockets;
 
-	static bool OnServerExit;
 };
