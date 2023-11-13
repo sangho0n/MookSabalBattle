@@ -6,8 +6,11 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
 #include "Components/CanvasPanel.h"
-#include "Components/TextBlock.h"
+#include "Components/CheckBox.h"
 #include "Components/EditableTextBox.h"
+#include "Components/TextBlock.h"
+#include "Components/ScrollBox.h"
+#include "Components/Slider.h"
 #include "LobbyUI.generated.h"
 
 /**
@@ -26,53 +29,50 @@ public:
 private:
 	UButton* Button_Host;
 	UButton* Button_Join;
-
-	UCanvasPanel* Canvas_Waiting;
-	UWidget* Image_Waiting;
-	UTextBlock* Text_PlayerCount;
-	UButton* Button_Exit;
+	UButton* Button_Back_1;
+	UButton* Button_Back_2;
 
 	UCanvasPanel* Canvas_OnJoin;
-	UEditableTextBox* Text_Address;
+	UButton* Button_Refresh;
+	USlider* Slider_MaxPlayer;
+	UCheckBox* CheckBox_UseLan;
+	UScrollBox* ScrollBox_ServerBrowserList;
 	UEditableTextBox* Text_NickNameCL;
 	UButton* Button_ConfirmJoin;
 	
 	UCanvasPanel* Canvas_OnHost;
-	UTextBlock* Text_HostIP;
 	UEditableTextBox* Text_NickNameSrv;
+	UTextBlock* Text_MaxPlayer;
 	UButton* Button_ConfirmHost;
 
 	UFUNCTION()
 	void HostPressed();
 
 	void ShowOnHostCanvas();
-	
-	void ShowWaitingCanvas();
 
-	void TryHost(FString IP, FString NickName);
+	void TryHost(FString NickName, int32 MaxPlayerCount, bool bUseLan);
 
 	UFUNCTION()
 	void JoinPressed();
 
 	void ShowOnJoinCanvas();
 
-	void TryJoin(FString IP, FString NickName);
-
-	void SyncPlayerCount();
+	void TryJoin(FString NickName, TSharedPtr<FOnlineSessionSearchResult> Session);
 
 	UFUNCTION()
-	void ExitPressed();
-	
-	void Exit();
+	void BackPressed();
 
 	UFUNCTION()
 	void ConfirmJoinPressed();
 	UFUNCTION()
 	void ConfirmHostPressed();
 
-	void UpdateWaitCanvas(float InDeltaTime);
+	UFUNCTION()
+	void OnMaxPlayerChanged(float ratio);
 
-	bool bStartWaiting;
-	bool bIsHost;
-	float AccWaitTime;
+public:
+	TSharedPtr<FOnlineSessionSearchResult> SelectedSession;
+
+private:
+	void ResetSessionCheckState(TSharedPtr<FOnlineSessionSearchResult> NewSelectedSession);
 };
