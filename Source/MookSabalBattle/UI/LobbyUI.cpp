@@ -3,6 +3,7 @@
 
 #include "LobbyUI.h"
 #include "ServerBrowserItemUI.h"
+#include "MookSabalBattle/MSBGameInstance.h"
 
 void ULobbyUI::NativeConstruct()
 {
@@ -71,7 +72,8 @@ void ULobbyUI::ShowOnHostCanvas()
 
 void ULobbyUI::TryHost(FString NickName, int32 MaxPlayerCount, bool bUseLan)
 {
-	// TODO 게임인스턴스에서 호스팅 튜라이
+	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
+	GameInstance->HostGame(NickName, MaxPlayerCount, bUseLan);
 }
 
 void ULobbyUI::JoinPressed()

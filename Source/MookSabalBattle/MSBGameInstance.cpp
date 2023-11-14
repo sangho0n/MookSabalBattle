@@ -3,31 +3,39 @@
 
 #include "MSBGameInstance.h"
 
-IOnlineSubsystem* UMSBGameInstance::OnlineSubsystem;
-
 void UMSBGameInstance::Init()
 {
 	Super::Init();
 	OnlineSubsystem = IOnlineSubsystem::Get();
+	SessionInterface = OnlineSubsystem->GetSessionInterface().Get();
+
+	SessionInterface->OnCreateSessionCompleteDelegates.RemoveAll(this);
+	SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMSBGameInstance::OnSessionCreate);
+	
 	DessertMap = FString("/Game/Main/Maps/Map_Dessert");
 }
 
-void UMSBGameInstance::EnterGameOnServer(FString ServerIP)
+void UMSBGameInstance::HostGame(FString NickName, int32 MaxPlayerCount, bool bUseLan)
 {
-	MSB_LOG(Warning, TEXT("ddd"));
-	FTimerHandle TimerHandle;
-	float DelayInSeconds = 3.0f;
-	//auto TimerDelegate = FTimerDelegate::CreateUObject(this, &UMSBGameInstance::EnterGame);
-	FTimerDelegate TimerDelegate;
-	TimerDelegate.BindUObject(this, &UMSBGameInstance::EnterGame);
-	
-	MSB_LOG(Warning, TEXT("ddd"));
-	check(GetWorld() != nullptr);
-	check(TimerDelegate.IsBound());
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, DelayInSeconds, false);
-
-	
+	NickName = NickName.Append(TEXT("'s room"));
+	TSharedPtr<FOnlineSessionSettings> SessionSettings = MakeShareable(new FOnlineSessionSettings());
+	SessionSettings.Get()->bIsDedicated = false;
+	SessionSettings.Get()->NumPublicConnections = MaxPlayerCount;
+	SessionSettings.Get()->bIsLANMatch = bUseLan;
+	SessionInterface->CreateSession(MaxPlayerCount, FName(*NickName), *SessionSettings.Get());
 }
+
+void UMSBGameInstance::OnSessionCreate(FName SessionName, bool bWasSucceed)
+{
+	if(!bWasSucceed)
+	{
+		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed to create session"));
+		return;
+	}
+	MSB_LOG(Warning, TEXT("세션 생성 성공 ! %s"), *SessionName.ToString());
+	GetWorld()->ServerTravel(DessertMap);
+}
+
 
 void UMSBGameInstance::EnterGame()
 {

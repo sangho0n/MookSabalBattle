@@ -21,16 +21,20 @@ class MOOKSABALBATTLE_API UMSBGameInstance : public UGameInstance
 public:
 	virtual void Init() override;
 	UFUNCTION()
-	void EnterGameOnServer(FString ServerIP);
+	void HostGame(FString NickName, int32 MaxPlayerCount, bool bUseLan);
+	
 	UFUNCTION()
 	void EnterGameOnClient(FString ServerIP);
 private:
 	UFUNCTION()
 	void EnterGame();
 	
-	static IOnlineSubsystem* OnlineSubsystem;
-	
-	TSharedPtr<FOnlineSessionSettings> SessionSettings;
+	IOnlineSubsystem* OnlineSubsystem;
+	IOnlineSession* SessionInterface;
+
+	// host
+	UFUNCTION()
+	void OnSessionCreate(FName SessionName, bool bWasSucceed);
 	
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 
