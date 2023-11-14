@@ -93,11 +93,6 @@ void APlayerCharacter::PostInitializeComponents()
 	Collider->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnCharacterEndOverlapWithCharacter);
 	OnGetDamage.AddDynamic(this, &APlayerCharacter::OnHit); // blueprint
 	Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnAttackEnd.AddDynamic(this, &APlayerCharacter::StopAttacking);
-	if(HasAuthority())
-	{
-		auto GameMode = Cast<AMookSabalBattleGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
-		OnNewPlayerReplicationFinished.BindUObject(GameMode, &AMookSabalBattleGameModeBase::IncreaseRepFinishedPlayerCount);
-	}
 	
 	PunchDamage = 7.0f;
 	KickDamage = 16.0f;
@@ -120,7 +115,11 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::AfterReplication()
 {
 	if(HasAuthority())
+	{
+		auto GameMode = Cast<AMookSabalBattleGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+		OnNewPlayerReplicationFinished.BindUObject(GameMode, &AMookSabalBattleGameModeBase::IncreaseRepFinishedPlayerCount);
 		OnNewPlayerReplicationFinished.Execute();
+	}
 }
 
 // NetMulticast RPC (called on both listen server and client)
@@ -162,9 +161,6 @@ void APlayerCharacter::InitWidgets_Implementation()
 	}
 
 	// HealthBar(by blueprint)
-	// TODO : 모두 잘 되는데 왜 서버에서 클라 캐릭터를 때리면 안나오는 것일까..?
-	// 첫번째 때릴 때는 잘 나오지만, 클라에서 때린 후 서버에서 다시 때리면 안나옴
-	// 로그는 잘 띄워지는데...
 }
 
 

@@ -28,8 +28,10 @@ UMSBAnimInstance::UMSBAnimInstance()
 void UMSBAnimInstance::PostInitProperties()
 {
 	Super::PostInitProperties();
-	OnMontageEnded.AddDynamic(this, &UMSBAnimInstance::OnComboMontageEnded);
-	OnOverDeltaOffset.AddDynamic(this, &UMSBAnimInstance::ResetDelta);
+	OnMontageEnded.RemoveAll(this);
+	OnOverDeltaOffset.RemoveAll(this);
+	OnMontageEnded.AddUniqueDynamic(this, &UMSBAnimInstance::OnComboMontageEnded);
+	OnOverDeltaOffset.AddUniqueDynamic(this, &UMSBAnimInstance::ResetDelta);
 }
 
 

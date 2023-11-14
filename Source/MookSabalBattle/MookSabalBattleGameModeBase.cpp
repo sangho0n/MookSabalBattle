@@ -34,6 +34,7 @@ void AMookSabalBattleGameModeBase::InitGame(const FString& MapName, const FStrin
 		FreePlayerStarts.Add(*it);
 	}
 	RepFinishedPlayerCount = 0;
+	// TODO MaxPlayer를 호스팅할 때 동적으로 변경 및 패키징된 파일에서는 왜 MaxPlayerCount가 채워지기도 전에 OnAllPlayerReplicationFinished가 broadcast되는지 디버깅하기
 	MaxPlayerCount = 2;
 }
 

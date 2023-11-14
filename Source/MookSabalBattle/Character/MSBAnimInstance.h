@@ -128,8 +128,7 @@ public:
 
 private:
 	FOnHitCheck OnHitCheck;
-	
-	//UPROPERTY(BlueprintAssignable, Category=Event, meta=(DisplayName="On Over Delta Offset"))
+
 	FOnOverDeltaOffset OnOverDeltaOffset;
 
 	UFUNCTION()
