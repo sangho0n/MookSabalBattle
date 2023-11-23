@@ -104,6 +104,10 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	GetMesh()->SetVisibility(false);
+	
+	// 맵에 있는 무기의 수만큼 PlayerCharacter 클래스의 BeginPlay가 추가적으로 호출되는 문제 확인
+	// 컨트롤러의 null 여부로 임시 해결
+	if(this->GetController() == nullptr) return;
 
 	// wait for some seconds for replications
 	FTimerHandle TimerHandle;
