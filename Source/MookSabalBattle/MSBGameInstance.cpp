@@ -2,12 +2,12 @@
 
 
 #include "MSBGameInstance.h"
+#include "Online/OnlineSessionNames.h"
 
 void UMSBGameInstance::Init()
 {
 	Super::Init();
-	OnlineSubsystem = IOnlineSubsystem::Get();
-	SessionInterface = OnlineSubsystem->GetSessionInterface().Get();
+	GetSubsystemAndSessionInterface();
 
 	SessionInterface->OnCreateSessionCompleteDelegates.RemoveAll(this);
 	SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMSBGameInstance::OnSessionCreate);
@@ -52,3 +52,13 @@ void UMSBGameInstance::EnterGameOnClient(FString ServerIP)
 	PlayerController->ClientTravel(ServerIP+TEXT(":7777"), TRAVEL_Absolute);
 	MSB_LOG(Warning, TEXT("ddd"));
 }
+
+void UMSBGameInstance::GetSubsystemAndSessionInterface()
+{
+	OnlineSubsystem = IOnlineSubsystem::Get();
+	
+	//SessionInterface = OnlineSubsystem->GetSessionInterface().Get();
+	
+	SessionInterface = Online::GetSessionInterface().Get();
+}
+

@@ -39,4 +39,7 @@ private:
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 
 	FString DessertMap;
+
+	// A method retrying to get access to OnlineSubsystem and SessionInterface
+	void GetSubsystemAndSessionInterface();
 };
