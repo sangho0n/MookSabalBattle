@@ -3,13 +3,14 @@
 #pragma once
 
 #include "MookSabalBattle.h"
-#include "OnlineSessionSettings.h"
 #include "Engine/GameInstance.h"
-#include "Interfaces/OnlineSessionDelegates.h"
 #include "OnlineSubsystem.h"
-#include "Online.h"
 #include "OnlineSessionSettings.h"
+#include "Interfaces/OnlineSessionDelegates.h"
+#include "Online.h"
 #include "MSBGameInstance.generated.h"
+
+DECLARE_DELEGATE_TwoParams(FOnSessionSearchCompleteWithResults, TArray<FOnlineSessionSearchResult>& SessionSearchResults, bool bSucceed)
 
 /**
  * 
@@ -20,8 +21,17 @@ class MOOKSABALBATTLE_API UMSBGameInstance : public UGameInstance
 	GENERATED_BODY()
 public:
 	virtual void Init() override;
+
+	// Hosting Session
 	UFUNCTION()
 	void HostGame(FString NickName, int32 MaxPlayerCount, bool bUseLan);
+
+	// Searching Session
+	void TryFindSession(bool bUseLan);
+	
+	UFUNCTION()
+	void OnFindSessionComplete(bool bSucceed);
+	FOnSessionSearchCompleteWithResults OnSessionSearchCompleteWithResults;
 	
 	UFUNCTION()
 	void EnterGameOnClient(FString ServerIP);
@@ -31,12 +41,11 @@ private:
 	
 	IOnlineSubsystem* OnlineSubsystem;
 	IOnlineSession* SessionInterface;
+	TSharedPtr<FOnlineSessionSearch> LastSearchResult;
 
 	// host
 	UFUNCTION()
 	void OnSessionCreate(FName SessionName, bool bWasSucceed);
-	
-	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 
 	FString DessertMap;
 

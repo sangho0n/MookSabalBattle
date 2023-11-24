@@ -21,6 +21,11 @@ void UServerBrowserItemUI::NativeDestruct()
 	Super::NativeDestruct();
 }
 
+void UServerBrowserItemUI::SetInitialData(FString SessionName)
+{
+	TextBlock_SessionName->SetText(FText::FromString(SessionName));
+}
+
 
 void UServerBrowserItemUI::SetCheck(TSharedPtr<FOnlineSessionSearchResult> dummy, bool flag)
 {

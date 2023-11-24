@@ -59,11 +59,13 @@ FString AMookSabalBattleGameModeBase::InitNewPlayer(APlayerController* NewPlayer
 	NewPlayerController->StartSpot = FreePlayerStarts.Pop();
 	PlayerControllers.Add(NewPlayerController);
 	
+	MSB_LOG(Log, TEXT("how many init new player called"));
 	return Super::InitNewPlayer(NewPlayerController, UniqueId, Options, Portal);
 }
 
 void AMookSabalBattleGameModeBase::PostLogin(APlayerController* NewPlayer)
 {
+	MSB_LOG(Log, TEXT("how many post login called"));
 	Super::PostLogin(NewPlayer);
 }
 
@@ -82,6 +84,7 @@ void AMookSabalBattleGameModeBase::InitAllPlayers()
 
 void AMookSabalBattleGameModeBase::IncreaseRepFinishedPlayerCount()
 {
-	RepFinishedPlayerCount++;
+	RepFinishedPlayerCount++;	MSB_LOG(Warning, TEXT("current finished player : %d"), RepFinishedPlayerCount);
+
 	if(RepFinishedPlayerCount == MaxPlayerCount) OnAllPlayerReplicationFinished.Execute();
 }

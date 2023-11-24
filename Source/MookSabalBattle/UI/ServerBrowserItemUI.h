@@ -26,6 +26,8 @@ private:
 	UTextBlock* TextBlock_SessionName;
 
 public:
+	void SetInitialData(FString SessionName);
+	
 	FOnSessionSelected OnSessionSelected;
 
 	TSharedPtr<FOnlineSessionSearchResult> Session;

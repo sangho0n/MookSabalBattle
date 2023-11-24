@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "ServerBrowserItemUI.h"
 #include "../MookSabalBattle.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
@@ -11,6 +12,7 @@
 #include "Components/TextBlock.h"
 #include "Components/ScrollBox.h"
 #include "Components/Slider.h"
+#include "../MSBGameInstance.h"
 #include "LobbyUI.generated.h"
 
 /**
@@ -45,6 +47,9 @@ private:
 	UTextBlock* Text_MaxPlayer;
 	UButton* Button_ConfirmHost;
 
+	UPROPERTY(BlueprintReadWrite, meta=(AllowPrivateAccess=true))
+	TSubclassOf<UServerBrowserItemUI> ServerBrowserItemRef;
+
 	UFUNCTION()
 	void HostPressed();
 
@@ -57,7 +62,7 @@ private:
 
 	void ShowOnJoinCanvas();
 
-	void TryJoin(FString NickName, TSharedPtr<FOnlineSessionSearchResult> Session);
+	void TryJoin(FString NickName);
 
 	UFUNCTION()
 	void BackPressed();
@@ -69,6 +74,11 @@ private:
 
 	UFUNCTION()
 	void OnMaxPlayerChanged(float ratio);
+
+	UFUNCTION()
+	void RefreshServerBrowser();
+	
+	void SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& SessionSearchResults, bool bSucceed);
 
 public:
 	TSharedPtr<FOnlineSessionSearchResult> SelectedSession;

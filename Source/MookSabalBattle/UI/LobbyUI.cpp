@@ -2,8 +2,6 @@
 
 
 #include "LobbyUI.h"
-#include "ServerBrowserItemUI.h"
-#include "MookSabalBattle/MSBGameInstance.h"
 
 void ULobbyUI::NativeConstruct()
 {
@@ -18,7 +16,7 @@ void ULobbyUI::NativeConstruct()
 	this->Button_Refresh = Cast<UButton>(GetWidgetFromName(TEXT("BT_Refresh")));
 	this->Slider_MaxPlayer = Cast<USlider>(GetWidgetFromName(TEXT("Slider_MaxPlayer")));
 	this->CheckBox_UseLan = Cast<UCheckBox>(GetWidgetFromName(TEXT("CheckBox_UseLan")));
-	this->ScrollBox_ServerBrowserList = Cast<UScrollBox>(GetWidgetFromName(TEXT("ScrollBox")));
+	this->ScrollBox_ServerBrowserList = Cast<UScrollBox>(GetWidgetFromName(TEXT("ScrollBox_RoomList")));
 	this->Text_NickNameCL = Cast<UEditableTextBox>(GetWidgetFromName(TEXT("Text_NickNameCL")));
 	this->Button_ConfirmJoin = Cast<UButton>(GetWidgetFromName(TEXT("BT_ConfirmJoin")));
 
@@ -37,6 +35,7 @@ void ULobbyUI::NativeConstruct()
 	Button_Join->OnClicked.AddUniqueDynamic(this, &ULobbyUI::JoinPressed);
 	Button_Back_1->OnClicked.AddUniqueDynamic(this, &ULobbyUI::BackPressed);
 	Button_Back_2->OnClicked.AddUniqueDynamic(this, &ULobbyUI::BackPressed);
+	Button_Refresh->OnClicked.AddUniqueDynamic(this, &ULobbyUI::RefreshServerBrowser);
 
 	Button_ConfirmJoin->OnClicked.AddUniqueDynamic(this, &ULobbyUI::ConfirmJoinPressed);
 	Button_ConfirmHost->OnClicked.AddUniqueDynamic(this, &ULobbyUI::ConfirmHostPressed);
@@ -90,10 +89,8 @@ void ULobbyUI::ShowOnJoinCanvas()
 	Button_Back_1->SetIsEnabled(true);
 	Button_Refresh->SetIsEnabled(true);
 	Button_ConfirmJoin->SetIsEnabled(true);
-
-	// TODO 브라우징 전 ServerBrowserList 클리어
-	// TODO 게임인스턴스에서 브라우징 후 ServerBrowserList에 addChild
-	// TODO addChild할 때마다 해당 위젯 인스턴스의 OnSessionSelected와 ResetSessionCheckState 바인딩
+	
+	RefreshServerBrowser();
 }
 
 void ULobbyUI::ConfirmJoinPressed()
@@ -113,7 +110,7 @@ void ULobbyUI::ConfirmJoinPressed()
 
 	if(!bIgnore)
 	{
-		TryJoin(NickName, SelectedSession);
+		TryJoin(NickName);
 	}
 }
 
@@ -145,7 +142,7 @@ void ULobbyUI::ConfirmHostPressed()
 	}
 }
 
-void ULobbyUI::TryJoin(FString NickName, TSharedPtr<FOnlineSessionSearchResult> Session)
+void ULobbyUI::TryJoin(FString NickName)
 {
 	// TODO gameInstance에 세션 참가 메서드 작성 후 요청
 }
@@ -159,6 +156,54 @@ void ULobbyUI::BackPressed()
 	Button_Host->SetIsEnabled(true);
 	Button_Join->SetIsEnabled(true);
 }
+
+void ULobbyUI::RefreshServerBrowser()
+{
+	bool bUseLan = CheckBox_UseLan->IsChecked();
+	// clear
+	ScrollBox_ServerBrowserList->ClearChildren();
+	
+	// try find session
+	// TODO 아래 코드는 스팀 연동 이후 지워질 코드
+	if(!bUseLan)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black,
+					TEXT("지금은 원격 접속 불가능함"));
+		bUseLan = true;
+	}
+	
+	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
+	GameInstance->TryFindSession(bUseLan);
+	GameInstance->OnSessionSearchCompleteWithResults.BindUObject(this, &ULobbyUI::SetSessionSearchResults);
+}
+
+void ULobbyUI::SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& SessionSearchResults, bool bSucceed)
+{
+	if(bSucceed)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue,
+					TEXT("세션 찾기 성공함"));
+
+		for(const FOnlineSessionSearchResult& SessionSearchResult : SessionSearchResults)
+		{
+			if(IsValid(ServerBrowserItemRef))
+			{
+				UServerBrowserItemUI* NewWidget = CreateWidget<UServerBrowserItemUI>(GetWorld(), ServerBrowserItemRef);NewWidget->AddToViewport();
+				ScrollBox_ServerBrowserList->AddChild(NewWidget);
+				NewWidget->OnSessionSelected.AddUObject(this, &ULobbyUI::ResetSessionCheckState);
+				NewWidget->SetInitialData(SessionSearchResult.Session.SessionSettings.Settings.FindRef("SessionName").Data.ToString());
+			}
+		}
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue,
+					TEXT("세션 찾기 실패"));
+	}
+	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
+	GameInstance->OnSessionSearchCompleteWithResults.Unbind();
+}
+
 
 void ULobbyUI::OnMaxPlayerChanged(float ratio)
 {
