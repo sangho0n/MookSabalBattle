@@ -85,7 +85,7 @@ void UMSBGameInstance::OnSessionCreate(FName SessionName, bool bWasSucceed)
 
 void UMSBGameInstance::OnFindSessionComplete(bool bSucceed)
 {
-	if(bSucceed)
+	if(bSucceed && LastSearchResult.IsValid())
 	{
 		OnSessionSearchCompleteWithResults.ExecuteIfBound(LastSearchResult->SearchResults, bSucceed);
 	}
