@@ -191,7 +191,7 @@ void ULobbyUI::SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& Sessi
 				UServerBrowserItemUI* NewWidget = CreateWidget<UServerBrowserItemUI>(GetWorld(), ServerBrowserItemRef);NewWidget->AddToViewport();
 				ScrollBox_ServerBrowserList->AddChild(NewWidget);
 				NewWidget->OnSessionSelected.AddUObject(this, &ULobbyUI::ResetSessionCheckState);
-				NewWidget->SetInitialData(SessionSearchResult.Session.SessionSettings.Settings.FindRef("SessionName").Data.ToString());
+				NewWidget->SetInitialData(SessionSearchResult.Session.SessionSettings.Settings.FindRef("SessionName").Data.ToString(), SessionSearchResult.Session);
 			}
 		}
 	}
@@ -212,16 +212,19 @@ void ULobbyUI::OnMaxPlayerChanged(float ratio)
 		FString::Printf(TEXT("%d"), value)));
 }
 
-void ULobbyUI::ResetSessionCheckState(TSharedPtr<FOnlineSessionSearchResult> NewSelectedSession)
+void ULobbyUI::ResetSessionCheckState(TSharedPtr<FOnlineSession> NewSelectedSession)
 {
 	SelectedSession = NewSelectedSession;
 	for(const auto elem : ScrollBox_ServerBrowserList->GetAllChildren())
 	{
 		auto SessionWidgetItem = Cast<UServerBrowserItemUI>(elem);
 		if(SelectedSession == SessionWidgetItem->Session)
-			SessionWidgetItem->SetCheck(SelectedSession, true);
+			SessionWidgetItem->SetCheck(true);
 		else
-			SessionWidgetItem->SetCheck(SelectedSession, false);
+			SessionWidgetItem->SetCheck(false);
 	}
+
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black,
+				FString::Printf(TEXT("현재 선택된 세션 이름 %s"), *SelectedSession.Get()->SessionSettings.Settings.FindRef("SessionName").Data.ToString()));
 }
 

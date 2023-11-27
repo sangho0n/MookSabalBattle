@@ -81,8 +81,12 @@ private:
 	void SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& SessionSearchResults, bool bSucceed);
 
 public:
-	TSharedPtr<FOnlineSessionSearchResult> SelectedSession;
+	TSharedPtr<FOnlineSession> SelectedSession;
 
 private:
-	void ResetSessionCheckState(TSharedPtr<FOnlineSessionSearchResult> NewSelectedSession);
+	/**
+	 * @brief Called by the OnSessionSelected delegate when the checkbox in the searched session UI is clicked.
+	 * @param NewSelectedSession The session corresponding to the widget where the checkbox was clicked.
+	 */
+	void ResetSessionCheckState(TSharedPtr<FOnlineSession> NewSelectedSession);
 };

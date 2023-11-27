@@ -21,13 +21,14 @@ void UServerBrowserItemUI::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UServerBrowserItemUI::SetInitialData(FString SessionName)
+void UServerBrowserItemUI::SetInitialData(FString SessionName, FOnlineSession OnlineSession)
 {
 	TextBlock_SessionName->SetText(FText::FromString(SessionName));
+	Session = MakeShared<FOnlineSession>(OnlineSession);
 }
 
 
-void UServerBrowserItemUI::SetCheck(TSharedPtr<FOnlineSessionSearchResult> dummy, bool flag)
+void UServerBrowserItemUI::SetCheck(bool flag)
 {
 	CheckBox_Select->SetIsChecked(flag);
 }
@@ -35,6 +36,7 @@ void UServerBrowserItemUI::SetCheck(TSharedPtr<FOnlineSessionSearchResult> dummy
 void UServerBrowserItemUI::OnSelected(bool bIsChecked)
 {
 	if(!bIsChecked) return;
-	
+
+	CheckBox_Select->SetIsChecked(bIsChecked);
 	OnSessionSelected.Broadcast(Session);
 }

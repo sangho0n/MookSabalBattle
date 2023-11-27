@@ -6,9 +6,10 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/CheckBox.h"
 #include "Components/TextBlock.h"
+#include "OnlineSessionSettings.h"
 #include "ServerBrowserItemUI.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionSelected, TSharedPtr<FOnlineSessionSearchResult>)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionSelected, TSharedPtr<FOnlineSession>)
 
 /**
  * 
@@ -26,14 +27,15 @@ private:
 	UTextBlock* TextBlock_SessionName;
 
 public:
-	void SetInitialData(FString SessionName);
+	void SetInitialData(FString SessionName, FOnlineSession OnlineSession);
 	
 	FOnSessionSelected OnSessionSelected;
 
-	TSharedPtr<FOnlineSessionSearchResult> Session;
+	TSharedPtr<FOnlineSession> Session;
 
-	void SetCheck(TSharedPtr<FOnlineSessionSearchResult> dummy, bool flag);
+	void SetCheck(bool flag);
 
 private:
+	UFUNCTION()
 	void OnSelected(bool bIsChecked);
 };
