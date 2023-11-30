@@ -55,6 +55,7 @@ public:
 	void LookUp(float NewAxisValue);
 	void Turn(float NewAxisValue);
 	
+	UPROPERTY(VisibleAnywhere, Category=Weapon)
 	AWeapon* OverlappedWeapon;
 	
 private:
@@ -73,12 +74,14 @@ public:
 	void EquipWeapon_Multicast();
 	
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void OnWeaponStartOverlap(AWeapon* OverlappedWeapon_);
+	void OnWeaponStartOverlap_Server(AWeapon* OverlappedWeapon_);
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
 	void OnWeaponStartOverlap_Multicast(AWeapon* OverlappedWeapon_);
 	
-	UFUNCTION(BlueprintCallable)
-	void OnWeaponEndOverlap();
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void OnWeaponEndOverlap_Server();
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
+	void OnWeaponEndOverlap_Multicast();
 
 private:
 	const FVector CamPosWhenGunMode = FVector(0.0f, 50.0f, 50.0f);
@@ -109,8 +112,17 @@ public:
 	void StopShooting_Multicast();
 	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
 	void SwingMelee_Multicast();
-
+	
 	UFUNCTION(BlueprintCallable)
+	/**
+	* @brief Method for hit detection.
+	* It is bound to the OnHitCheck delegate of the anim instance, and
+	* the OnHitCheck delegate is broadcasted by AnimNotify_HitCheck.
+	*
+	*  Call the appropriate method with given param and CharacterState->CurrentMode
+	* 
+	* @param CurrCombo 
+	*/
 	void Hit(int32 CurrCombo);
 
 private:

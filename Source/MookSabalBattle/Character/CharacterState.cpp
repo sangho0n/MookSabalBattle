@@ -22,13 +22,7 @@ ACharacterState::ACharacterState()
 void ACharacterState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
-	DOREPLIFETIME(ACharacterState, CurrentMode);
-	DOREPLIFETIME(ACharacterState, bIsEquippable);
-	DOREPLIFETIME(ACharacterState, bIsAttacking);
-	DOREPLIFETIME(ACharacterState, bIsReloading);
-	DOREPLIFETIME(ACharacterState, bIsDead);
-	DOREPLIFETIME(ACharacterState, HP);
+
 	DOREPLIFETIME(ACharacterState, bIsRedTeam);
 }
 

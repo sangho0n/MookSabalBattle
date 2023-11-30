@@ -35,23 +35,23 @@ protected:
 public:	
 	bool bIsEquipped;
 
-	UPROPERTY(Replicated, EditAnywhere, Category=Status)
+	UPROPERTY(EditAnywhere, Category=Status)
 	CharacterMode  CurrentMode;
 
 private:
-	UPROPERTY(VisibleAnywhere, Replicated, Category=Status)
+	UPROPERTY(VisibleAnywhere, Category=Status)
 	bool bIsEquippable;
 
-	UPROPERTY(Replicated, VisibleAnywhere, Category=Status)
+	UPROPERTY(VisibleAnywhere, Category=Status)
 	bool bIsAttacking;
 	
-	UPROPERTY(Replicated, VisibleAnywhere, Category=Status)
+	UPROPERTY(VisibleAnywhere, Category=Status)
 	bool bIsReloading;
 
-	UPROPERTY(Replicated, VisibleAnywhere, Category=Status)
+	UPROPERTY(VisibleAnywhere, Category=Status)
 	bool bIsDead;
 	
-	UPROPERTY(Replicated, EditAnywhere, Category=Status)
+	UPROPERTY(EditAnywhere, Category=Status)
 	float HP;
 public:
 	const float MaxHP = 200.0f;

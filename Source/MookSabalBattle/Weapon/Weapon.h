@@ -27,9 +27,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category=Weapon)
 	UStaticMeshComponent* SM_Weapon;
 
-	UPROPERTY(VisibleAnywhere, Category=Character)
-	APlayerCharacter* LocalPlayer;
-
 	FVector OffsetFromLand;
 
 	virtual void Destroyed() override;

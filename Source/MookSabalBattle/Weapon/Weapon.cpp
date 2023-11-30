@@ -10,8 +10,6 @@ AWeapon::AWeapon()
 	Collider = CreateDefaultSubobject<UBoxComponent>("Collider");
 	RootComponent = SM_Weapon;
 	Collider->SetupAttachment(RootComponent);
-
-	LocalPlayer = CreateDefaultSubobject<APlayerCharacter>("AttachedPlayer");
 	SM_Weapon->SetRelativeLocation(FVector(0, 0, 100));
 
 	OffsetFromLand = FVector(0.0f, 0.0f, 10.0f);
@@ -24,7 +22,6 @@ AWeapon::AWeapon()
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-	LocalPlayer = nullptr;
 	SM_Weapon->SetSimulatePhysics(true);
 	SM_Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	bIsPossessed = false;
@@ -50,7 +47,7 @@ void AWeapon::OnCharacterBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 		if(Character->IsLocallyControlled())
 		{
 			// show equip UI
-			Character->OnWeaponStartOverlap(this);
+			Character->OnWeaponStartOverlap_Server(this);
 		}
 	}
 }
@@ -64,22 +61,19 @@ void AWeapon::OnCharacterEndOverlap(UPrimitiveComponent* OverlappedComponent, AA
 		{
 			// hide equip UI
 			MSB_LOG(Warning, TEXT("end"));
-			Character->OnWeaponEndOverlap();
+			Character->OnWeaponEndOverlap_Server();
 		}
 	}
 }
 
 void AWeapon::Destroyed()
 {
-	if(nullptr != LocalPlayer)
-		OnCharacterEndOverlap(nullptr, LocalPlayer, nullptr, -1);
 	Super::Destroyed();
 }
 
 UStaticMeshComponent* AWeapon::ReadyToEquip(APlayerCharacter* Player)
 {
 	bIsPossessed = true;
-	LocalPlayer = Player;
 	
 	// collider config
 	Collider->DestroyComponent();
