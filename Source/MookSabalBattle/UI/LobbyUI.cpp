@@ -99,12 +99,17 @@ void ULobbyUI::ConfirmJoinPressed()
 	
 	bool bIgnore = false;
 
-	// validate host request before hosting
+	// validate join request before hosting
 	if(NickName.Len() > 10)
 	{
 		bIgnore = true;
 		Text_NickNameCL->SetText(FText::FromString(TEXT("Nickname cannot over 10 characters")));
 		Text_NickNameCL->SetForegroundColor(FColor::Red);
+	}
+	if(!SelectedSession.IsValid())
+	{
+		bIgnore = true;
+		// TODO 세션 선택 안됐을 시 위젯 띄우기
 	}
 
 
@@ -145,6 +150,8 @@ void ULobbyUI::ConfirmHostPressed()
 void ULobbyUI::TryJoin(FString NickName)
 {
 	// TODO gameInstance에 세션 참가 메서드 작성 후 요청
+	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
+	GameInstance->JoinSession(NickName, SelectedSession.ToWeakPtr());
 }
 
 void ULobbyUI::BackPressed()
@@ -191,7 +198,7 @@ void ULobbyUI::SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& Sessi
 				UServerBrowserItemUI* NewWidget = CreateWidget<UServerBrowserItemUI>(GetWorld(), ServerBrowserItemRef);NewWidget->AddToViewport();
 				ScrollBox_ServerBrowserList->AddChild(NewWidget);
 				NewWidget->OnSessionSelected.AddUObject(this, &ULobbyUI::ResetSessionCheckState);
-				NewWidget->SetInitialData(SessionSearchResult.Session.SessionSettings.Settings.FindRef("SessionName").Data.ToString(), SessionSearchResult.Session);
+				NewWidget->SetInitialData(SessionSearchResult.Session.SessionSettings.Settings.FindRef("SessionName").Data.ToString(), SessionSearchResult);
 			}
 		}
 	}
@@ -212,7 +219,7 @@ void ULobbyUI::OnMaxPlayerChanged(float ratio)
 		FString::Printf(TEXT("%d"), value)));
 }
 
-void ULobbyUI::ResetSessionCheckState(TSharedPtr<FOnlineSession> NewSelectedSession)
+void ULobbyUI::ResetSessionCheckState(TSharedPtr<FOnlineSessionSearchResult> NewSelectedSession)
 {
 	SelectedSession = NewSelectedSession;
 	for(const auto elem : ScrollBox_ServerBrowserList->GetAllChildren())
@@ -225,6 +232,6 @@ void ULobbyUI::ResetSessionCheckState(TSharedPtr<FOnlineSession> NewSelectedSess
 	}
 
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black,
-				FString::Printf(TEXT("현재 선택된 세션 이름 %s"), *SelectedSession.Get()->SessionSettings.Settings.FindRef("SessionName").Data.ToString()));
+				FString::Printf(TEXT("현재 선택된 세션 이름 %s"), *SelectedSession.Get()->Session.SessionSettings.Settings.FindRef("SessionName").Data.ToString()));
 }
 

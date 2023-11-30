@@ -31,13 +31,15 @@ public:
 	
 	UFUNCTION()
 	void OnFindSessionComplete(bool bSucceed);
+	
 	FOnSessionSearchCompleteWithResults OnSessionSearchCompleteWithResults;
 	
-	UFUNCTION()
-	void EnterGameOnClient(FString ServerIP);
+	void JoinSession(FString NickName,  TWeakPtr<FOnlineSessionSearchResult> SelectedSession);
+
+	
+	
 private:
-	UFUNCTION()
-	void EnterGame();
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type SessionType);
 	
 	IOnlineSubsystem* OnlineSubsystem;
 	IOnlineSession* SessionInterface;

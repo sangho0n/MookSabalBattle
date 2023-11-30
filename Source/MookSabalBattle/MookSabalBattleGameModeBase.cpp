@@ -34,7 +34,7 @@ void AMookSabalBattleGameModeBase::InitGame(const FString& MapName, const FStrin
 		FreePlayerStarts.Add(*it);
 	}
 	RepFinishedPlayerCount = 0;
-	// TODO MaxPlayer를 호스팅할 때 동적으로 변경 및 패키징된 파일에서는 왜 MaxPlayerCount가 채워지기도 전에 OnAllPlayerReplicationFinished가 broadcast되는지 디버깅하기
+	// TODO : max player 위치 옮기기
 	MaxPlayerCount = 2;
 }
 
@@ -80,11 +80,15 @@ void AMookSabalBattleGameModeBase::InitAllPlayers()
 		Character->InitPlayer(TEXT("default name"), flag%2==0?true:false);
 		flag++;
 	}
+
+	Super::StartPlay();
 }
 
 void AMookSabalBattleGameModeBase::IncreaseRepFinishedPlayerCount()
 {
-	RepFinishedPlayerCount++;	MSB_LOG(Warning, TEXT("current finished player : %d"), RepFinishedPlayerCount);
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, FString::Printf(TEXT("current finished player : %d"), RepFinishedPlayerCount));
+	
+	RepFinishedPlayerCount++;
 
 	if(RepFinishedPlayerCount == MaxPlayerCount) OnAllPlayerReplicationFinished.Execute();
 }

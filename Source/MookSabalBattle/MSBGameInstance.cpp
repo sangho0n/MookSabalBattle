@@ -2,6 +2,9 @@
 
 
 #include "MSBGameInstance.h"
+
+#include <functional>
+
 #include "Online/OnlineSessionNames.h"
 
 void UMSBGameInstance::Init()
@@ -12,6 +15,7 @@ void UMSBGameInstance::Init()
 	SessionInterface->OnCreateSessionCompleteDelegates.RemoveAll(this);
 	SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UMSBGameInstance::OnSessionCreate);
 	SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UMSBGameInstance::OnFindSessionComplete);
+	SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UMSBGameInstance::OnJoinSessionComplete);
 	
 	DessertMap = FString("/Game/Main/Maps/Map_Dessert");
 }
@@ -80,7 +84,7 @@ void UMSBGameInstance::OnSessionCreate(FName SessionName, bool bWasSucceed)
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed to create session"));
 		return;
 	}
-	GetWorld()->ServerTravel(DessertMap);
+	GetWorld()->ServerTravel(DessertMap + TEXT("?listen"));
 }
 
 void UMSBGameInstance::OnFindSessionComplete(bool bSucceed)
@@ -96,20 +100,60 @@ void UMSBGameInstance::OnFindSessionComplete(bool bSucceed)
 	}
 }
 
-
-void UMSBGameInstance::EnterGame()
+void UMSBGameInstance::JoinSession(FString NickName, TWeakPtr<FOnlineSessionSearchResult> SelectedSession)
 {
-	MSB_LOG(Warning, TEXT("ddd"));
-	GetWorld()->ServerTravel(DessertMap+TEXT("?listen"), true);
+	GetSubsystemAndSessionInterface();
+	if(OnlineSubsystem == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get online subsystem"));
+		return;
+	}
+	if(SessionInterface == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get session interface"));
+		return;
+	}
+	
+	auto LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	const FOnlineSessionSearchResult& SessionSearchResult = std::ref(*SelectedSession.Pin().Get());
 
+	if(SessionSearchResult.IsValid())
+	{
+		FName SessionName = FName(SessionSearchResult.Session.SessionSettings.Settings.FindRef("SessionName").Data.ToString());
+		
+		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString::Printf(TEXT("Try joining to %s"), *SessionName.ToString()));
+
+		SessionInterface->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), SessionName, SessionSearchResult);
+		return;
+	}
+
+	GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Selected Session is not valid now"));
 }
 
-
-void UMSBGameInstance::EnterGameOnClient(FString ServerIP)
+void UMSBGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type SessionType)
 {
+	GetSubsystemAndSessionInterface();
+	if(OnlineSubsystem == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get online subsystem"));
+		return;
+	}
+	if(SessionInterface == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get session interface"));
+		return;
+	}
 
-	auto PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	PlayerController->ClientTravel(ServerIP+TEXT(":7777"), TRAVEL_Absolute);
+	bool bSucceed = false;
+	APlayerController* const PlayerController = GetFirstLocalPlayerController();
+	FString TravelURL;
+
+	SessionInterface->ClearOnJoinSessionCompleteDelegates(this);
+	if(PlayerController && SessionInterface->GetResolvedConnectString(SessionName, TravelURL))
+	{
+		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("trying client travel"));
+		PlayerController->ClientTravel(TravelURL, TRAVEL_Absolute);
+	}
 }
 
 void UMSBGameInstance::GetSubsystemAndSessionInterface()

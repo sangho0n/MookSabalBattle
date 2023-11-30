@@ -9,7 +9,7 @@
 #include "OnlineSessionSettings.h"
 #include "ServerBrowserItemUI.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionSelected, TSharedPtr<FOnlineSession>)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSessionSelected, TSharedPtr<FOnlineSessionSearchResult>)
 
 /**
  * 
@@ -27,11 +27,11 @@ private:
 	UTextBlock* TextBlock_SessionName;
 
 public:
-	void SetInitialData(FString SessionName, FOnlineSession OnlineSession);
+	void SetInitialData(FString SessionName, const FOnlineSessionSearchResult &OnlineSession);
 	
 	FOnSessionSelected OnSessionSelected;
 
-	TSharedPtr<FOnlineSession> Session;
+	TSharedPtr<FOnlineSessionSearchResult> Session;
 
 	void SetCheck(bool flag);
 

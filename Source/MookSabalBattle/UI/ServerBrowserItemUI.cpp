@@ -21,10 +21,10 @@ void UServerBrowserItemUI::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UServerBrowserItemUI::SetInitialData(FString SessionName, FOnlineSession OnlineSession)
+void UServerBrowserItemUI::SetInitialData(FString SessionName, const FOnlineSessionSearchResult &OnlineSession)
 {
 	TextBlock_SessionName->SetText(FText::FromString(SessionName));
-	Session = MakeShared<FOnlineSession>(OnlineSession);
+	Session = MakeShared<FOnlineSessionSearchResult>(OnlineSession);
 }
 
 
