@@ -69,7 +69,7 @@ void UMSBGameInstance::HostGame(FString NickName, int32 MaxPlayerCount, bool bUs
 	SessionSettings.Get()->bIsLANMatch = bUseLan;
 	SessionSettings.Get()->bShouldAdvertise = true;
 	SessionSettings.Get()->bUsesPresence = true;
-	SessionSettings.Get()->NumPublicConnections = MaxPlayerCount;
+	SessionSettings.Get()->NumPublicConnections = MaxPlayerCount; MaxPlayer = MaxPlayerCount;
 	SessionSettings.Get()->Settings.Add(FName("SessionName"), CustomSessionName);
 
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
@@ -152,12 +152,16 @@ void UMSBGameInstance::JoinSession(FString NickName, TWeakPtr<FOnlineSessionSear
 
 	if(SessionSearchResult.IsValid())
 	{
-		FName SessionName = FName(SessionSearchResult.Session.SessionSettings.Settings.FindRef("SessionName").Data.ToString());
+		int32 OpenConnectionCount = SessionSearchResult.Session.NumOpenPublicConnections;
+		if(OpenConnectionCount > 0)
+		{
+			FName SessionName = FName(SessionSearchResult.Session.SessionSettings.Settings.FindRef("SessionName").Data.ToString());
 		
-		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString::Printf(TEXT("Try joining to %s"), *SessionName.ToString()));
+			GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString::Printf(TEXT("Try joining to %s"), *SessionName.ToString()));
 
-		SessionInterface->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), SessionName, SessionSearchResult);
-		return;
+			SessionInterface->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), SessionName, SessionSearchResult);
+			return;
+		}
 	}
 
 	GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Selected Session is not valid now"));

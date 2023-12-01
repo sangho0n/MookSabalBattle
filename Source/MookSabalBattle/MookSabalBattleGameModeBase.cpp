@@ -5,6 +5,7 @@
 
 #include "Character/LocalPlayerController.h"
 #include "MookSabalBattle.h"
+#include "MSBGameInstance.h"
 #include "Character/PlayerCharacter.h"
 
 AMookSabalBattleGameModeBase::AMookSabalBattleGameModeBase()
@@ -34,8 +35,7 @@ void AMookSabalBattleGameModeBase::InitGame(const FString& MapName, const FStrin
 		FreePlayerStarts.Add(*it);
 	}
 	RepFinishedPlayerCount = 0;
-	// TODO : max player 위치 옮기기
-	MaxPlayerCount = 2;
+	MaxPlayerCount = Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer;
 }
 
 void AMookSabalBattleGameModeBase::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
