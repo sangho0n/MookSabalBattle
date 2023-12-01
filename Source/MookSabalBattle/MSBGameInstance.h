@@ -10,7 +10,9 @@
 #include "Online.h"
 #include "MSBGameInstance.generated.h"
 
-DECLARE_DELEGATE_TwoParams(FOnSessionSearchCompleteWithResults, TArray<FOnlineSessionSearchResult>& SessionSearchResults, bool bSucceed)
+DECLARE_DELEGATE_TwoParams(FOnSessionSearchCompleteWithResults, TArray<FOnlineSessionSearchResult>& SessionSearchResults, bool bSucceed);
+DECLARE_DELEGATE(FOnLoading);
+DECLARE_DELEGATE(FStopLoading);
 
 /**
  * 
@@ -20,6 +22,11 @@ class MOOKSABALBATTLE_API UMSBGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 public:
+	UMSBGameInstance();
+	
+	FOnLoading OnLoading;
+	FStopLoading StopLoading;
+	
 	virtual void Init() override;
 
 	// Hosting Session
@@ -35,8 +42,6 @@ public:
 	FOnSessionSearchCompleteWithResults OnSessionSearchCompleteWithResults;
 	
 	void JoinSession(FString NickName,  TWeakPtr<FOnlineSessionSearchResult> SelectedSession);
-
-	
 	
 private:
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type SessionType);
@@ -53,4 +58,8 @@ private:
 
 	// A method retrying to get access to OnlineSubsystem and SessionInterface
 	void GetSubsystemAndSessionInterface();
+
+	// for loading widget
+	TSubclassOf<UUserWidget> LoadingWidgetClass;
+	UUserWidget* LoadingWidget;
 };

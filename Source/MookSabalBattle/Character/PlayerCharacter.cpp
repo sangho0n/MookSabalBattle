@@ -17,6 +17,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h"
 #include "MookSabalBattle/MookSabalBattleGameModeBase.h"
+#include "MookSabalBattle/MSBGameInstance.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -103,6 +104,7 @@ void APlayerCharacter::PostInitializeComponents()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	if(IsLocallyControlled()) Cast<UMSBGameInstance>(GetGameInstance())->OnLoading.Execute();
 	GetMesh()->SetVisibility(false);
 
 	// wait for some seconds for replications
@@ -153,6 +155,8 @@ void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool b
 	}
 
 	ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
+	
+	if(IsLocallyControlled())  Cast<UMSBGameInstance>(GetGameInstance())->StopLoading.Execute();
 }
 
 void APlayerCharacter::InitWidgets_Implementation()

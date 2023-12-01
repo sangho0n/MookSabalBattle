@@ -5,7 +5,18 @@
 
 #include <functional>
 
+#include "Blueprint/UserWidget.h"
 #include "Online/OnlineSessionNames.h"
+
+UMSBGameInstance::UMSBGameInstance()
+{
+	ConstructorHelpers::FClassFinder<UUserWidget> LOADING(TEXT("/Game/Main/UI/Loading.Loading_C"));
+	if(LOADING.Succeeded())
+	{
+		LoadingWidgetClass = LOADING.Class;
+	}
+}
+
 
 void UMSBGameInstance::Init()
 {
@@ -18,19 +29,34 @@ void UMSBGameInstance::Init()
 	SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UMSBGameInstance::OnJoinSessionComplete);
 	
 	DessertMap = FString("/Game/Main/Maps/Map_Dessert");
+
+	OnLoading.BindLambda([this]()-> void
+	{
+		if(LoadingWidgetClass->IsValidLowLevel())
+			LoadingWidget = CreateWidget(this, LoadingWidgetClass); LoadingWidget->AddToViewport();
+	});
+
+	StopLoading.BindLambda([this]()->void
+	{
+		LoadingWidget->RemoveFromViewport();
+		LoadingWidget = nullptr;
+	});
 }
 
 void UMSBGameInstance::HostGame(FString NickName, int32 MaxPlayerCount, bool bUseLan)
 {
+	OnLoading.Execute();
 	GetSubsystemAndSessionInterface();
 	if(OnlineSubsystem == nullptr)
 	{
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get online subsystem"));
+		StopLoading.Execute();
 		return;
 	}
 	if(SessionInterface == nullptr)
 	{
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get session interface"));
+		StopLoading.Execute();
 		return;
 	}
 
@@ -52,15 +78,18 @@ void UMSBGameInstance::HostGame(FString NickName, int32 MaxPlayerCount, bool bUs
 
 void UMSBGameInstance::TryFindSession(bool bUseLan)
 {
+	OnLoading.Execute();
 	GetSubsystemAndSessionInterface();
 	if(OnlineSubsystem == nullptr)
 	{
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get online subsystem"));
+		StopLoading.Execute();
 		return;
 	}
 	if(SessionInterface == nullptr)
 	{
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get session interface"));
+		StopLoading.Execute();
 		return;
 	}
 
@@ -89,6 +118,7 @@ void UMSBGameInstance::OnSessionCreate(FName SessionName, bool bWasSucceed)
 
 void UMSBGameInstance::OnFindSessionComplete(bool bSucceed)
 {
+	StopLoading.Execute();
 	if(bSucceed && LastSearchResult.IsValid())
 	{
 		OnSessionSearchCompleteWithResults.ExecuteIfBound(LastSearchResult->SearchResults, bSucceed);
@@ -102,15 +132,18 @@ void UMSBGameInstance::OnFindSessionComplete(bool bSucceed)
 
 void UMSBGameInstance::JoinSession(FString NickName, TWeakPtr<FOnlineSessionSearchResult> SelectedSession)
 {
+	OnLoading.Execute();
 	GetSubsystemAndSessionInterface();
 	if(OnlineSubsystem == nullptr)
 	{
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get online subsystem"));
+		StopLoading.Execute();
 		return;
 	}
 	if(SessionInterface == nullptr)
 	{
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get session interface"));
+		StopLoading.Execute();
 		return;
 	}
 	
@@ -136,11 +169,13 @@ void UMSBGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCo
 	if(OnlineSubsystem == nullptr)
 	{
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get online subsystem"));
+		StopLoading.Execute();
 		return;
 	}
 	if(SessionInterface == nullptr)
 	{
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get session interface"));
+		StopLoading.Execute();
 		return;
 	}
 
