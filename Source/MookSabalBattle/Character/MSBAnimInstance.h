@@ -93,12 +93,9 @@ private:
 
 	const int32 MaxCombo = 3;
 
-	bool CanNextCombo;
-
 	bool NextComboInputOn;
 
 	FName GetNextComboSectionName();
-
 public:
 	UFUNCTION(BlueprintPure)
 	bool SetIntended(bool isIntended);
@@ -112,10 +109,6 @@ public:
 	UFUNCTION()
 	void AnimNotify_NextComboCheck();
 	
-	bool GetCanNextCombo()
-	{
-		return CanNextCombo;
-	}
 	void SetNextComboInputOn(bool flag)
 	{
 		NextComboInputOn = flag;
@@ -135,8 +128,7 @@ public:
 
 private:
 	FOnHitCheck OnHitCheck;
-	
-	UPROPERTY(BlueprintAssignable, Category=Event, meta=(DisplayName="On Over Delta Offset"))
+
 	FOnOverDeltaOffset OnOverDeltaOffset;
 
 	UFUNCTION()

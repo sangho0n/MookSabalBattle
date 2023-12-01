@@ -28,8 +28,10 @@ UMSBAnimInstance::UMSBAnimInstance()
 void UMSBAnimInstance::PostInitProperties()
 {
 	Super::PostInitProperties();
-	OnMontageEnded.AddDynamic(this, &UMSBAnimInstance::OnComboMontageEnded);
-	OnOverDeltaOffset.AddDynamic(this, &UMSBAnimInstance::ResetDelta);
+	OnMontageEnded.RemoveAll(this);
+	OnOverDeltaOffset.RemoveAll(this);
+	OnMontageEnded.AddUniqueDynamic(this, &UMSBAnimInstance::OnComboMontageEnded);
+	OnOverDeltaOffset.AddUniqueDynamic(this, &UMSBAnimInstance::ResetDelta);
 }
 
 
@@ -44,7 +46,6 @@ void UMSBAnimInstance::NativeBeginPlay()
 	bIsCW = false;
 	bIsDead = false;
 	CurrentCombo = 0;
-	CanNextCombo = false;
 
 	OnHitCheck.AddDynamic(OwnedCharacter, &APlayerCharacter::Hit);
 }
@@ -53,6 +54,8 @@ void UMSBAnimInstance::NativeBeginPlay()
 void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
+	if(!IsValid(OwnedCharacter)) return;
+	if(!IsValid(OwnedCharacter->GetCharacterStateComponent())) return;
 
 	// TODO : below if statement will be deleted after server implemented.
 	// for now, just place some other characters in scene for debugging
@@ -68,9 +71,9 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		CurrentPawnSpeed = Velocity.Size();
 		bInAir = OwnedCharacter->GetMovementComponent()->IsFalling();
 		CurrentMode = state->CurrentMode;
-		bIsAttacking = state->bIsAttacking;
-		bIsReload = state->bIsReloading;
-		bIsDead = state->bIsDead;
+		bIsAttacking = state->IsAttacking();
+		bIsReload = state->IsReloading();
+		bIsDead = state->IsDead();
 
 		if(nullptr != OwnedCharacter->CurrentWeapon && OwnedCharacter->CurrentWeapon->IsA(AMelee::StaticClass()))
 		{
@@ -126,8 +129,8 @@ bool UMSBAnimInstance::SetIntended(bool isIntended)
 
 void UMSBAnimInstance::PlayComboAnim()
 {
-	CanNextCombo = false;
 	CurrentCombo = 1;
+	NextComboInputOn = false;
 	
 	Montage_Play(ComboMontage);
 }
@@ -145,10 +148,13 @@ void UMSBAnimInstance::JumpToNextSection()
 
 void UMSBAnimInstance::OnComboMontageEnded(UAnimMontage* montage, bool bInterrupted)
 {
-	CanNextCombo = false;
+	if(bInterrupted) return;
 	CurrentCombo = 0;
-	Cast<ALocalPlayerController>(OwnedCharacter->GetController())->AttackStop();
+	NextComboInputOn = false;
 	OnAttackEnd.Broadcast();
+	
+	if(!OwnedCharacter->HasAuthority()) return;
+	Cast<ALocalPlayerController>(OwnedCharacter->GetController())->AttackStop();
 }
 
 void UMSBAnimInstance::AnimNotify_HitCheck()

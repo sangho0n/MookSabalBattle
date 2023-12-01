@@ -12,7 +12,12 @@
 #include "MookSabalBattle/Weapon/Weapon.h"
 
 #include "DrawDebugHelpers.h"
+#include "LocalPlayerController.h"
 #include "Engine/DamageEvents.h"
+#include "Net/UnrealNetwork.h"
+#include "Engine/Engine.h"
+#include "MookSabalBattle/MookSabalBattleGameModeBase.h"
+#include "MookSabalBattle/MSBGameInstance.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -23,7 +28,6 @@ APlayerCharacter::APlayerCharacter()
 	// set cam and spring arm
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>("CAMERA");
-	CharacterState = CreateDefaultSubobject<UCharacterStateComponent>(TEXT("STATE"));
 
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
@@ -52,18 +56,12 @@ APlayerCharacter::APlayerCharacter()
 		GetMesh()->SetAnimInstanceClass(ABP_HUMANOID.Class);
 	}
 	
-	// Collision
-	SetCharacterAsAlly();
-	
 	// movement
-	auto movement = GetCharacterMovement();\
+	auto movement = GetCharacterMovement();
 	movement->AirControl = 0.5f;
 	movement->JumpZVelocity = 350.0f;
 	movement->MaxWalkSpeed = MaxWalkSpeed;
 
-	CharacterState->CurrentMode = CharacterMode::NON_EQUIPPED;
-	CharacterState->bIsEquipped = false;
-	CharacterState->bIsEquippable = false;
 	CurrentWeapon = nullptr; // Fist mode
 
 	// UI
@@ -73,7 +71,7 @@ APlayerCharacter::APlayerCharacter()
 		this->InGameUIClass = INGAMEUI.Class;
 	}
 
-	// Attack Collision
+	// Collision
 	AttackCapsuleColliderRadius = 34.0f;
 	AttackCapsuleColliderHalfHeight = 30.0f;
 	static ConstructorHelpers::FObjectFinder<UParticleSystem> BLEEDING(TEXT("/Game/Realistic_Starter_VFX_Pack_Vol2/Particles/Blood/P_Blood_Splat_Cone.P_Blood_Splat_Cone"));
@@ -81,10 +79,9 @@ APlayerCharacter::APlayerCharacter()
 	{
 		BleedingParticle = BLEEDING.Object;
 	}
-
-	
-	// below code will be refactored after implement server
-	SetCharacterAsEnemy();
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn"));
+	GetMesh()->SetCollisionProfileName(TEXT("Humanoid"));
+	OverlappedAlly = {};
 }
 
 void APlayerCharacter::PostInitializeComponents()
@@ -94,7 +91,8 @@ void APlayerCharacter::PostInitializeComponents()
 	auto Collider = GetCapsuleComponent();
 
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnCharacterBeginOverlapWithCharacter);
-	OnGetDamage.AddDynamic(this, &APlayerCharacter::OnHit);
+	Collider->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnCharacterEndOverlapWithCharacter);
+	OnGetDamage.AddDynamic(this, &APlayerCharacter::OnHit); // blueprint
 	Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnAttackEnd.AddDynamic(this, &APlayerCharacter::StopAttacking);
 	
 	PunchDamage = 7.0f;
@@ -105,45 +103,103 @@ void APlayerCharacter::PostInitializeComponents()
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
-	Super::BeginPlay(); 
-	CharacterState->OnHPIsZero.AddDynamic(this, &APlayerCharacter::Die);
+	Super::BeginPlay();
+	if(IsLocallyControlled()) Cast<UMSBGameInstance>(GetGameInstance())->OnLoading.Execute();
+	GetMesh()->SetVisibility(false);
+
+	// wait for some seconds for replications
+	FTimerHandle TimerHandle;
+	float DelayInSeconds = 2.0f;
+	FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &APlayerCharacter::AfterReplication);
+	GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, DelayInSeconds, false);
+}
+
+void APlayerCharacter::AfterReplication()
+{
+	// 맵에 있는 무기의 수만큼 PlayerCharacter 클래스의 BeginPlay가 추가적으로 호출되는 문제 확인
+	// 컨트롤러의 null 여부로 임시 해결
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green,
+		FString::Printf(TEXT("is null? : %s"), nullptr == this->GetController()?TEXT("null"):TEXT("not null")));
+	if(nullptr == this->GetController()) return;
 	
-	if(GetController()->IsLocalPlayerController())
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, FString::Printf(TEXT("has Auth? : %s"), HasAuthority()?TEXT("true"):TEXT("false")));
+
+	if(HasAuthority())
+	{
+		auto GameMode = Cast<AMookSabalBattleGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+		OnNewPlayerReplicationFinished.BindUObject(GameMode, &AMookSabalBattleGameModeBase::IncreaseRepFinishedPlayerCount);
+		OnNewPlayerReplicationFinished.Execute();
+	}
+}
+
+// NetMulticast RPC (called on both listen server and client)
+void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool bIsRedTeam)
+{
+	GetMesh()->SetVisibility(true);
+	CharacterState = Cast<ACharacterState>(GetPlayerState());
+	check(nullptr != CharacterState);
+	
+	if(HasAuthority())
+	{
+		CharacterState->OnHPIsZero.AddDynamic(this, &APlayerCharacter::Die_Server);
+		CharacterState->SetPlayerName(UserName);
+		CharacterState->SetTeam(bIsRedTeam);
+		CharacterState->SetDead(false);
+	}
+
+	InitWidgets();
+	
+	if(IsLocallyControlled())
+	{
+		Cast<ALocalPlayerController>(GetController())->InitPlayer();
+	}
+
+	ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
+	
+	if(IsLocallyControlled())  Cast<UMSBGameInstance>(GetGameInstance())->StopLoading.Execute();
+}
+
+void APlayerCharacter::InitWidgets_Implementation()
+{
+	// InGame UI
+	if(IsLocallyControlled())
 	{
 		if(IsValid(InGameUIClass))
 		{
 			InGameUI = Cast<UInGameUI>(CreateWidget(GetWorld(), InGameUIClass));
 			InGameUI->AddToViewport();
+			MSB_LOG_LOCATION(Warning);
 			InGameUI->BindCharacterStat(CharacterState);
 		}
 	}
 
-	ChangeCharacterMode(CharacterState->CurrentMode);
-	CharacterState->bIsDead = false;
-	
-	// below code will be refactored after implement server
-	if(GetController()->IsLocalPlayerController())
-	{
-		SetCharacterAsAlly();	
-	}
+	// HealthBar(by blueprint)
 }
 
-void APlayerCharacter::SetCharacterAsAlly()
+
+void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Ally"));
-	GetMesh()->SetCollisionProfileName(TEXT("CharacterMesh"));
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APlayerCharacter, CharacterState);
 }
 
-void APlayerCharacter::SetCharacterAsEnemy()
+
+void APlayerCharacter::SetCharacterAsBlueTeam_Implementation()
 {
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn"));
-	GetMesh()->SetCollisionProfileName(TEXT("Enemy"));
+	CharacterState->SetTeam(false);
+}
+
+void APlayerCharacter::SetCharacterAsRedTeam_Implementation()
+{
+	CharacterState->SetTeam(true);
 }
 
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if(!IsValid(CharacterState)) return;
 
 	// cam pos change
 	if(bInterpingCamPos)
@@ -153,30 +209,36 @@ void APlayerCharacter::Tick(float DeltaTime)
 		Camera->SetRelativeLocation(CurrentCamPos);
 		if(FVector::Dist(DesiredCamPos, CurrentCamPos) < KINDA_SMALL_NUMBER) {bInterpingCamPos = false; accTime = 0.0f;}
 	}
-}
 
-// Called to bind functionality to input
-void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-	
+	if(!OverlappedAlly.IsEmpty())
+	{
+		for(auto OtherActor : OverlappedAlly)
+		{
+			auto CurrentPos = GetActorLocation();
+			auto OtherPos = OtherActor->GetActorLocation();
+			auto ToOther = OtherPos - CurrentPos; ToOther.Normalize();
+
+			GetMovementComponent()->Velocity += -ToOther * 10.0f;
+		}
+	}
 }
 
 void APlayerCharacter::ForwardBack(float NewAxisValue)
 {
-	if(nullptr != Controller && NewAxisValue != 0.0)
+	if(NewAxisValue != 0.0)
 	{
 		const auto Rotation = Controller->GetControlRotation();
 		const FRotator XYRotation(0, Rotation.Yaw, 0);
 
-		const auto Forward = FRotationMatrix(XYRotation).GetUnitAxis(EAxis::X);
+		const FVector Forward = FRotationMatrix(XYRotation).GetUnitAxis(EAxis::X);
 		AddMovementInput(Forward, NewAxisValue);
+		//GetCharacterMovement()->AddInputVector(Forward*NewAxisValue, false);
 	}
 }
 
 void APlayerCharacter::LeftRight(float NewAxisValue)
 {
-	if(nullptr != Controller && NewAxisValue != 0.0)
+	if(NewAxisValue != 0.0)
 	{
 		const auto Rotation = Controller->GetControlRotation();
 		const FRotator XYRotation(0, Rotation.Yaw, 0);
@@ -214,11 +276,10 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		this->bUseControllerRotationPitch = false;
 		this->bUseControllerRotationRoll = false;
 		this->bUseControllerRotationYaw = false;
-		if(!Controller->IsLocalPlayerController()) return;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		if(!IsLocallyControlled()) return;
 		// 3rd view mouse rotation
 		SpringArm->TargetArmLength = 400.0f;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-		SpringArm->bUsePawnControlRotation = true;
 		SpringArm->bInheritPitch = true;
 		SpringArm->bInheritRoll = true;
 		SpringArm->bInheritYaw = true;
@@ -236,11 +297,10 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		this->bUseControllerRotationPitch = false;
 		this->bUseControllerRotationRoll = false;
 		this->bUseControllerRotationYaw = false;
-		if(!Controller->IsLocalPlayerController()) return;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		if(!IsLocallyControlled()) return;
 		// 3rd view mouse rotation
 		SpringArm->TargetArmLength = 400.0f;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-		SpringArm->bUsePawnControlRotation = false;
 		SpringArm->bInheritPitch = true;
 		SpringArm->bInheritRoll = true;
 		SpringArm->bInheritYaw = true;
@@ -254,17 +314,28 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 	}
 }
 
-bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
+void APlayerCharacter::EquipWeapon_Server_Implementation(AWeapon* NewWeapon)
 {
+	// if Already possessed by other character or not available
+	MSB_LOG(Warning,TEXT("b is possesse %s, is valid %s, is equippable %s")
+		,NewWeapon->bIsPossessed?TEXT("true"):TEXT("false")
+		,IsValid(NewWeapon)?TEXT("true"):TEXT("false"),
+		CharacterState->IsEquippable()?TEXT("true"):TEXT("false"));
+	if(NewWeapon->bIsPossessed || !IsValid(NewWeapon) || !CharacterState->IsEquippable()) return;
+
+	EquipWeapon_Multicast();
+}
+
+void APlayerCharacter::EquipWeapon_Multicast_Implementation()
+{
+	MSB_LOG(Warning, TEXT("multicasted"));
 	if(nullptr != CurrentWeapon)
 	{
 		CurrentWeapon->Destroy();
 	}
-	CharacterState->ApplyDamage(50.0f);
-	CurrentWeapon = NewWeapon;
-	auto weaponMesh = CurrentWeapon->ReadyToEquip();
+	CurrentWeapon = OverlappedWeapon;
+	auto weaponMesh = CurrentWeapon->ReadyToEquip(this);
 
-	CharacterState->bIsEquipped = true;
 	if(CurrentWeapon->IsA(AGun::StaticClass()))
 	{
 		ChangeCharacterMode(CharacterMode::GUN);
@@ -283,9 +354,9 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 
 		auto Gun = Cast<AGun>(CurrentWeapon);
 		Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnReloadAnimEnd
-		.AddDynamic(Gun, &AGun::FillBullets);
+			.AddDynamic(Gun, &AGun::FillBullets);
 		Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->OnReloadAnimEnd
-		.AddDynamic(this, &APlayerCharacter::EndReloading);
+			.AddDynamic(this, &APlayerCharacter::EndReloading);
 	}
 	else if (CurrentWeapon->IsA(AMelee::StaticClass()))
 	{
@@ -310,103 +381,149 @@ bool APlayerCharacter::EquipWeapon(AWeapon* NewWeapon)
 			}
 		}
 	}
-	return true;
+	CurrentWeapon->SetOwner(this);
 }
 
-void APlayerCharacter::OnWeaponStartOverlap(AWeapon* OverlappedWeapon_)
+void APlayerCharacter::OnWeaponStartOverlap_Server_Implementation(AWeapon* OverlappedWeapon_)
 {
-	InGameUI->SetEquipVisible();
-	CharacterState->bIsEquippable = true;
+	OnWeaponStartOverlap_Multicast(OverlappedWeapon_);
+}
+
+void APlayerCharacter::OnWeaponStartOverlap_Multicast_Implementation(AWeapon* OverlappedWeapon_)
+{
+	CharacterState->SetEquippable(true);
 	this->OverlappedWeapon = OverlappedWeapon_;
+	if(IsLocallyControlled())
+		InGameUI->SetEquipVisible();
 }
 
-void APlayerCharacter::OnWeaponEndOverlap()
+void APlayerCharacter::OnWeaponEndOverlap_Server_Implementation()
 {
-	InGameUI->SetEquipInvisible();
-	CharacterState->bIsEquippable = false;
+	OnWeaponEndOverlap_Multicast();
 }
 
-UCharacterStateComponent* APlayerCharacter::GetCharacterStateComponent()
+void APlayerCharacter::OnWeaponEndOverlap_Multicast_Implementation()
+{
+	CharacterState->SetEquippable(false);
+	if(IsLocallyControlled())
+		InGameUI->SetEquipInvisible();
+}
+
+
+ACharacterState* APlayerCharacter::GetCharacterStateComponent()
 {
 	return this->CharacterState;
 }
 
 # pragma region attack
-void APlayerCharacter::AttackNonEquip()
+void APlayerCharacter::AttackNonEquip_Server_Implementation()
+{
+	AttackNonEquip_Multicast();
+}
+
+void APlayerCharacter::AttackNonEquip_Multicast_Implementation()
 {
 	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
-	if(CharacterState->bIsAttacking)
+	if(CharacterState->IsAttacking())
 	{
 		animInstance->SetNextComboInputOn(true);
-		return;
 	}
-
-	CharacterState->bIsAttacking = true;
-	animInstance->PlayComboAnim();
+	else
+	{
+		CharacterState->SetAttacking(true);
+		animInstance->PlayComboAnim();
+	}
 }
 
-void APlayerCharacter::Shoot()
+void APlayerCharacter::Shoot_Server_Implementation()
 {
-	if(CharacterState->bIsAttacking || CharacterState->bIsReloading) return;
+	if(CharacterState->IsAttacking() || CharacterState->IsReloading()) return;
+	Shoot_Multicast();
+}
+
+void APlayerCharacter::Shoot_Multicast_Implementation()
+{
 	auto Gun = Cast<AGun>(CurrentWeapon);
 	if(!Gun->CanFire(this)) return;
-
-	bInterpingCamPos = true;
-	DesiredCamPos = CamPosWhenFireGun;
-
-	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed / 2.0f * 1.0f;
-	CharacterState->bIsAttacking = true;	
+	
+	if(IsLocallyControlled())
+	{
+		bInterpingCamPos = true;
+		DesiredCamPos = this->CamPosWhenFireGun;
+	}
+	
+	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed / 2.0f;
+	CharacterState->SetAttacking(true);
 }
 
-void APlayerCharacter::StopShooting()
+void APlayerCharacter::StopShooting_Server_Implementation()
 {
-	CharacterState->bIsAttacking = false;
+	StopShooting_Multicast();
+}
 
-	bInterpingCamPos = true;
-	DesiredCamPos = CamPosWhenGunMode;
+void APlayerCharacter::StopShooting_Multicast_Implementation()
+{
+	if(IsLocallyControlled())
+	{
+		bInterpingCamPos = true;
+		DesiredCamPos = this->CamPosWhenGunMode;
+	}
 
 	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+	CharacterState->SetAttacking(false);
 }
 
-void APlayerCharacter::ReloadGun()
+void APlayerCharacter::SwingMelee_Server_Implementation()
 {
-	auto Gun = Cast<AGun>(CurrentWeapon);
-	if(CharacterState->bIsReloading
-		|| CharacterState->bIsAttacking
-		|| Gun->Bullets >= 45) return;
-	
-	CharacterState->bIsReloading = true;
+	if(CharacterState->IsAttacking()) return;
+	SwingMelee_Multicast();
 }
 
-
-void APlayerCharacter::SwingMelee()
+void APlayerCharacter::SwingMelee_Multicast_Implementation()
 {
-	if(CharacterState->bIsAttacking) return;
-
 	auto animInstance = Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance());
 	animInstance->PlayRandomMeleeSwing();
-	CharacterState->bIsAttacking = true;
+
+	CharacterState->SetAttacking(true);
+}
+
+void APlayerCharacter::ReloadGun_Server_Implementation()
+{
+	auto Gun = Cast<AGun>(CurrentWeapon);
+	if(CharacterState->IsReloading()
+		|| CharacterState->IsAttacking()
+		|| Gun->Bullets >= 45) return;
+
+	ReloadGun_Multicast();
+}
+
+void APlayerCharacter::ReloadGun_Multicast_Implementation()
+{
+	CharacterState->SetReload(true);
 }
 
 void APlayerCharacter::Hit(int32 CurrCombo)
 {
-	if(!GetController()->IsLocalPlayerController()) return;
+	if(!IsLocallyControlled()) return;
 	
 	auto currentMode = CharacterState->CurrentMode;
+	TArray<FPointDamageEvent> DamageEvents = {}; 
 	if(currentMode == CharacterMode::NON_EQUIPPED)
 	{
-		if (CurrCombo <= 2) Punch();
-		else Kick();
+		if (CurrCombo <= 2) DamageEvents.Append(Punch());
+		else  DamageEvents.Append(Kick());
 	}
 	else if(currentMode == CharacterMode::MELEE)
 	{
 		auto Melee = Cast<AMelee>(CurrentWeapon);
-		Melee->Hit(this); // return multiple results
-	}
+		DamageEvents.Append(Melee->Hit(this));
+	} 
 	else // gun
 	{
 		auto Gun = Cast<AGun>(CurrentWeapon);
-		Gun->Hit(this); // return single result
+		auto DamageEvent = Gun->Hit(this);
+		DamageEvents.Add(DamageEvent);
+		
 		// ApplyRecoil
 		UGameplayStatics::PlayWorldCameraShake(
 			Camera,
@@ -417,11 +534,14 @@ void APlayerCharacter::Hit(int32 CurrCombo)
 		);
 		AddControllerPitchInput(-0.5f);
 	}
+	
+	ApplyDamageEventsOnServer(this, DamageEvents);
 }
 
-void APlayerCharacter::Punch()
+TArray<FPointDamageEvent> APlayerCharacter::Punch()
 {
 	TArray<FHitResult> HitResults;
+	TArray<FPointDamageEvent> DamageEvents;
 	auto Param_IgnoreSelf = FCollisionQueryParams();
 	Param_IgnoreSelf.AddIgnoredActor(this);
 
@@ -431,7 +551,8 @@ void APlayerCharacter::Punch()
 		GetActorLocation() + GetActorForwardVector() * (AttackCapsuleColliderHalfHeight + AttackCapsuleColliderRadius) * 2,
 		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
 		ECollisionChannel::ECC_GameTraceChannel4,
-		FCollisionShape::MakeCapsule(AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight));
+		FCollisionShape::MakeCapsule(AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight),
+		Param_IgnoreSelf);
 
 	if(bResult)
 	{
@@ -439,9 +560,9 @@ void APlayerCharacter::Punch()
 		for(auto res: HitResults)
 		{
 			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
-
+			
 			auto Character = Cast<APlayerCharacter>(res.GetActor());
-			if(AlreadyHitActors.Contains(Character)) continue;
+			if(AlreadyHitActors.Contains(Character) || Character->IsSameTeam(this)) continue;
 			
 			AlreadyHitActors.Push(Character);
 			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
@@ -450,7 +571,8 @@ void APlayerCharacter::Punch()
 			PointDamageEvent.HitInfo = res;
 			PointDamageEvent.ShotDirection = ToThis;
 
-			Character->TakeDamage(PunchDamage, PointDamageEvent, this->GetInstigatorController(), this);
+			//Character->TakeDamage(PunchDamage, PointDamageEvent, this->GetInstigatorController(), this);
+			DamageEvents.Add(PointDamageEvent);
 		}
 	}
 
@@ -466,12 +588,14 @@ void APlayerCharacter::Punch()
 		1.0f
 	);
 #endif
-	
+
+	return DamageEvents;
 }
 
-void APlayerCharacter::Kick()
+TArray<FPointDamageEvent> APlayerCharacter::Kick()
 {
 	TArray<FHitResult> HitResults;
+	TArray<FPointDamageEvent> DamageEvents;
 	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
 	Param_IgnoreSelf.AddIgnoredActor(this);
 
@@ -481,7 +605,8 @@ void APlayerCharacter::Kick()
 		GetActorLocation() + GetActorForwardVector() * (AttackCapsuleColliderHalfHeight + AttackCapsuleColliderRadius) * 2,
 		FRotationMatrix::MakeFromZ(GetActorForwardVector()).ToQuat(),
 		ECollisionChannel::ECC_GameTraceChannel4,
-		FCollisionShape::MakeCapsule(AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight));
+		FCollisionShape::MakeCapsule(AttackCapsuleColliderRadius, AttackCapsuleColliderHalfHeight),
+		Param_IgnoreSelf);
 		
 	if(bResult)
 	{
@@ -491,7 +616,7 @@ void APlayerCharacter::Kick()
 			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
 
 			auto Character = Cast<APlayerCharacter>(res.GetActor());
-			if(AlreadyHitActors.Contains(Character)) continue;
+			if(AlreadyHitActors.Contains(Character)|| Character->IsSameTeam(this)) continue;
 			
 			AlreadyHitActors.Push(Character);
 			auto ToThis = this->GetActorLocation() - res.Location; ToThis.Normalize();
@@ -500,7 +625,8 @@ void APlayerCharacter::Kick()
 			PointDamageEvent.HitInfo = res;
 			PointDamageEvent.ShotDirection = ToThis;
 
-			Character->TakeDamage(KickDamage, PointDamageEvent, this->GetInstigatorController(), this);
+			//Character->TakeDamage(KickDamage, PointDamageEvent, this->GetInstigatorController(), this);
+			DamageEvents.Add(PointDamageEvent);
 		}
 	}
 
@@ -516,65 +642,126 @@ void APlayerCharacter::Kick()
 		1.0f
 	);
 #endif
+	return DamageEvents;
 }
+
+// Server RPC
+void APlayerCharacter::ApplyDamageEventsOnServer_Implementation(APlayerCharacter* const &Causer, const TArray<FPointDamageEvent> &HitResults)
+{
+	for(auto Result : HitResults)
+	{
+		if(Result.Damage < KINDA_SMALL_NUMBER) continue;
+
+		auto DamagedCharacter = Cast<APlayerCharacter>(Result.HitInfo.GetActor());
+		DamagedCharacter->TakeDamage(Result.Damage, Result, GetInstigatorController(), Causer);
+		DamagedCharacter->MulticastHitEffect(Result, Causer);
+		MSB_LOG(Warning, TEXT("%s took %f damage"), *DamagedCharacter->GetName(), Result.Damage);
+	}
+}
+
+void APlayerCharacter::MulticastHitEffect_Implementation(FPointDamageEvent HitResult, APlayerCharacter* Causer)
+{
+	auto PointDamageEvent = (FPointDamageEvent*)&HitResult;
+	OnGetDamage.Broadcast(PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection);
+	ShowBleeding(PointDamageEvent->HitInfo.Location, PointDamageEvent->ShotDirection, PointDamageEvent->HitInfo.Normal);
+
+	if(IsLocallyControlled())
+	{
+		InGameUI->ShowDamageIndicator(Causer);
+	}
+}
+
+
 
 void APlayerCharacter::StopAttacking()
 {
-	CharacterState->bIsAttacking = false;
+	CharacterState->SetAttacking(false);
 }
 
 # pragma endregion
 
+/**
+ * @brief method for collision handling between players
+ * when capsule collider(set as Pawn profile name) begin overlap,
+ * they pushes each other
+ *
+ * If overlapped actor is an ally, it continuously applies a gentle force to push them apart until they separate.
+ * If it's an enemy, a strong impulse is applied the moment they overlap to make them immediately move away from each other.
+ */
 void APlayerCharacter::OnCharacterBeginOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if(!OtherActor->IsA(APlayerCharacter::StaticClass())) return;
-	
-	auto currentPos = GetActorLocation();
-	auto otherPos = OtherActor->GetActorLocation();
-	auto toOther = otherPos - currentPos; toOther.Normalize();
 
-	GetMovementComponent()->Velocity = -toOther * 500.0f;
+	auto Character = Cast<APlayerCharacter>(OtherActor);
+	if(!Character->IsSameTeam(this))
+	{
+		auto CurrentPos = GetActorLocation();
+		auto OtherPos = OtherActor->GetActorLocation();
+		auto ToOther = OtherPos - CurrentPos; ToOther.Normalize();
+
+		GetMovementComponent()->Velocity = -ToOther * 500.0f;
+	}
+	else
+	{
+		OverlappedAlly.Add(Character);
+	}
 }
 
+void APlayerCharacter::OnCharacterEndOverlapWithCharacter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if(!OtherActor->IsA(APlayerCharacter::StaticClass())) return;
+
+	auto Character = Cast<APlayerCharacter>(OtherActor);
+	if(Character->IsSameTeam(this))
+	{
+		OverlappedAlly.Remove(Character);
+	}
+}
+
+// should be called on server
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	if(DamageEvent.IsOfType(FPointDamageEvent::ClassID))
-	{
-		auto PointDamageEvent = (FPointDamageEvent*)&DamageEvent;
-		OnGetDamage.Broadcast(PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection);
-		ShowBleeding(PointDamageEvent->HitInfo.Location, PointDamageEvent->ShotDirection, PointDamageEvent->HitInfo.Normal);
-
-		if(this->GetController()->IsLocalPlayerController())
-		{
-			InGameUI->ShowDamageIndicator(DamageCauser);
-		}
-	}
-	
 	DamageAmount = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	CharacterState->ApplyDamage(DamageAmount);
 	return DamageAmount;
 }
 
-void APlayerCharacter::Die()
+// Server RPC
+void APlayerCharacter::Die_Server_Implementation()
 {
-	Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->PlayRandomDeadAnim();
-	CharacterState->bIsDead = true;
+	GEngine->AddOnScreenDebugMessage(5, 5.0f, FColor::Red, FString::Printf(TEXT("죽음 서버 rpc")));
 	
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("NoCollision"));
-	GetMesh()->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
-	GetMesh()->SetSimulatePhysics(true);
+	if(nullptr != CurrentWeapon)
+	{
+		CurrentWeapon->Destroy();
+	}
+	CharacterState->OnHPIsZero.Clear();
+	Die_Multicast();
+}
+void APlayerCharacter::Die_Multicast_Implementation()
+{
+	GEngine->AddOnScreenDebugMessage(5, 5.0f, FColor::Red, FString::Printf(TEXT("죽음 멀티캐스트 rpc")));
+	
+	Cast<UMSBAnimInstance>(GetMesh()->GetAnimInstance())->PlayRandomDeadAnim();
+	CharacterState->SetDead(true);
+	
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("IgnoreOnlyPawn"));
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	if(nullptr != CurrentWeapon)
+	{
+		CurrentWeapon->Destroy();
+	}
 	OnGetDamage.Clear();
 }
 
-/*
- * APlayerCharacter::ShowBleeding
- *
- * Location : The location that particle spawned
- * From : A vector from attacking point to `Location
- * Normal : The normal of that mesh at location
- *
- * the particle must spawned on the `Location,
- * and the rotation angle should be same as the angle between `Normal and `From
+/**
+ * @brief method for show bleeding particles
+ * the particle must spawned on the Location.
+ * the direction should be a replicated vector of From via Normal
+ * 
+ * @param Location The location that particle spawned
+ * @param From A vector from attacking point to Location
+ * @param Normal The normal of that mesh at location
  */
 void APlayerCharacter::ShowBleeding(FVector Location, FVector From, FVector Normal)
 {
@@ -587,9 +774,14 @@ void APlayerCharacter::ShowBleeding(FVector Location, FVector From, FVector Norm
 	UGameplayStatics::SpawnEmitterAtLocation(
 		GetWorld(),
 		BleedingParticle,
-		Transform
+		Location,
+		FRotationMatrix::MakeFromZ(From + 2 * Normal * FVector::DotProduct(-From, Normal)).Rotator(),
+		FVector(1),
+		true
 	);
+	MSB_LOG(Warning,TEXT("bleeding"));
 }
+
 
 FVector APlayerCharacter::GetCameraLocation()
 {
@@ -603,6 +795,15 @@ FVector APlayerCharacter::GetCameraDirection()
 
 void APlayerCharacter::EndReloading()
 {
-	CharacterState->bIsReloading = false;
+	CharacterState->SetReload(false);
+}
+
+bool APlayerCharacter::IsSameTeam(APlayerCharacter* OtherPlayer)
+{
+	auto ThisTeam = CharacterState->IsRedTeam();
+	auto OtherTeam = OtherPlayer->GetCharacterStateComponent()->IsRedTeam();
+	
+	if(!(ThisTeam ^ OtherTeam)) return true;
+	return false;
 }
 

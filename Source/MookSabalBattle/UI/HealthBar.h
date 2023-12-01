@@ -6,7 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/CanvasPanel.h"
 #include "Components/ProgressBar.h"
-#include "../Character/CharacterStateComponent.h"
+#include "../Character/CharacterState.h"
 #include "HealthBar.generated.h"
 
 /**
@@ -23,7 +23,7 @@ public:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 	UFUNCTION(BlueprintCallable)
-	void BindCharacterStat(UCharacterStateComponent* State);
+	void BindCharacterStat(ACharacterState* State);
 
 private:
 	UCanvasPanel* Canvas_Health;
@@ -31,12 +31,11 @@ private:
 	const float FadeOutTime = 0.6f;
 	float AccTimeForFadeOut;
 	bool bIsFadeOut;
-
 	
 	UFUNCTION()
 	void UpdateFadeOutEffect(UCanvasPanel* Canvas,  bool& bIsFading, float& AccTime, const float InDeltaTime, float Threshold = 0.0f);
 
 public:
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void ShowHealthBar(float HP);
 };

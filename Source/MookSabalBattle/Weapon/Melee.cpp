@@ -14,9 +14,10 @@ void AMelee::PostInitializeComponents()
 	Super::PostInitializeComponents();
 }
 
-TArray<FHitResult> AMelee::Hit(AActor* Causer)
+TArray<FPointDamageEvent> AMelee::Hit(APlayerCharacter* Causer)
 {
 	TArray<FHitResult> HitResults;
+	TArray<FPointDamageEvent> DamageEvents;
 	auto Param_IgnoreSelf = FCollisionQueryParams::DefaultQueryParam;
 	Param_IgnoreSelf.AddIgnoredActor(Causer);
 
@@ -28,7 +29,8 @@ TArray<FHitResult> AMelee::Hit(AActor* Causer)
 		CauserLocation + CauserForwardVector * (this->AttackCapsuleColliderHalfHeight + this->AttackCapsuleColliderRadius) * 2,
 		FRotationMatrix::MakeFromZ(CauserForwardVector).ToQuat(),
 		ECollisionChannel::ECC_GameTraceChannel4,
-		FCollisionShape::MakeCapsule(this->AttackCapsuleColliderRadius, this->AttackCapsuleColliderHalfHeight));
+		FCollisionShape::MakeCapsule(this->AttackCapsuleColliderRadius, this->AttackCapsuleColliderHalfHeight),
+		Param_IgnoreSelf);
 		
 	if(bResult)
 	{
@@ -38,7 +40,7 @@ TArray<FHitResult> AMelee::Hit(AActor* Causer)
 			if(!res.GetActor()->IsA(APlayerCharacter::StaticClass())) continue;
 
 			auto Character = Cast<APlayerCharacter>(res.GetActor());
-			if(AlreadyHitActors.Contains(Character)) continue;
+			if(AlreadyHitActors.Contains(Character)|| Character->IsSameTeam(Causer)) continue;
 			
 			AlreadyHitActors.Push(Character);
 			auto ToThis = CauserLocation - res.Location; ToThis.Normalize();
@@ -48,7 +50,8 @@ TArray<FHitResult> AMelee::Hit(AActor* Causer)
 			PointDamageEvent.ShotDirection = ToThis;
 
 			MSB_LOG(Warning, TEXT("attack %s with Pick"), *res.GetActor()->GetName());
-			Character->TakeDamage(this->Damage, PointDamageEvent, Causer->GetInstigatorController(), Causer);
+			//Character->TakeDamage(Damage, PointDamageEvent, this->GetInstigatorController(), Causer);
+			DamageEvents.Add(PointDamageEvent);
 		}
 	}
 
@@ -65,6 +68,6 @@ TArray<FHitResult> AMelee::Hit(AActor* Causer)
 	);
 #endif
 
-	return HitResults;
+	return DamageEvents;
 }
 

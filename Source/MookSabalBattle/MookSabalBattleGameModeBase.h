@@ -6,6 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "MookSabalBattleGameModeBase.generated.h"
 
+DECLARE_DELEGATE(FOnAllPlayerReplicationFinished);
 /**
  * 
  */
@@ -16,4 +17,27 @@ class MOOKSABALBATTLE_API AMookSabalBattleGameModeBase : public AGameModeBase
 
 public:
 	AMookSabalBattleGameModeBase();
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
+	virtual FString InitNewPlayer(APlayerController* NewPlayerController, const FUniqueNetIdRepl& UniqueId, const FString& Options, const FString& Portal) override;
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+	virtual void PostInitializeComponents() override;
+
+private:
+	UPROPERTY()
+	TArray<APlayerController*> PlayerControllers;
+	TArray<APlayerStart*> FreePlayerStarts;
+
+	UFUNCTION()
+	void InitAllPlayers();
+
+	uint8 RepFinishedPlayerCount;
+	uint8 MaxPlayerCount;
+
+	FOnAllPlayerReplicationFinished OnAllPlayerReplicationFinished;
+
+public:
+	UFUNCTION()
+	void IncreaseRepFinishedPlayerCount();
 };

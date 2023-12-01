@@ -26,5 +26,5 @@ public:
 
 	float AttackSpeed;
 	
-	TArray<FHitResult> Hit(AActor* Causer);
+	TArray<FPointDamageEvent> Hit(APlayerCharacter* Causer);
 };
