@@ -193,7 +193,7 @@ void ULobbyUI::SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& Sessi
 
 		for(const FOnlineSessionSearchResult& SessionSearchResult : SessionSearchResults)
 		{
-			if(IsValid(ServerBrowserItemRef))
+			if(IsValid(ServerBrowserItemRef) && SessionSearchResult.Session.NumOpenPublicConnections > 0)
 			{
 				UServerBrowserItemUI* NewWidget = CreateWidget<UServerBrowserItemUI>(GetWorld(), ServerBrowserItemRef);NewWidget->AddToViewport();
 				ScrollBox_ServerBrowserList->AddChild(NewWidget);
@@ -215,6 +215,7 @@ void ULobbyUI::SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& Sessi
 void ULobbyUI::OnMaxPlayerChanged(float ratio)
 {
 	int32 value = ratio * 4 + 2;
+	if((value & 1) == 1) value--;
 	Text_MaxPlayer->SetText(FText::FromString(
 		FString::Printf(TEXT("%d"), value)));
 }

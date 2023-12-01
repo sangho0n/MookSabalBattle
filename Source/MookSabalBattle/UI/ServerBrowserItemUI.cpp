@@ -23,7 +23,12 @@ void UServerBrowserItemUI::NativeDestruct()
 
 void UServerBrowserItemUI::SetInitialData(FString SessionName, const FOnlineSessionSearchResult &OnlineSession)
 {
+	int32 currentPlayer = OnlineSession.Session.SessionSettings.NumPublicConnections - OnlineSession.Session.NumOpenPublicConnections;
+	
 	TextBlock_SessionName->SetText(FText::FromString(SessionName));
+	// null subsystem은 플레이어가 세션에 참가해도 NumOpenPublicConnections가 감소하지 않음!
+	TextBlock_PlayerCount->SetText(FText::FromString(FString::Printf(TEXT("null subsys"), OnlineSession.Session.SessionSettings.NumPublicConnections, OnlineSession.Session.NumOpenPublicConnections)));
+	//TextBlock_PlayerCount->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), currentPlayer, OnlineSession.Session.SessionSettings.NumPublicConnections)));
 	Session = MakeShared<FOnlineSessionSearchResult>(OnlineSession);
 }
 
