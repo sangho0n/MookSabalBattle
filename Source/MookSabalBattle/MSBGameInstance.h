@@ -42,6 +42,8 @@ public:
 	FOnSessionSearchCompleteWithResults OnSessionSearchCompleteWithResults;
 	
 	void JoinSession(FString NickName,  TWeakPtr<FOnlineSessionSearchResult> SelectedSession);
+
+	int32 MaxPlayer;
 	
 private:
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type SessionType);
