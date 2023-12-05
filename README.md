@@ -112,12 +112,29 @@ void APlayerCharacter::Hit(int32 CurrCombo)
 }
 ```
 
-https://github.com/sangho0n/MookSabalBattle/assets/54069713/44bd5913-2643-4bc1-82d1-4099b67e1475
-
 ## 로비
-소켓통신을 이용해 호스팅/조인 기능 구현(예정)
+모든 플레이어는 게임 플레이가 이루어지는 세션을 생성하고, 여러 세션 중에서 자신이 원하는 세션에 참가 요청을 보낼 수 있다. (현재 LAN에서만 동작합니다.)
 
-https://github.com/sangho0n/MookSabalBattle/assets/54069713/b545ab58-c027-4bfd-8b22-c3c786616b85
+### 방 만들기
+자신의 닉네임과 참가인원(2 ~ 6명; 짝수), 로컬 네트워크 이용 여부를 입력하고 Confirm 버튼을 누르면 세션을 열어둔 채 대기한다.
+![image](https://github.com/sangho0n/MookSabalBattle/assets/54069713/19e28802-a83f-4405-bb11-4c6b147ffc04)
 
-### 호스팅하기
-### 참가하기
+### 방 찾기
+초기 로비 창에서 Join 버튼을 누르면 자동으로 검색이 이루어진다. 자신이 원하는 방을 선택할 수 있으며, 기존에 이미 선택했던 방이 있을 때 새로운 방을 선택하면 자동으로 기존 방에 대한 선택이 해제된다.
+세션 정보 중 세션 호스트의 이름, 현재원/정원가 화면에 노출된다.
+
+Refresh 버튼을 통해 다시 검색할 수 있다.
+![image](https://github.com/sangho0n/MookSabalBattle/assets/54069713/648a2df0-3f61-40ce-8094-6a27a677cf38)
+(Null subsystem을 활용한 LAN 세션의 경우, 현재원 여부를 알 수 없기 때문에 null subsys 텍스트로 대체해두었습니다.)
+
+### 방 참가하기
+원하는 방을 선택한 후 닉네임을 입력하고 Confirm 버튼을 누르면 방에 참가 요청을 보낼 수 있다. 유효한 요청일 때 세션 참가가 이루어지며, 정원이 다 찼을 경우 게임이 시작된다.
+![image](https://github.com/sangho0n/MookSabalBattle/assets/54069713/39e8b8c0-99e2-4a97-9aab-92a145152436)
+
+
+
+https://github.com/sangho0n/MookSabalBattle/assets/54069713/424577d9-0df0-4782-9212-284c260ce8c3
+
+
+
+
