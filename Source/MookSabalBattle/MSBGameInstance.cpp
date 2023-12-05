@@ -149,6 +149,7 @@ void UMSBGameInstance::JoinSession(FString NickName, TWeakPtr<FOnlineSessionSear
 	
 	auto LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	const FOnlineSessionSearchResult& SessionSearchResult = std::ref(*SelectedSession.Pin().Get());
+	MaxPlayer = SessionSearchResult.Session.SessionSettings.NumPublicConnections;
 
 	if(SessionSearchResult.IsValid())
 	{
@@ -183,7 +184,6 @@ void UMSBGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCo
 		return;
 	}
 
-	bool bSucceed = false;
 	APlayerController* const PlayerController = GetFirstLocalPlayerController();
 	FString TravelURL;
 

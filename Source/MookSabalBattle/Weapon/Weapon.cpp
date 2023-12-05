@@ -24,6 +24,8 @@ void AWeapon::BeginPlay()
 	Super::BeginPlay();
 	SM_Weapon->SetSimulatePhysics(true);
 	SM_Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	SM_Weapon->SetRenderCustomDepth(true);
+	SM_Weapon->CustomDepthStencilValue = OUT_LINE::Weapon;
 	bIsPossessed = false;
 }
 

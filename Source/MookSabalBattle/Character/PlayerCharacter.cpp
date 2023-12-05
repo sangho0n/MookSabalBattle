@@ -19,6 +19,8 @@
 #include "MookSabalBattle/MookSabalBattleGameModeBase.h"
 #include "MookSabalBattle/MSBGameInstance.h"
 
+int APlayerCharacter::InitFinishedPlayer = 0;
+
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
@@ -137,7 +139,9 @@ void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool b
 {
 	GetMesh()->SetVisibility(true);
 	CharacterState = Cast<ACharacterState>(GetPlayerState());
-	check(nullptr != CharacterState);
+	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
+	check(CharacterState);
+	check(GameInstance);
 	
 	if(HasAuthority())
 	{
@@ -148,15 +152,23 @@ void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool b
 	}
 
 	InitWidgets();
+	ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
 	
 	if(IsLocallyControlled())
 	{
 		Cast<ALocalPlayerController>(GetController())->InitPlayer();
+		Cast<UMSBGameInstance>(GetGameInstance())->StopLoading.Execute();
 	}
 
-	ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
-	
-	if(IsLocallyControlled())  Cast<UMSBGameInstance>(GetGameInstance())->StopLoading.Execute();
+	InitFinishedPlayer++;
+	if(GameInstance->MaxPlayer == InitFinishedPlayer)
+	{
+		// wait for some seconds for bIsRedTeam replication
+		FTimerHandle TimerHandle;
+		float DelayInSeconds = 0.4f;
+		FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &APlayerCharacter::SetPlayerOutline);
+		GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, DelayInSeconds, false);
+	}
 }
 
 void APlayerCharacter::InitWidgets_Implementation()
@@ -184,16 +196,28 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(APlayerCharacter, CharacterState);
 }
 
-
-void APlayerCharacter::SetCharacterAsBlueTeam_Implementation()
+// act like a static method for setting outline of player characters
+// only called once for each client(or listen server)
+void APlayerCharacter::SetPlayerOutline()
 {
-	CharacterState->SetTeam(false);
+	TArray<TObjectPtr<APlayerState>> Players = GetWorld()->GetGameState()->PlayerArray;
+	APlayerCharacter* LocalPlayer = Cast<APlayerCharacter>(Players[0]->GetPawn());
+
+	for(int i = 1; i < Players.Num(); i++)
+	{
+		APlayerCharacter* Character = Cast<APlayerCharacter>(Players[i]->GetPawn());
+		Character->GetMesh()->SetRenderCustomDepth(true);
+		if(LocalPlayer->IsSameTeam(Character))
+		{
+			Character->GetMesh()->SetCustomDepthStencilValue(OUT_LINE::Ally);
+		}
+		else
+		{
+			Character->GetMesh()->SetCustomDepthStencilValue(OUT_LINE::Enemy);
+		}
+	}
 }
 
-void APlayerCharacter::SetCharacterAsRedTeam_Implementation()
-{
-	CharacterState->SetTeam(true);
-}
 
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)

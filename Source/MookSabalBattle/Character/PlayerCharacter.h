@@ -11,6 +11,14 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGetDamage, FName, BoneName, FVector, HitFrom);
 DECLARE_DELEGATE(FOnNewPlayerReplicationFinished);
 
+UENUM()
+enum OUT_LINE
+{
+	Ally = 1,
+	Enemy,
+	Weapon
+};
+
 UCLASS()
 class MOOKSABALBATTLE_API APlayerCharacter : public ACharacter
 {
@@ -159,10 +167,6 @@ private:
 	TArray<APlayerCharacter*> OverlappedAlly;
 	
 public:
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void SetCharacterAsBlueTeam();
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void SetCharacterAsRedTeam();
 	UFUNCTION(BlueprintCallable)
 	bool IsSameTeam(APlayerCharacter* OtherPlayer);
 
@@ -212,6 +216,10 @@ public:
 private:
 	UFUNCTION()
 	void AfterReplication();
+
+	static int InitFinishedPlayer;
+
+	/* static */ void SetPlayerOutline();
 public:
 	UFUNCTION(NetMulticast, Reliable)
 	void InitPlayer(const FString &UserName, bool bIsRedTeam);
