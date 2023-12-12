@@ -10,7 +10,7 @@
 void ALocalPlayerController::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	bEnableInputControl = false;
+	DisableInput(this);
 	bIsPossessingPawnInitialized = false;
 }
 
@@ -18,7 +18,6 @@ void ALocalPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(ALocalPlayerController, bEnableInputControl);
 	DOREPLIFETIME(ALocalPlayerController, bIsPossessingPawnInitialized);
 }
 
@@ -26,7 +25,7 @@ void ALocalPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 void ALocalPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-	bEnableInputControl = false;
+	DisableInput(this);
 	bIsPossessingPawnInitialized = false;
 }
 
@@ -47,7 +46,7 @@ void ALocalPlayerController::SetupInputComponent()
 
 void ALocalPlayerController::ForwardBack(float NewAxisValue)
 {
-	if(!bEnableInputControl) return;
+	if(!InputEnabled()) return;
 	if(!bIsPossessingPawnInitialized) return;
 
 	auto ControllingPawn = GetPawn();
@@ -60,7 +59,7 @@ void ALocalPlayerController::ForwardBack(float NewAxisValue)
 
 void ALocalPlayerController::LeftRight(float NewAxisValue)
 {
-	if(!bEnableInputControl) return;
+	if(!InputEnabled()) return;
 	if(!bIsPossessingPawnInitialized) return;
 	
 	auto ControllingPawn = GetPawn();
@@ -74,7 +73,7 @@ void ALocalPlayerController::LeftRight(float NewAxisValue)
 
 void ALocalPlayerController::Jump()
 {
-	if(!bEnableInputControl) return;
+	if(!InputEnabled()) return;
 	if(!bIsPossessingPawnInitialized) return;
 	
 	auto ControllingPawn = GetPawn();
@@ -88,7 +87,7 @@ void ALocalPlayerController::Jump()
 
 void ALocalPlayerController::MouseVerticalChange(float NewAxisValue)
 {
-	if(!bEnableInputControl) return;
+	if(!InputEnabled()) return;
 	if(!bIsPossessingPawnInitialized) return;
 	
 	auto ControllingPawn = GetPawn();
@@ -102,7 +101,7 @@ void ALocalPlayerController::MouseVerticalChange(float NewAxisValue)
 
 void ALocalPlayerController::MouseHorizontalChange(float NewAxisValue)
 {
-	if(!bEnableInputControl) return;
+	if(!InputEnabled()) return;
 	if(!bIsPossessingPawnInitialized) return;
 	
 	auto ControllingPawn = GetPawn();
@@ -116,7 +115,7 @@ void ALocalPlayerController::MouseHorizontalChange(float NewAxisValue)
 
 void ALocalPlayerController::Equip()
 {
-	if(!bEnableInputControl) return;
+	if(!InputEnabled()) return;
 	if(!bIsPossessingPawnInitialized) return;
 	
 	auto ControllingPawn = GetPawn();
@@ -153,7 +152,7 @@ void ALocalPlayerController::Attack()
 		// combo hit
 		if(state->CurrentMode == CharacterMode::NON_EQUIPPED)
 		{
-			bEnableInputControl = false;
+			EnableInput(this);
 			character->AttackNonEquip_Server();
 		}
 		// swing
@@ -179,7 +178,7 @@ void ALocalPlayerController::AttackStop()
 		auto character = Cast<APlayerCharacter>(ControllingPawn);
 		auto state = character->GetCharacterStateComponent();
 		if(state->CurrentMode == CharacterMode::NON_EQUIPPED) 
-			bEnableInputControl = true;
+			EnableInput(this);
 		else if(state->CurrentMode == CharacterMode::GUN) 
 			character->StopShooting_Server();
 	}
@@ -187,7 +186,7 @@ void ALocalPlayerController::AttackStop()
 
 void ALocalPlayerController::Reload()
 {
-	if(!bEnableInputControl) return;
+	if(!InputEnabled()) return;
 	if(!bIsPossessingPawnInitialized) return;
 	
 	auto ControllingPawn = GetPawn();
@@ -203,5 +202,5 @@ void ALocalPlayerController::Reload()
 void ALocalPlayerController::InitPlayer()
 {
 	bIsPossessingPawnInitialized = true;
-	bEnableInputControl = true;
+	EnableInput(this);
 }

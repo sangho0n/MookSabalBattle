@@ -37,6 +37,20 @@ void ACharacterState::BeginPlay()
 	bIsReloading = false;
 }
 
+void ACharacterState::Reset()
+{
+	Super::Reset();
+
+	HP = MaxHP;
+	bIsEquippable = false;
+	bIsAttacking = false;
+	bIsReloading = false;
+	bIsDead = false;
+	bIsEquipped = false;
+	OnHPChanges.Broadcast(GetHP());
+}
+
+
 // only called on Server
 void ACharacterState::ApplyDamage(float damage)
 {

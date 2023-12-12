@@ -31,8 +31,9 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+public:
+	virtual void Reset() override;
 
-public:	
 	bool bIsEquipped;
 
 	UPROPERTY(EditAnywhere, Category=Status)

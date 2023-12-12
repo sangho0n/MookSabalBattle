@@ -24,10 +24,13 @@ public:
 
 	virtual void PostInitializeComponents() override;
 
+	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
+
 private:
 	UPROPERTY()
 	TArray<APlayerController*> PlayerControllers;
 	TArray<APlayerStart*> FreePlayerStarts;
+	TMap<AController*, APlayerStart*> PlayerStartMap;
 
 	UFUNCTION()
 	void InitAllPlayers();

@@ -36,7 +36,5 @@ public:
 	void InitPlayer();
 private:
 UPROPERTY(Replicated)
-	bool bEnableInputControl;
-UPROPERTY(Replicated)
 	bool bIsPossessingPawnInitialized;
 };

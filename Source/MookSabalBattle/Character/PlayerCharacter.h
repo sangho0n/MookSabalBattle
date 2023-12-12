@@ -220,6 +220,12 @@ private:
 	static int InitFinishedPlayer;
 
 	/* static */ void SetPlayerOutline();
+
+	UFUNCTION(BlueprintCallable)
+	void Respawn();
+
+
+	
 public:
 	UFUNCTION(NetMulticast, Reliable)
 	void InitPlayer(const FString &UserName, bool bIsRedTeam);

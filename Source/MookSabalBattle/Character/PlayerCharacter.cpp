@@ -135,6 +135,33 @@ void APlayerCharacter::AfterReplication()
 	}
 }
 
+void APlayerCharacter::Respawn()
+{
+	GetMesh()->SetVisibility(true);
+	CharacterState->Reset();
+	ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn"));
+	GetMesh()->SetCollisionProfileName(TEXT("Humanoid"));
+	
+	if(IsLocallyControlled())
+	{
+		auto LocalController = Cast<ALocalPlayerController>(GetController());
+		LocalController->InitPlayer();
+		LocalController->EnableInput(LocalController);
+	}
+
+	// respawn at its own PlayerStart
+	if(HasAuthority())
+	{
+		auto GameMode = Cast<AMookSabalBattleGameModeBase>(GetWorld()->GetAuthGameMode());
+		APlayerStart* PlayerStart = Cast<APlayerStart>(GameMode->ChoosePlayerStart(GetController()));
+		SetActorLocationAndRotation(
+			PlayerStart->GetActorLocation(),
+			PlayerStart->GetActorRotation()
+		);
+	}
+}
+
 // NetMulticast RPC (called on both listen server and client)
 void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool bIsRedTeam)
 {
@@ -771,7 +798,6 @@ void APlayerCharacter::Die_Server_Implementation()
 	{
 		CurrentWeapon->Destroy();
 	}
-	CharacterState->OnHPIsZero.Clear();
 
 	GameState->AdjustScore(this);
 	
@@ -790,7 +816,18 @@ void APlayerCharacter::Die_Multicast_Implementation()
 	{
 		CurrentWeapon->Destroy();
 	}
-	OnGetDamage.Clear();
+	//OnGetDamage.Clear();
+
+	if(IsLocallyControlled())
+	{
+		GetLocalViewingPlayerController()->DisableInput(GetLocalViewingPlayerController());
+	}
+
+	FTimerHandle TimerHandle;
+	float DelayInSeconds = 5.0f;
+	FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &APlayerCharacter::Respawn);
+	GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, DelayInSeconds, false);
+	// TODO : blink mesh until to be respawned
 }
 
 /**

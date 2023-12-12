@@ -40,6 +40,7 @@ void AMookSabalBattleGameModeBase::InitGame(const FString& MapName, const FStrin
 
 	// TODO : 아래 코드는 PIE 용임.
 	Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer = 2;
+	PlayerStartMap.Reserve(Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer);
 }
 
 void AMookSabalBattleGameModeBase::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
@@ -60,7 +61,9 @@ FString AMookSabalBattleGameModeBase::InitNewPlayer(APlayerController* NewPlayer
 		return FString(TEXT("No free player starts"));
 	}
 
-	NewPlayerController->StartSpot = FreePlayerStarts.Pop();
+	auto FreeStart = FreePlayerStarts.Pop();
+	NewPlayerController->StartSpot = FreeStart;
+	PlayerStartMap.Add(NewPlayerController, FreeStart);
 	PlayerControllers.Add(NewPlayerController);
 	
 	MSB_LOG(Log, TEXT("how many init new player called"));
@@ -93,4 +96,9 @@ void AMookSabalBattleGameModeBase::IncreaseRepFinishedPlayerCount()
 	RepFinishedPlayerCount++;
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, FString::Printf(TEXT("current finished player %d and max %d"), RepFinishedPlayerCount, Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer));
 	if(RepFinishedPlayerCount == Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer) OnAllPlayerReplicationFinished.Execute();
+}
+
+AActor* AMookSabalBattleGameModeBase::ChoosePlayerStart_Implementation(AController* Player)
+{
+	return *PlayerStartMap.Find(Player);
 }
