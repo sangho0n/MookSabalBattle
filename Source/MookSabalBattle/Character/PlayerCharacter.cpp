@@ -18,6 +18,7 @@
 #include "Engine/Engine.h"
 #include "MookSabalBattle/MookSabalBattleGameModeBase.h"
 #include "MookSabalBattle/MSBGameInstance.h"
+#include "MookSabalBattle/MSBGameStateBase.h"
 
 int APlayerCharacter::InitFinishedPlayer = 0;
 
@@ -161,7 +162,7 @@ void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool b
 	}
 
 	InitFinishedPlayer++;
-	if(GameInstance->MaxPlayer == InitFinishedPlayer)
+	if(InitFinishedPlayer == GameInstance->MaxPlayer)
 	{
 		// wait for some seconds for bIsRedTeam replication
 		FTimerHandle TimerHandle;
@@ -201,12 +202,22 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 void APlayerCharacter::SetPlayerOutline()
 {
 	TArray<TObjectPtr<APlayerState>> Players = GetWorld()->GetGameState()->PlayerArray;
-	APlayerCharacter* LocalPlayer = Cast<APlayerCharacter>(Players[0]->GetPawn());
+	APlayerCharacter* LocalPlayer = nullptr;
+
+	for(auto Player : Players)
+	{
+		if(Player->GetPawn()->IsLocallyControlled())
+		{
+			LocalPlayer = Cast<APlayerCharacter>(Player->GetPawn());
+		}
+	}
 
 	for(int i = 1; i < Players.Num(); i++)
 	{
 		APlayerCharacter* Character = Cast<APlayerCharacter>(Players[i]->GetPawn());
 		Character->GetMesh()->SetRenderCustomDepth(true);
+
+		if(Character->IsLocallyControlled()) continue;
 		if(LocalPlayer->IsSameTeam(Character))
 		{
 			Character->GetMesh()->SetCustomDepthStencilValue(OUT_LINE::Ally);
@@ -753,13 +764,17 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 // Server RPC
 void APlayerCharacter::Die_Server_Implementation()
 {
-	GEngine->AddOnScreenDebugMessage(5, 5.0f, FColor::Red, FString::Printf(TEXT("죽음 서버 rpc")));
+	auto GameState = Cast<AMSBGameStateBase>(GetWorld()->GetGameState());
+	GEngine->AddOnScreenDebugMessage(7, 5.0f, FColor::Red, FString::Printf(TEXT("죽음 서버 rpc")));
 	
 	if(nullptr != CurrentWeapon)
 	{
 		CurrentWeapon->Destroy();
 	}
 	CharacterState->OnHPIsZero.Clear();
+
+	GameState->AdjustScore(this);
+	
 	Die_Multicast();
 }
 void APlayerCharacter::Die_Multicast_Implementation()

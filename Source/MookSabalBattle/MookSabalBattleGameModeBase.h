@@ -33,7 +33,6 @@ private:
 	void InitAllPlayers();
 
 	uint8 RepFinishedPlayerCount;
-	uint8 MaxPlayerCount;
 
 	FOnAllPlayerReplicationFinished OnAllPlayerReplicationFinished;
 

@@ -6,6 +6,7 @@
 #include "Character/LocalPlayerController.h"
 #include "MookSabalBattle.h"
 #include "MSBGameInstance.h"
+#include "MSBGameStateBase.h"
 #include "Character/PlayerCharacter.h"
 
 AMookSabalBattleGameModeBase::AMookSabalBattleGameModeBase()
@@ -17,6 +18,7 @@ AMookSabalBattleGameModeBase::AMookSabalBattleGameModeBase()
 	}
 	PlayerControllerClass = ALocalPlayerController::StaticClass();
 	PlayerStateClass = ACharacterState::StaticClass();
+	GameStateClass = AMSBGameStateBase::StaticClass();
 }
 
 void AMookSabalBattleGameModeBase::PostInitializeComponents()
@@ -35,7 +37,9 @@ void AMookSabalBattleGameModeBase::InitGame(const FString& MapName, const FStrin
 		FreePlayerStarts.Add(*it);
 	}
 	RepFinishedPlayerCount = 0;
-	MaxPlayerCount = Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer;
+
+	// TODO : 아래 코드는 PIE 용임.
+	Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer = 2;
 }
 
 void AMookSabalBattleGameModeBase::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
@@ -86,9 +90,7 @@ void AMookSabalBattleGameModeBase::InitAllPlayers()
 
 void AMookSabalBattleGameModeBase::IncreaseRepFinishedPlayerCount()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, FString::Printf(TEXT("current finished player : %d"), RepFinishedPlayerCount));
-	
 	RepFinishedPlayerCount++;
-
-	if(RepFinishedPlayerCount == MaxPlayerCount) OnAllPlayerReplicationFinished.Execute();
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, FString::Printf(TEXT("current finished player %d and max %d"), RepFinishedPlayerCount, Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer));
+	if(RepFinishedPlayerCount == Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer) OnAllPlayerReplicationFinished.Execute();
 }

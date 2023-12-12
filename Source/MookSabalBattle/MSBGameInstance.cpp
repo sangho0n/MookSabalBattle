@@ -183,6 +183,12 @@ void UMSBGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCo
 		StopLoading.Execute();
 		return;
 	}
+	if(SessionType != EOnJoinSessionCompleteResult::Success)
+	{
+		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Cannot join session"));
+		StopLoading.Execute();
+		return;
+	}
 
 	APlayerController* const PlayerController = GetFirstLocalPlayerController();
 	FString TravelURL;
@@ -190,7 +196,7 @@ void UMSBGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCo
 	SessionInterface->ClearOnJoinSessionCompleteDelegates(this);
 	if(PlayerController && SessionInterface->GetResolvedConnectString(SessionName, TravelURL))
 	{
-		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("trying client travel"));
+		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString::Printf(TEXT("trying client travel %s"), *TravelURL));
 		PlayerController->ClientTravel(TravelURL, TRAVEL_Absolute);
 	}
 }
