@@ -60,13 +60,19 @@ public:
 private:
 	UPROPERTY(Replicated, EditAnywhere, Category=Status)
 	bool bIsRedTeam;
+
 public:
+	UPROPERTY(Replicated, EditAnywhere, Category=Status)
+	int32 KillCount;
+
+	UPROPERTY(Replicated, EditAnywhere, Category=Status)
+	int32 DeathCount;
 	FOnHPIsZero OnHPIsZero;
 	
 	FOnHPChanges OnHPChanges;
 
 	UFUNCTION()
-	void ApplyDamage(float damage);
+	void ApplyDamage(float damage, AActor* Causer);
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastDamage(float damage);
 

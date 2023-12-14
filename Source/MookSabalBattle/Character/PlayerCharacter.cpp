@@ -210,6 +210,7 @@ void APlayerCharacter::InitWidgets_Implementation()
 			InGameUI->AddToViewport();
 			MSB_LOG_LOCATION(Warning);
 			InGameUI->BindCharacterStat(CharacterState);
+			Cast<AMSBGameStateBase>(GetWorld()->GetGameState())->PlayGame();
 		}
 	}
 
@@ -784,7 +785,7 @@ void APlayerCharacter::OnCharacterEndOverlapWithCharacter(UPrimitiveComponent* O
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	DamageAmount = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	CharacterState->ApplyDamage(DamageAmount);
+	CharacterState->ApplyDamage(DamageAmount, DamageCauser);
 	return DamageAmount;
 }
 
@@ -798,8 +799,8 @@ void APlayerCharacter::Die_Server_Implementation()
 	{
 		CurrentWeapon->Destroy();
 	}
-
 	GameState->AdjustScore(this);
+	CharacterState->DeathCount++;
 	
 	Die_Multicast();
 }

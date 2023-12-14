@@ -3,6 +3,7 @@
 
 #include "CharacterState.h"
 
+#include "PlayerCharacter.h"
 #include "Containers/StackTracker.h"
 #include "Net/UnrealNetwork.h"
 #include "Serialization/ArchiveStackTrace.h"
@@ -24,6 +25,8 @@ void ACharacterState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ACharacterState, bIsRedTeam);
+	DOREPLIFETIME(ACharacterState, KillCount);
+	DOREPLIFETIME(ACharacterState, DeathCount);
 }
 
 
@@ -35,6 +38,8 @@ void ACharacterState::BeginPlay()
 	HP = MaxHP;
 	bIsAttacking = false;
 	bIsReloading = false;
+	KillCount = 0;
+	DeathCount = 0;
 }
 
 void ACharacterState::Reset()
@@ -52,11 +57,18 @@ void ACharacterState::Reset()
 
 
 // only called on Server
-void ACharacterState::ApplyDamage(float damage)
+void ACharacterState::ApplyDamage(float damage, AActor* Causer)
 {
 	//if(!GetOwner()->HasAuthority()) return;
 	MulticastDamage(damage);
-	if(GetHP() < KINDA_SMALL_NUMBER) OnHPIsZero.Broadcast();
+	if(GetHP() < KINDA_SMALL_NUMBER)
+	{
+		OnHPIsZero.Broadcast();
+		if(Causer->IsA(APlayerCharacter::StaticClass()))
+		{
+			Cast<APlayerCharacter>(Causer)->GetCharacterStateComponent()->KillCount++;
+		}
+	}
 }
 
 void ACharacterState::MulticastDamage_Implementation(float damage)

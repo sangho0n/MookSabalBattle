@@ -8,6 +8,7 @@
 #include "MSBGameStateBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnScoreChanged, int32, BlueTeamScore, int32, RedTeamScore);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameEnd);
 
 /**
  * 
@@ -18,9 +19,13 @@ class MOOKSABALBATTLE_API AMSBGameStateBase : public AGameStateBase
 	GENERATED_BODY()
 
 public:
+	AMSBGameStateBase();
+	
 	virtual void BeginPlay() override;
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	virtual void Tick(float DeltaSeconds) override;
 
 private:
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing=OnRep_Score, Category=GamePlay)
@@ -29,10 +34,31 @@ private:
 	int32 RedTeamScore;
 	UFUNCTION()
 	void OnRep_Score();
+	
+	UPROPERTY(EditAnywhere, Category=Status)
+	int32 KillCount;
+	UPROPERTY(EditAnywhere, Category=Status)
+	int32 DeathCount;
 public:
 	// only called on Server
 	void AdjustScore(APlayerCharacter* DeadCharacter);
 
 	UPROPERTY(BlueprintAssignable, Category=GameState)
 	FOnScoreChanged OnScoreChanged;
+
+private:
+	const float GamePlaySeconds = 60 * 3;
+	UPROPERTY(Replicated)
+	float AccGameSeconds;
+	bool bIsGameStarted;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	float GetLeftTimeRatio();
+
+	UFUNCTION(BlueprintCallable)
+	void PlayGame();
+
+	UPROPERTY(BlueprintAssignable)
+	FOnGameEnd OnGameEnd;
 };
