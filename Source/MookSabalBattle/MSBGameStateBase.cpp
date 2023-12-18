@@ -3,6 +3,7 @@
 
 #include "MSBGameStateBase.h"
 
+#include "MookSabalBattleGameModeBase.h"
 #include "Character/PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
 
@@ -20,6 +21,14 @@ void AMSBGameStateBase::BeginPlay()
 	RedTeamScore = 0;
 	bIsGameStarted = false;
 	AccGameSeconds = 0;
+
+	if(HasAuthority())
+	{
+		auto GameMode = Cast<AMookSabalBattleGameModeBase>(GetWorld()->GetAuthGameMode());
+		check(GameMode);
+		OnGameEnd.AddDynamic(GameMode, &AMookSabalBattleGameModeBase::EndGamePlay);
+	}
+	OnGameEnd.AddDynamic(this, &AMSBGameStateBase::FreezeGame);
 }
 
 
@@ -42,6 +51,8 @@ void AMSBGameStateBase::Tick(float DeltaSeconds)
 
 float AMSBGameStateBase::GetLeftTimeRatio()
 {
+	if(!bIsGameStarted) return 0.0f;
+	
 	float Ratio = (GamePlaySeconds - AccGameSeconds) / GamePlaySeconds;
 	if(Ratio < KINDA_SMALL_NUMBER)
 	{
@@ -71,4 +82,9 @@ void AMSBGameStateBase::OnRep_Score()
 void AMSBGameStateBase::PlayGame()
 {
 	bIsGameStarted = true;
+}
+
+void AMSBGameStateBase::FreezeGame()
+{
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(),0.01f);
 }

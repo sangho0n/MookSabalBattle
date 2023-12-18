@@ -88,7 +88,6 @@ void AMookSabalBattleGameModeBase::InitAllPlayers()
 		flag++;
 	}
 
-	Super::StartPlay();
 }
 
 void AMookSabalBattleGameModeBase::IncreaseRepFinishedPlayerCount()
@@ -101,4 +100,15 @@ void AMookSabalBattleGameModeBase::IncreaseRepFinishedPlayerCount()
 AActor* AMookSabalBattleGameModeBase::ChoosePlayerStart_Implementation(AController* Player)
 {
 	return *PlayerStartMap.Find(Player);
+}
+
+void AMookSabalBattleGameModeBase::EndGamePlay()
+{
+	// freeze
+	//for (APlayerController* PlayerController : PlayerControllers) 왜 이 루프로 순회하면 클라이언트 RPC가 호출이 안되는 것일까...
+	for (TActorIterator<APlayerController> it(GetWorld()); it; ++it)
+	{
+		auto PlayerController = *it;
+		Cast<ALocalPlayerController>(PlayerController)->DisableInputEachCient(PlayerController);
+	}
 }

@@ -37,4 +37,8 @@ public:
 private:
 UPROPERTY(Replicated)
 	bool bIsPossessingPawnInitialized;
+
+public:
+	UFUNCTION(Client, Reliable)
+	void DisableInputEachCient(APlayerController* Controller);
 };

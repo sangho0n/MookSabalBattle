@@ -204,3 +204,8 @@ void ALocalPlayerController::InitPlayer()
 	bIsPossessingPawnInitialized = true;
 	EnableInput(this);
 }
+
+void ALocalPlayerController::DisableInputEachCient_Implementation(APlayerController* Controller)
+{
+	Super::DisableInput(Controller);
+}

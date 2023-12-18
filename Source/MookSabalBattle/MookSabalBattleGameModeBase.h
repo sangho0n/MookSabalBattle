@@ -42,4 +42,7 @@ private:
 public:
 	UFUNCTION()
 	void IncreaseRepFinishedPlayerCount();
+
+	UFUNCTION()
+	void EndGamePlay();
 };

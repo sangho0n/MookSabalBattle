@@ -47,7 +47,7 @@ public:
 	FOnScoreChanged OnScoreChanged;
 
 private:
-	const float GamePlaySeconds = 60 * 3;
+	const float GamePlaySeconds = 10;
 	UPROPERTY(Replicated)
 	float AccGameSeconds;
 	bool bIsGameStarted;
@@ -61,4 +61,7 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnGameEnd OnGameEnd;
+
+	UFUNCTION()
+	void FreezeGame();
 };
