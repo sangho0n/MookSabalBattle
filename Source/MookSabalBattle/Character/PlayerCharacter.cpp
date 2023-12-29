@@ -188,6 +188,7 @@ void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool b
 		Cast<UMSBGameInstance>(GetGameInstance())->StopLoading.Execute();
 	}
 
+	CS_InitFinishedPlayer.Lock();
 	InitFinishedPlayer++;
 	if(InitFinishedPlayer == GameInstance->MaxPlayer)
 	{
@@ -197,6 +198,7 @@ void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool b
 		FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &APlayerCharacter::SetPlayerOutline);
 		GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, DelayInSeconds, false);
 	}
+	CS_InitFinishedPlayer.Unlock();
 }
 
 void APlayerCharacter::InitWidgets_Implementation()

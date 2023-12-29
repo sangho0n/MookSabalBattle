@@ -218,6 +218,7 @@ private:
 	void AfterReplication();
 
 	static int InitFinishedPlayer;
+	static FCriticalSection CS_InitFinishedPlayer;
 
 	/* static */ void SetPlayerOutline();
 
