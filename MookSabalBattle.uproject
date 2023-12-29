@@ -11,7 +11,8 @@
 			"AdditionalDependencies": [
 				"Engine",
 				"ControlRig",
-				"UMG"
+				"UMG",
+				"CoreUObject"
 			]
 		}
 	],
@@ -22,6 +23,11 @@
 			"TargetAllowList": [
 				"Editor"
 			]
+		},
+		{
+			"Name": "GrpcWrapper",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/23a893176d314732ba91d33dda0f04e2"
 		}
 	]
 }
