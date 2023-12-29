@@ -8,6 +8,7 @@
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineSessionDelegates.h"
 #include "Online.h"
+#include "Networking/RegisterNicknamegRPC/RegisterNicknameGrpcWrapper.h"
 #include "MSBGameInstance.generated.h"
 
 DECLARE_DELEGATE_TwoParams(FOnSessionSearchCompleteWithResults, TArray<FOnlineSessionSearchResult>& SessionSearchResults, bool bSucceed);
@@ -44,9 +45,16 @@ public:
 	void JoinSession(FString NickName,  TWeakPtr<FOnlineSessionSearchResult> SelectedSession);
 
 	int32 MaxPlayer;
+
+	FString LocalPlayerNickName;
+	TArray<FString> PlayerNickNames;
+	FString TravelURL;
 	
 private:
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type SessionType);
+
+	UFUNCTION()
+	void CheckNicknameDuplicity(bool bCanJoin);
 	
 	IOnlineSubsystem* OnlineSubsystem;
 	IOnlineSession* SessionInterface;
@@ -64,4 +72,7 @@ private:
 	// for loading widget
 	TSubclassOf<UUserWidget> LoadingWidgetClass;
 	UUserWidget* LoadingWidget;
+
+	// for gRPC
+	URegisterNicknameGrpcWrapper* gRPCSubsystem;
 };

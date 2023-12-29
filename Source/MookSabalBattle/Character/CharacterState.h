@@ -67,6 +67,10 @@ public:
 
 	UPROPERTY(Replicated, EditAnywhere, Category=Status)
 	int32 DeathCount;
+
+	UPROPERTY(VisibleAnywhere, Category=Status)
+	FString NickName;
+	
 	FOnHPIsZero OnHPIsZero;
 	
 	FOnHPChanges OnHPChanges;

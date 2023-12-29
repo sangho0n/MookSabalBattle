@@ -3,8 +3,6 @@
 
 #include "MSBGameInstance.h"
 
-#include <functional>
-
 #include "Blueprint/UserWidget.h"
 #include "Online/OnlineSessionNames.h"
 
@@ -41,6 +39,8 @@ void UMSBGameInstance::Init()
 		LoadingWidget->RemoveFromViewport();
 		LoadingWidget = nullptr;
 	});
+	
+	gRPCSubsystem = GetSubsystem<URegisterNicknameGrpcWrapper>();
 }
 
 void UMSBGameInstance::HostGame(FString NickName, int32 MaxPlayerCount, bool bUseLan)
@@ -59,6 +59,9 @@ void UMSBGameInstance::HostGame(FString NickName, int32 MaxPlayerCount, bool bUs
 		StopLoading.Execute();
 		return;
 	}
+	
+	PlayerNickNames.Reset();
+	LocalPlayerNickName = NickName;
 
 	FOnlineSessionSetting CustomSessionName;
 	CustomSessionName.AdvertisementType = EOnlineDataAdvertisementType::ViaOnlineService;
@@ -113,7 +116,13 @@ void UMSBGameInstance::OnSessionCreate(FName SessionName, bool bWasSucceed)
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed to create session"));
 		return;
 	}
-	GetWorld()->ServerTravel(DessertMap + TEXT("?listen"));
+	PlayerNickNames.Add(LocalPlayerNickName);
+	GetWorld()->ServerTravel(DessertMap + TEXT("?listen?port=7777"));
+
+	// get ipv4
+	FString IPv4;
+	SessionInterface->GetResolvedConnectString(SessionName, IPv4);
+	//gRPCSubsystem->StartListen();
 }
 
 void UMSBGameInstance::OnFindSessionComplete(bool bSucceed)
@@ -160,6 +169,7 @@ void UMSBGameInstance::JoinSession(FString NickName, TWeakPtr<FOnlineSessionSear
 		
 			GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString::Printf(TEXT("Try joining to %s"), *SessionName.ToString()));
 
+			LocalPlayerNickName = NickName;
 			SessionInterface->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), SessionName, SessionSearchResult);
 			return;
 		}
@@ -191,14 +201,35 @@ void UMSBGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCo
 	}
 
 	APlayerController* const PlayerController = GetFirstLocalPlayerController();
-	FString TravelURL;
 
 	SessionInterface->ClearOnJoinSessionCompleteDelegates(this);
 	if(PlayerController && SessionInterface->GetResolvedConnectString(SessionName, TravelURL))
 	{
+		//gRPCSubsystem->OnClientReceiveMessage.AddDynamic(this, &UMSBGameInstance::CheckNicknameDuplicity);
+		UE_LOG(MookSablBattle, Log, TEXT("travel url : %s"), *TravelURL);
+		//gRPCSubsystem->RequestRegister(LocalPlayerNickName, TravelURL);
+
+		// TODO Below code must be deleted after resolving gRPC error
+	
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString::Printf(TEXT("trying client travel %s"), *TravelURL));
 		PlayerController->ClientTravel(TravelURL, TRAVEL_Absolute);
+		gRPCSubsystem->OnClientReceiveMessage.Clear();
 	}
+}
+
+void UMSBGameInstance::CheckNicknameDuplicity(bool bCanJoin)
+{
+	if(!bCanJoin)
+	{
+		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString::Printf(TEXT("cannot join server")));
+
+		return;
+	}
+	APlayerController* const PlayerController = GetFirstLocalPlayerController();
+	
+	GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString::Printf(TEXT("trying client travel %s"), *TravelURL));
+	PlayerController->ClientTravel(TravelURL, TRAVEL_Absolute);
+	gRPCSubsystem->OnClientReceiveMessage.Clear();
 }
 
 void UMSBGameInstance::GetSubsystemAndSessionInterface()

@@ -60,13 +60,17 @@ FString AMookSabalBattleGameModeBase::InitNewPlayer(APlayerController* NewPlayer
 		MSB_LOG(Error, TEXT("No free player starts"));
 		return FString(TEXT("No free player starts"));
 	}
+	// FString NickName = Cast<UMSBGameInstance>(GetGameInstance())->PlayerNickNames.Last();
+	// auto MSBGameState = Cast<AMSBGameStateBase>(GameState);
+	// auto PlayerState = Cast<ALocalPlayerController>(NewPlayerController)->GetPlayerState<ACharacterState>();
 
 	auto FreeStart = FreePlayerStarts.Pop();
 	NewPlayerController->StartSpot = FreeStart;
 	PlayerStartMap.Add(NewPlayerController, FreeStart);
 	PlayerControllers.Add(NewPlayerController);
+	// PlayerState->NickName = NickName;
+	// UE_LOG(MookSablBattle, Log, TEXT("nickname ? %s"), *PlayerState->NickName);
 	
-	MSB_LOG(Log, TEXT("how many init new player called"));
 	return Super::InitNewPlayer(NewPlayerController, UniqueId, Options, Portal);
 }
 
@@ -78,13 +82,19 @@ void AMookSabalBattleGameModeBase::PostLogin(APlayerController* NewPlayer)
 
 void AMookSabalBattleGameModeBase::InitAllPlayers()
 {
-	MSB_LOG(Warning, TEXT("total controller : %d"), PlayerControllers.Num());
+	auto MSBGameState = Cast<AMSBGameStateBase>(GameState);
 
 	int flag = 0;
+	bool bFlag;
 	for(auto Controller : PlayerControllers)
 	{
 		auto Character = Cast<APlayerCharacter>(Controller->GetPawn());
-		Character->InitPlayer(TEXT("default name"), flag%2==0?true:false);
+		// FString NickName = Character->GetCharacterStateComponent()->NickName;
+		// UE_LOG(MookSablBattle, Log, TEXT("character %s"), *Character->GetName());
+		// UE_LOG(MookSablBattle, Log, TEXT("is null ? %s"), *NickName);
+		bFlag = flag%2==0?true:false;// TODO why read access violation?
+		Character->InitPlayer(TEXT("default name"), bFlag);
+		
 		flag++;
 	}
 
