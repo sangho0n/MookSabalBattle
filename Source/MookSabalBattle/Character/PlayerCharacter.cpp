@@ -13,6 +13,7 @@
 
 #include "DrawDebugHelpers.h"
 #include "LocalPlayerController.h"
+#include "Blueprint/UserWidgetBlueprint.h"
 #include "Engine/DamageEvents.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h"
@@ -21,6 +22,7 @@
 #include "MookSabalBattle/MSBGameStateBase.h"
 
 int APlayerCharacter::InitFinishedPlayer = 0;
+FCriticalSection APlayerCharacter::CS_InitFinishedPlayer = FCriticalSection();
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -213,6 +215,13 @@ void APlayerCharacter::InitWidgets_Implementation()
 			MSB_LOG_LOCATION(Warning);
 			InGameUI->BindCharacterStat(CharacterState);
 			Cast<AMSBGameStateBase>(GetWorld()->GetGameState())->PlayGame();
+		}
+
+		if(IsValid(EndGameUIClass))
+		{
+			EndGameUI = CreateWidget(GetWorld(), EndGameUIClass);
+			EndGameUI->AddToViewport();
+			EndGameUI->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
 

@@ -71,6 +71,10 @@ private:
 
 	TSubclassOf<UInGameUI> InGameUIClass;
 	UInGameUI* InGameUI;
+	
+	UPROPERTY(BlueprintReadWrite, meta=(AllowPrivateAccess=true))
+	TSubclassOf<UUserWidget> EndGameUIClass;
+	UUserWidget* EndGameUI;
 
 public:
 	UFUNCTION(BlueprintCallable)
