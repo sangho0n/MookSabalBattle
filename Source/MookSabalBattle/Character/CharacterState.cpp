@@ -66,7 +66,8 @@ void ACharacterState::ApplyDamage(float damage, AActor* Causer)
 		OnHPIsZero.Broadcast();
 		if(Causer->IsA(APlayerCharacter::StaticClass()))
 		{
-			Cast<APlayerCharacter>(Causer)->GetCharacterStateComponent()->KillCount++;
+			auto CauserCharacterState = Cast<APlayerCharacter>(Causer)->GetCharacterStateComponent();
+			CauserCharacterState->KillCount++;
 		}
 	}
 }

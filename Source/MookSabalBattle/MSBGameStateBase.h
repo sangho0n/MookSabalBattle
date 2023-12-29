@@ -35,10 +35,6 @@ private:
 	UFUNCTION()
 	void OnRep_Score();
 	
-	UPROPERTY(EditAnywhere, Category=Status)
-	int32 KillCount;
-	UPROPERTY(EditAnywhere, Category=Status)
-	int32 DeathCount;
 public:
 	// only called on Server
 	void AdjustScore(APlayerCharacter* DeadCharacter);
@@ -47,7 +43,7 @@ public:
 	FOnScoreChanged OnScoreChanged;
 
 private:
-	const float GamePlaySeconds = 10;
+	const float GamePlaySeconds = 5 * 60;
 	UPROPERTY(Replicated)
 	float AccGameSeconds;
 	bool bIsGameStarted;
@@ -64,4 +60,10 @@ public:
 
 	UFUNCTION()
 	void FreezeGame();
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetBlueTeamScore(){return BlueTeamScore;}
+	UFUNCTION(BlueprintCallable)
+	int32 GetRedTeamScore(){return RedTeamScore;}
+
 };
