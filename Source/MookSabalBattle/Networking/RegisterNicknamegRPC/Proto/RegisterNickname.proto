@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message NickName {
+  string value = 1;
+}
+
+service NicknameService {
+  rpc RegisterNickname(NickName) returns (RegisterResponse);
+}
+
+message RegisterResponse {
+  bool bSucceed = 1;
+}
+
