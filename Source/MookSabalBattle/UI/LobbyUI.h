@@ -80,6 +80,8 @@ private:
 	
 	void SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& SessionSearchResults, bool bSucceed);
 
+	void NotifyInvalidNickname();
+
 public:
 	TSharedPtr<FOnlineSessionSearchResult> SelectedSession;
 

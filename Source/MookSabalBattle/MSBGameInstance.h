@@ -6,7 +6,6 @@
 #include "Engine/GameInstance.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
-#include "Interfaces/OnlineSessionDelegates.h"
 #include "Online.h"
 #include "Networking/RegisterNicknamegRPC/RegisterNicknameGrpcWrapper.h"
 #include "MSBGameInstance.generated.h"
@@ -14,6 +13,7 @@
 DECLARE_DELEGATE_TwoParams(FOnSessionSearchCompleteWithResults, TArray<FOnlineSessionSearchResult>& SessionSearchResults, bool bSucceed);
 DECLARE_DELEGATE(FOnLoading);
 DECLARE_DELEGATE(FStopLoading);
+DECLARE_DELEGATE(FOnInvalidNickname);
 
 /**
  * 
@@ -59,6 +59,7 @@ private:
 	IOnlineSubsystem* OnlineSubsystem;
 	IOnlineSession* SessionInterface;
 	TSharedPtr<FOnlineSessionSearch> LastSearchResult;
+	FName LastJoinedSessionName;
 
 	// host
 	UFUNCTION()
@@ -75,4 +76,7 @@ private:
 
 	// for gRPC
 	URegisterNicknameGrpcWrapper* gRPCSubsystem;
+
+public:
+	FOnInvalidNickname OnInvalidNickname;
 };

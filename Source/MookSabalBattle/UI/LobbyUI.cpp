@@ -47,6 +47,9 @@ void ULobbyUI::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 	SelectedSession.Reset();
+
+	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
+	GameInstance->OnInvalidNickname.BindUObject(this, &ULobbyUI::NotifyInvalidNickname);
 }
 
 void ULobbyUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -232,5 +235,10 @@ void ULobbyUI::ResetSessionCheckState(TSharedPtr<FOnlineSessionSearchResult> New
 
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black,
 				FString::Printf(TEXT("현재 선택된 세션 이름 %s"), *SelectedSession.Get()->Session.SessionSettings.Settings.FindRef("SessionName").Data.ToString()));
+}
+
+void ULobbyUI::NotifyInvalidNickname()
+{
+	Text_NickNameCL->SetError(FText::FromString(TEXT("This Nickname is already in use")));
 }
 

@@ -202,34 +202,35 @@ void UMSBGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCo
 
 	APlayerController* const PlayerController = GetFirstLocalPlayerController();
 
-	SessionInterface->ClearOnJoinSessionCompleteDelegates(this);
 	if(PlayerController && SessionInterface->GetResolvedConnectString(SessionName, TravelURL))
 	{
-		//gRPCSubsystem->OnClientReceiveMessage.AddDynamic(this, &UMSBGameInstance::CheckNicknameDuplicity);
+		gRPCSubsystem->OnClientReceiveMessage.AddDynamic(this, &UMSBGameInstance::CheckNicknameDuplicity);
+		LastJoinedSessionName = SessionName;
 		UE_LOG(MookSablBattle, Log, TEXT("travel url : %s"), *TravelURL);
-		//gRPCSubsystem->RequestRegister(LocalPlayerNickName, TravelURL);
-
-		// TODO Below code must be deleted after resolving gRPC error
-	
-		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString::Printf(TEXT("trying client travel %s"), *TravelURL));
-		PlayerController->ClientTravel(TravelURL, TRAVEL_Absolute);
-		gRPCSubsystem->OnClientReceiveMessage.Clear();
+		gRPCSubsystem->RequestRegister(LocalPlayerNickName, TravelURL);
 	}
 }
 
 void UMSBGameInstance::CheckNicknameDuplicity(bool bCanJoin)
 {
+	gRPCSubsystem->OnClientReceiveMessage.Clear();
 	if(!bCanJoin)
 	{
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString::Printf(TEXT("cannot join server")));
-
+		// to assure that Slate accessing code runs in GameThread or SlateLoadingThread
+		AsyncTask(ENamedThreads::GameThread, [this]() -> void
+		{
+			StopLoading.Execute();
+			OnInvalidNickname.Execute();
+		});
+		// leave session as a client
+		SessionInterface->DestroySession(LastJoinedSessionName);
 		return;
 	}
 	APlayerController* const PlayerController = GetFirstLocalPlayerController();
 	
 	GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString::Printf(TEXT("trying client travel %s"), *TravelURL));
 	PlayerController->ClientTravel(TravelURL, TRAVEL_Absolute);
-	gRPCSubsystem->OnClientReceiveMessage.Clear();
 }
 
 void UMSBGameInstance::GetSubsystemAndSessionInterface()
@@ -237,4 +238,3 @@ void UMSBGameInstance::GetSubsystemAndSessionInterface()
 	OnlineSubsystem = IOnlineSubsystem::Get();
 	SessionInterface = OnlineSubsystem->GetSessionInterface().Get();
 }
-
