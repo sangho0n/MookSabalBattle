@@ -251,12 +251,12 @@ void APlayerCharacter::SetPlayerOutline()
 		}
 	}
 
-	for(int i = 1; i < Players.Num(); i++)
+	for(int i = 0; i < Players.Num(); i++)
 	{
 		APlayerCharacter* Character = Cast<APlayerCharacter>(Players[i]->GetPawn());
-		Character->GetMesh()->SetRenderCustomDepth(true);
-
 		if(Character->IsLocallyControlled()) continue;
+		
+		Character->GetMesh()->SetRenderCustomDepth(true);
 		if(LocalPlayer->IsSameTeam(Character))
 		{
 			Character->GetMesh()->SetCustomDepthStencilValue(OUT_LINE::Ally);
