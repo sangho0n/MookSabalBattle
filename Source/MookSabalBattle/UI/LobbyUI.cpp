@@ -130,8 +130,7 @@ void ULobbyUI::ConfirmHostPressed()
 	if(NickName.Len() > 10)
 	{
 		bIgnore = true;
-		Text_NickNameSrv->SetText(FText::FromString(TEXT("Nickname cannot over 10 characters")));
-		Text_NickNameSrv->SetForegroundColor(FColor::Red);
+		Text_NickNameSrv->SetError(FText::FromString(TEXT("Nickname cannot over 10 characters")));
 	}
 	if(!bUseLan)
 	{
@@ -149,7 +148,6 @@ void ULobbyUI::ConfirmHostPressed()
 
 void ULobbyUI::TryJoin(FString NickName)
 {
-	// TODO gameInstance에 세션 참가 메서드 작성 후 요청
 	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
 	GameInstance->JoinSession(NickName, SelectedSession.ToWeakPtr());
 }
