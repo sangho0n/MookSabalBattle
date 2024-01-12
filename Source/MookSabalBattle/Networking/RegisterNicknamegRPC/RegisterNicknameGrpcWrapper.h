@@ -1,15 +1,14 @@
 #pragma once
 
-#include "CoreMinimal.h"
+#include "MookSabalBattle/MookSabalBattle.h"
 #include "RegisterNicknameServiceImpl.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "RegisterNicknameServiceImpl.h"
+#include "grpcpp/server.h"
 
 #if PLATFORM_WINDOWS
 #include "Windows/AllowWindowsPlatformAtomics.h"
 #include "Windows/PreWindowsApi.h"
-
-#include "RegisterNicknameServiceImpl.h"
-
 #include "Windows/PostWindowsApi.h"
 #include "Windows/HideWindowsPlatformAtomics.h"
 #endif
@@ -32,7 +31,7 @@ public:
 	virtual void Deinitialize() override;
 
 	UFUNCTION(BlueprintCallable, Category = "GrpcNicknameServiceWrapper")
-	void StartListen();
+	void StartListen(FString PlayerNickname);
 
 	UFUNCTION(BlueprintCallable, Category = "GrpcNicknameServiceWrapper")
 	void RequestRegister(const FString NickFStr, const FString ServerUrl, const FString Certificate = TEXT("null"), const FString SslHostName = TEXT("localhost"));
@@ -41,10 +40,9 @@ public:
 	FOnClientReceiveMessage OnClientReceiveMessage;
 
 private:
-	UPROPERTY()
-	TWeakObjectPtr<URegisterNicknameServiceImpl> RegisterNicknameService;
+	std::unique_ptr<RegisterNicknameServiceImpl> RegisterNicknameService;
 
-	TSharedPtr<NickName> Nickname;
-	TSharedPtr<RegisterResponse> Response;
+	std::shared_ptr<NickName> Nickname;
+	std::shared_ptr<RegisterResponse> Response;
 	std::unique_ptr<grpc::Server> gRPCServer;
 };

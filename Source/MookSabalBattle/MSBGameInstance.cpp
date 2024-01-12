@@ -122,7 +122,7 @@ void UMSBGameInstance::OnSessionCreate(FName SessionName, bool bWasSucceed)
 	// get ipv4
 	FString IPv4;
 	SessionInterface->GetResolvedConnectString(SessionName, IPv4);
-	//gRPCSubsystem->StartListen();
+	gRPCSubsystem->StartListen(LocalPlayerNickName);
 }
 
 void UMSBGameInstance::OnFindSessionComplete(bool bSucceed)
