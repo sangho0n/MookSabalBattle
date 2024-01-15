@@ -14,6 +14,11 @@
 				"UMG",
 				"CoreUObject"
 			]
+		},
+		{
+			"Name": "gRPCSubsystem",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [

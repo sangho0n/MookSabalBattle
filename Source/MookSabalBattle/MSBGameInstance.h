@@ -7,7 +7,7 @@
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 #include "Online.h"
-#include "Networking/RegisterNicknamegRPC/RegisterNicknameGrpcWrapper.h"
+#include "gRPCSubsystem/Public/RegisterNicknameGrpcSubsystem.h"
 #include "MSBGameInstance.generated.h"
 
 DECLARE_DELEGATE_TwoParams(FOnSessionSearchCompleteWithResults, TArray<FOnlineSessionSearchResult>& SessionSearchResults, bool bSucceed);
@@ -75,7 +75,7 @@ private:
 	UUserWidget* LoadingWidget;
 
 	// for gRPC
-	URegisterNicknameGrpcWrapper* gRPCSubsystem;
+	URegisterNicknameGrpcSubsystem* gRPCSubsystem;
 
 public:
 	FOnInvalidNickname OnInvalidNickname;

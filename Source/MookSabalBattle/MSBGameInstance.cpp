@@ -40,7 +40,7 @@ void UMSBGameInstance::Init()
 		LoadingWidget = nullptr;
 	});
 	
-	gRPCSubsystem = GetSubsystem<URegisterNicknameGrpcWrapper>();
+	gRPCSubsystem = GetSubsystem<URegisterNicknameGrpcSubsystem>();
 }
 
 void UMSBGameInstance::HostGame(FString NickName, int32 MaxPlayerCount, bool bUseLan)

@@ -1,12 +1,12 @@
 #pragma once
 
-#include "MookSabalBattle/MookSabalBattle.h"
+#include "gRPCSubsystem/gRPCSubsystem.h"
 #include "Proto/RegisterNickname.grpc.pb.h"
 
 /**
  * 
  */
-class MOOKSABALBATTLE_API RegisterNicknameServiceImpl final : public NicknameService::Service
+class GRPCSUBSYSTEM_API RegisterNicknameServiceImpl final : public NicknameService::Service
 {
 public:
 	RegisterNicknameServiceImpl();

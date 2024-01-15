@@ -9,12 +9,6 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
-#include "UMG.h"
-#include "UMGStyle.h"
-#include "Slate/SObjectWidget.h"
-#include "IUMGModule.h"
-#include "Blueprint/UserWidget.h"
-
 RegisterNicknameServiceImpl::RegisterNicknameServiceImpl()
 {
 	
