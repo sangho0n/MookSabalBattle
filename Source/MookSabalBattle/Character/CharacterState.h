@@ -58,19 +58,16 @@ public:
 	const float MaxHP = 200.0f;
 
 private:
-	UPROPERTY(Replicated, EditAnywhere, Category=Status)
+	UPROPERTY(BlueprintReadOnly, Replicated, EditAnywhere, Category=Status, meta=(AllowPrivateAccess=true))
 	bool bIsRedTeam;
 
 public:
-	UPROPERTY(Replicated, EditAnywhere, Category=Status)
+	UPROPERTY(BlueprintReadOnly, Replicated, EditAnywhere, Category=Status)
 	int32 KillCount;
 
-	UPROPERTY(Replicated, EditAnywhere, Category=Status)
+	UPROPERTY(BlueprintReadOnly, Replicated, EditAnywhere, Category=Status)
 	int32 DeathCount;
 
-	UPROPERTY(VisibleAnywhere, Category=Status)
-	FString NickName;
-	
 	FOnHPIsZero OnHPIsZero;
 	
 	FOnHPChanges OnHPChanges;

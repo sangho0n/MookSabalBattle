@@ -165,7 +165,7 @@ void APlayerCharacter::Respawn()
 }
 
 // NetMulticast RPC (called on both listen server and client)
-void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool bIsRedTeam)
+void APlayerCharacter::InitPlayer_Implementation(bool bIsRedTeam)
 {
 	GetMesh()->SetVisibility(true);
 	CharacterState = Cast<ACharacterState>(GetPlayerState());
@@ -176,7 +176,6 @@ void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool b
 	if(HasAuthority())
 	{
 		CharacterState->OnHPIsZero.AddDynamic(this, &APlayerCharacter::Die_Server);
-		CharacterState->SetPlayerName(UserName);
 		CharacterState->SetTeam(bIsRedTeam);
 		CharacterState->SetDead(false);
 	}

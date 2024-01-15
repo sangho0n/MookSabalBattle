@@ -39,6 +39,8 @@ private:
 
 	FOnAllPlayerReplicationFinished OnAllPlayerReplicationFinished;
 
+	TMap<APlayerController*, FString> ControllerToNickname;
+
 public:
 	UFUNCTION()
 	void IncreaseRepFinishedPlayerCount();

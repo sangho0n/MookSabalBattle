@@ -47,7 +47,6 @@ public:
 	int32 MaxPlayer;
 
 	FString LocalPlayerNickName;
-	TArray<FString> PlayerNickNames;
 	FString TravelURL;
 	
 private:

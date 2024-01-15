@@ -233,7 +233,7 @@ private:
 	
 public:
 	UFUNCTION(NetMulticast, Reliable)
-	void InitPlayer(const FString &UserName, bool bIsRedTeam);
+	void InitPlayer(const bool bIsRedTeam);
 	UFUNCTION(BlueprintNativeEvent)
 	void InitWidgets();
 };

@@ -60,7 +60,6 @@ void UMSBGameInstance::HostGame(FString NickName, int32 MaxPlayerCount, bool bUs
 		return;
 	}
 	
-	PlayerNickNames.Reset();
 	LocalPlayerNickName = NickName;
 
 	FOnlineSessionSetting CustomSessionName;
@@ -116,8 +115,7 @@ void UMSBGameInstance::OnSessionCreate(FName SessionName, bool bWasSucceed)
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed to create session"));
 		return;
 	}
-	PlayerNickNames.Add(LocalPlayerNickName);
-	GetWorld()->ServerTravel(DessertMap + TEXT("?listen?port=7777"));
+	GetWorld()->ServerTravel(DessertMap + TEXT("?listen?port=7777?Nickname=") + LocalPlayerNickName);
 
 	// get ipv4
 	FString IPv4;
@@ -230,7 +228,7 @@ void UMSBGameInstance::CheckNicknameDuplicity(bool bCanJoin)
 	APlayerController* const PlayerController = GetFirstLocalPlayerController();
 	
 	GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString::Printf(TEXT("trying client travel %s"), *TravelURL));
-	PlayerController->ClientTravel(TravelURL, TRAVEL_Absolute);
+	PlayerController->ClientTravel(TravelURL + TEXT("?Nickname=") + LocalPlayerNickName, TRAVEL_Absolute);
 }
 
 void UMSBGameInstance::GetSubsystemAndSessionInterface()

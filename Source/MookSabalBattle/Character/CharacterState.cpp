@@ -18,6 +18,7 @@ ACharacterState::ACharacterState()
 	bIsDead = false;
 	bIsEquipped = false;
 	bIsRedTeam = false;
+	bUseCustomPlayerNames = true;
 }
 
 void ACharacterState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

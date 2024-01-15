@@ -31,6 +31,8 @@ void AMookSabalBattleGameModeBase::PostInitializeComponents()
 void AMookSabalBattleGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
 	Super::InitGame(MapName, Options, ErrorMessage);
+	
+	ControllerToNickname.Empty();
 
 	for(TActorIterator<APlayerStart> it(GetWorld()); it; ++it)
 	{
@@ -60,16 +62,30 @@ FString AMookSabalBattleGameModeBase::InitNewPlayer(APlayerController* NewPlayer
 		MSB_LOG(Error, TEXT("No free player starts"));
 		return FString(TEXT("No free player starts"));
 	}
-	// FString NickName = Cast<UMSBGameInstance>(GetGameInstance())->PlayerNickNames.Last();
-	// auto MSBGameState = Cast<AMSBGameStateBase>(GameState);
-	// auto PlayerState = Cast<ALocalPlayerController>(NewPlayerController)->GetPlayerState<ACharacterState>();
 
+	TArray<FString> OptionsArray;
+	Options.ParseIntoArray(OptionsArray, TEXT("?"));
+	
 	auto FreeStart = FreePlayerStarts.Pop();
 	NewPlayerController->StartSpot = FreeStart;
 	PlayerStartMap.Add(NewPlayerController, FreeStart);
 	PlayerControllers.Add(NewPlayerController);
-	// PlayerState->NickName = NickName;
-	// UE_LOG(MookSablBattle, Log, TEXT("nickname ? %s"), *PlayerState->NickName);
+
+	for(const auto& Option : OptionsArray)
+	{
+		if(Option.StartsWith(TEXT("Nickname")))
+		{
+			FString Nickname;
+			FParse::Value(*Option, TEXT("Nickname="), Nickname);
+			//NewPlayerController->GetPlayerState<ACharacterState>()->SetPlayerName(Nickname);
+			ControllerToNickname.Add(NewPlayerController, Nickname);
+			UE_LOG(MookSablBattle, Log, TEXT("닉네임 변경 시도 %s"), *Nickname);
+			break;
+		}
+		
+		//NewPlayerController->GetPlayerState<ACharacterState>()->SetPlayerName(TEXT("default"));
+		ControllerToNickname.Add(NewPlayerController, TEXT("default"));
+	}
 	
 	return Super::InitNewPlayer(NewPlayerController, UniqueId, Options, Portal);
 }
@@ -82,18 +98,17 @@ void AMookSabalBattleGameModeBase::PostLogin(APlayerController* NewPlayer)
 
 void AMookSabalBattleGameModeBase::InitAllPlayers()
 {
-	auto MSBGameState = Cast<AMSBGameStateBase>(GameState);
-
 	int flag = 0;
 	bool bFlag;
-	for(auto Controller : PlayerControllers)
+	for (auto PlayerController : PlayerControllers)
 	{
-		auto Character = Cast<APlayerCharacter>(Controller->GetPawn());
-		// FString NickName = Character->GetCharacterStateComponent()->NickName;
-		// UE_LOG(MookSablBattle, Log, TEXT("character %s"), *Character->GetName());
-		// UE_LOG(MookSablBattle, Log, TEXT("is null ? %s"), *NickName);
-		bFlag = flag%2==0?true:false;// TODO why read access violation?
-		Character->InitPlayer(TEXT("default name"), bFlag);
+		auto Character = Cast<APlayerCharacter>(PlayerController->GetPawn());
+		bFlag = flag%2==0?true:false;
+		FString Nickname = *ControllerToNickname.Find(PlayerController);
+		
+		UE_LOG(MookSablBattle, Log, TEXT("닉네임 ? %s"), *Nickname);
+		PlayerController->GetPlayerState<ACharacterState>()->SetPlayerName(Nickname);
+		Character->InitPlayer(bFlag);
 		
 		flag++;
 	}
@@ -115,7 +130,6 @@ AActor* AMookSabalBattleGameModeBase::ChoosePlayerStart_Implementation(AControll
 void AMookSabalBattleGameModeBase::EndGamePlay()
 {
 	// freeze
-	//for (APlayerController* PlayerController : PlayerControllers) 왜 이 루프로 순회하면 클라이언트 RPC가 호출이 안되는 것일까...
 	for (TActorIterator<APlayerController> it(GetWorld()); it; ++it)
 	{
 		auto PlayerController = *it;
