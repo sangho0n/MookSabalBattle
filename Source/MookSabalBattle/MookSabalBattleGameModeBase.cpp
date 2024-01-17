@@ -135,4 +135,9 @@ void AMookSabalBattleGameModeBase::EndGamePlay()
 		auto PlayerController = *it;
 		Cast<ALocalPlayerController>(PlayerController)->DisableInputEachCient(PlayerController);
 	}
+	
+	FTimerHandle TimerHandle;
+	float DelayInSeconds = 5.0f;
+	FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &AGameModeBase::ReturnToMainMenuHost);
+	GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, DelayInSeconds, false);
 }
