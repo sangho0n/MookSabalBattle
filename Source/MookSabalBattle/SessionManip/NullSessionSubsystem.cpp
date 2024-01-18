@@ -98,13 +98,29 @@ void UNullSessionSubsystem::OnSessionCreate(FName SessionName, bool bWasSucceed)
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed to create session"));
 		return;
 	}
-	GetWorld()->ServerTravel(DessertMap + TEXT("?listen?port=7777?Nickname=") + LocalPlayerNickName);
-
 	// get ipv4
 	FString IPv4;
 	SessionInterface->GetResolvedConnectString(SessionName, IPv4);
+	LastJoinedSessionName = SessionName;
 	gRPCSubsystem->StartListen(LocalPlayerNickName);
+	
+	GetWorld()->ServerTravel(DessertMap + TEXT("?listen?port=7777?Nickname=") + LocalPlayerNickName);
 }
+
+void UNullSessionSubsystem::StartSession()
+{
+	try
+	{
+		GetSubsystemAndSessionInterface();
+	} catch (const std::runtime_error& e)
+	{
+		UE_LOG(MookSablBattle, Error, TEXT("%s"), *FString(e.what()));
+		return;
+	}
+
+	SessionInterface->StartSession(LastJoinedSessionName);
+}
+
 
 void UNullSessionSubsystem::OnFindSessionComplete(bool bSucceed)
 {
@@ -183,6 +199,21 @@ void UNullSessionSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSess
 		gRPCSubsystem->RequestRegister(LocalPlayerNickName, TravelURL);
 	}
 }
+
+void UNullSessionSubsystem::ExitSession_Implementation()
+{
+	try
+	{
+		GetSubsystemAndSessionInterface();
+	} catch (const std::runtime_error& e)
+	{
+		UE_LOG(MookSablBattle, Error, TEXT("%s"), *FString(e.what()));
+		return;
+	}
+
+	SessionInterface->DestroySession(LastJoinedSessionName);
+}
+
 
 void UNullSessionSubsystem::CheckNicknameDuplicity(bool bCanJoin)
 {

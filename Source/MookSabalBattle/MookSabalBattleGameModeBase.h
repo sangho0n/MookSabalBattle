@@ -21,8 +21,8 @@ public:
 	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
 	virtual FString InitNewPlayer(APlayerController* NewPlayerController, const FUniqueNetIdRepl& UniqueId, const FString& Options, const FString& Portal) override;
 	virtual void PostLogin(APlayerController* NewPlayer) override;
-
 	virtual void PostInitializeComponents() override;
+	virtual void ReturnToMainMenuHost() override;
 
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 

@@ -93,7 +93,8 @@ FString AMookSabalBattleGameModeBase::InitNewPlayer(APlayerController* NewPlayer
 
 void AMookSabalBattleGameModeBase::PostLogin(APlayerController* NewPlayer)
 {
-	MSB_LOG(Log, TEXT("how many post login called"));
+	if(ControllerToNickname.Num() == GetGameInstance()->GetSubsystem<UNullSessionSubsystem>()->MaxPlayer)
+		GetGameInstance()->GetSubsystem<UNullSessionSubsystem>()->StartSession();
 	Super::PostLogin(NewPlayer);
 }
 
@@ -139,6 +140,13 @@ void AMookSabalBattleGameModeBase::EndGamePlay()
 	
 	FTimerHandle TimerHandle;
 	float DelayInSeconds = 5.0f;
-	FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &AGameModeBase::ReturnToMainMenuHost);
+	FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &AMookSabalBattleGameModeBase::ReturnToMainMenuHost);
 	GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, DelayInSeconds, false);
 }
+
+void AMookSabalBattleGameModeBase::ReturnToMainMenuHost()
+{
+	GetGameInstance()->GetSubsystem<UNullSessionSubsystem>()->ExitSession();
+	Super::ReturnToMainMenuHost();
+}
+

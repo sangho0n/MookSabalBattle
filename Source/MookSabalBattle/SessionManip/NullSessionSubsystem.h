@@ -39,6 +39,9 @@ public:
     void HostGame(FString& NickName, int32 MaxPlayerCount, bool bUseLan);
     void TryFindSession(bool bUseLan);
     void JoinSession(const FString& NickName, TWeakPtr<FOnlineSessionSearchResult> SelectedSession);
+    UFUNCTION(NetMulticast, Reliable)
+    void ExitSession();
+    void StartSession();
 
     int32 MaxPlayer;
     FString LocalPlayerNickName;
