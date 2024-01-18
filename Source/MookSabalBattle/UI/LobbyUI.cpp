@@ -192,13 +192,14 @@ void ULobbyUI::SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& Sessi
 	if(bSucceed)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue,
-					TEXT("세션 찾기 성공함"));
+					FString::Printf(TEXT("세션 찾기 성공함 : %d개"), SessionSearchResults.Num()));
 
 		for(const FOnlineSessionSearchResult& SessionSearchResult : SessionSearchResults)
 		{
 			if(IsValid(ServerBrowserItemRef) && SessionSearchResult.Session.NumOpenPublicConnections > 0)
 			{
-				UServerBrowserItemUI* NewWidget = CreateWidget<UServerBrowserItemUI>(GetWorld(), ServerBrowserItemRef);NewWidget->AddToViewport();
+				UServerBrowserItemUI* NewWidget = CreateWidget<UServerBrowserItemUI>(GetWorld(), ServerBrowserItemRef);
+				NewWidget->AddToViewport();
 				ScrollBox_ServerBrowserList->AddChild(NewWidget);
 				NewWidget->OnSessionSelected.AddUObject(this, &ULobbyUI::ResetSessionCheckState);
 				NewWidget->SetInitialData(SessionSearchResult.Session.SessionSettings.Settings.FindRef("SessionName").Data.ToString(), SessionSearchResult);

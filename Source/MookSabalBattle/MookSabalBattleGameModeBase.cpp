@@ -42,8 +42,8 @@ void AMookSabalBattleGameModeBase::InitGame(const FString& MapName, const FStrin
 	RepFinishedPlayerCount = 0;
 
 	// TODO : 아래 코드는 PIE 용임.
-	Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer = 2;
-	PlayerStartMap.Reserve(Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer);
+	// Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer = 2;
+	// PlayerStartMap.Reserve(Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer);
 }
 
 void AMookSabalBattleGameModeBase::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
