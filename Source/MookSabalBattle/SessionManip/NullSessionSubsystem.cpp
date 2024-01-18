@@ -14,7 +14,14 @@ void UNullSessionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 	Collection.InitializeDependency(URegisterNicknameGrpcSubsystem::StaticClass());
-	GetSubsystemAndSessionInterface();
+	try
+	{
+		GetSubsystemAndSessionInterface();
+	} catch (const std::runtime_error& e)
+	{
+		UE_LOG(MookSablBattle, Error, TEXT("%s"), *FString(e.what()));
+		return;
+	}
 
 	SessionInterface->OnCreateSessionCompleteDelegates.RemoveAll(this);
 	SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UNullSessionSubsystem::OnSessionCreate);
@@ -29,17 +36,12 @@ void UNullSessionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 void UNullSessionSubsystem::HostGame(FString& NickName, int32 MaxPlayerCount, bool bUseLan)
 {
 	Cast<UMSBGameInstance>(GetGameInstance())->StartLoading();
-	GetSubsystemAndSessionInterface();
-	if(OnlineSubsystem == nullptr)
+	try
 	{
-		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get online subsystem"));
-		Cast<UMSBGameInstance>(GetGameInstance())->EndLoading();
-		return;
-	}
-	if(SessionInterface == nullptr)
+		GetSubsystemAndSessionInterface();
+	} catch (const std::runtime_error& e)
 	{
-		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get session interface"));
-		Cast<UMSBGameInstance>(GetGameInstance())->EndLoading();
+		UE_LOG(MookSablBattle, Error, TEXT("%s"), *FString(e.what()));
 		return;
 	}
 	
@@ -66,17 +68,13 @@ void UNullSessionSubsystem::TryFindSession(bool bUseLan)
 {
 	
 	Cast<UMSBGameInstance>(GetGameInstance())->StartLoading();
-	GetSubsystemAndSessionInterface();
-	if(OnlineSubsystem == nullptr)
+	
+	try
 	{
-		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get online subsystem"));
-		Cast<UMSBGameInstance>(GetGameInstance())->EndLoading();
-		return;
-	}
-	if(SessionInterface == nullptr)
+		GetSubsystemAndSessionInterface();
+	} catch (const std::runtime_error& e)
 	{
-		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get session interface"));
-		Cast<UMSBGameInstance>(GetGameInstance())->EndLoading();
+		UE_LOG(MookSablBattle, Error, TEXT("%s"), *FString(e.what()));
 		return;
 	}
 
@@ -125,19 +123,15 @@ void UNullSessionSubsystem::OnFindSessionComplete(bool bSucceed)
 void UNullSessionSubsystem::JoinSession(const FString& NickName, TWeakPtr<FOnlineSessionSearchResult> SelectedSession)
 {
 	Cast<UMSBGameInstance>(GetGameInstance())->StartLoading();
-	GetSubsystemAndSessionInterface();
-	if(OnlineSubsystem == nullptr)
+	try
 	{
-		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get online subsystem"));
-		Cast<UMSBGameInstance>(GetGameInstance())->EndLoading();
+		GetSubsystemAndSessionInterface();
+	} catch (const std::runtime_error& e)
+	{
+		UE_LOG(MookSablBattle, Error, TEXT("%s"), *FString(e.what()));
 		return;
 	}
-	if(SessionInterface == nullptr)
-	{
-		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get session interface"));
-		Cast<UMSBGameInstance>(GetGameInstance())->EndLoading();
-		return;
-	}
+
 	
 	auto LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	const FOnlineSessionSearchResult& SessionSearchResult = std::ref(*SelectedSession.Pin().Get());
@@ -163,19 +157,15 @@ void UNullSessionSubsystem::JoinSession(const FString& NickName, TWeakPtr<FOnlin
 
 void UNullSessionSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type SessionType)
 {
-	GetSubsystemAndSessionInterface();
-	if(OnlineSubsystem == nullptr)
+	try
 	{
-		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get online subsystem"));
-		Cast<UMSBGameInstance>(GetGameInstance())->EndLoading();
+		GetSubsystemAndSessionInterface();
+	} catch (const std::runtime_error& e)
+	{
+		UE_LOG(MookSablBattle, Error, TEXT("%s"), *FString(e.what()));
 		return;
 	}
-	if(SessionInterface == nullptr)
-	{
-		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Failed get session interface"));
-		Cast<UMSBGameInstance>(GetGameInstance())->EndLoading();
-		return;
-	}
+	
 	if(SessionType != EOnJoinSessionCompleteResult::Success)
 	{
 		GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, FString("Cannot join session"));
@@ -220,4 +210,13 @@ void UNullSessionSubsystem::GetSubsystemAndSessionInterface()
 {
 	OnlineSubsystem = IOnlineSubsystem::Get();
 	SessionInterface = OnlineSubsystem->GetSessionInterface().Get();
+	
+	if(SessionInterface == nullptr)
+	{
+		throw CannotGetSessionInterfaceException("Failed to get session interface");
+	}
+	if(OnlineSubsystem == nullptr)
+	{
+		throw CannotGetOnlineSubsystemException("Failed to get online subsystem");
+	}
 }

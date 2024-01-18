@@ -5,10 +5,23 @@
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "gRPCSubsystem/Public/RegisterNicknameGrpcSubsystem.h"
+#include <stdexcept>
 #include "NullSessionSubsystem.generated.h"
 
 DECLARE_DELEGATE_TwoParams(FOnSessionSearchCompleteWithResults, TArray<FOnlineSessionSearchResult>& SessionSearchResults, bool bSucceed);
 DECLARE_DELEGATE(FOnInvalidNickname);
+
+class CannotGetSessionInterfaceException : public std::runtime_error
+{
+public:
+    CannotGetSessionInterfaceException(const std::string& message) : std::runtime_error(message){}
+};
+
+class CannotGetOnlineSubsystemException : public std::runtime_error
+{
+public:
+    CannotGetOnlineSubsystemException(const std::string& message) : std::runtime_error(message){}
+};
 
 /**
  * 
