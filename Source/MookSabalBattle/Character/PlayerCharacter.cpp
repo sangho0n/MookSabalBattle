@@ -20,6 +20,7 @@
 #include "MookSabalBattle/MookSabalBattleGameModeBase.h"
 #include "MookSabalBattle/MSBGameInstance.h"
 #include "MookSabalBattle/MSBGameStateBase.h"
+#include "MookSabalBattle/SessionManip/NullSessionSubsystem.h"
 
 int APlayerCharacter::InitFinishedPlayer = 0;
 FCriticalSection APlayerCharacter::CS_InitFinishedPlayer = FCriticalSection();
@@ -109,7 +110,7 @@ void APlayerCharacter::PostInitializeComponents()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	if(IsLocallyControlled()) Cast<UMSBGameInstance>(GetGameInstance())->OnLoading.Execute();
+	if(IsLocallyControlled()) Cast<UMSBGameInstance>(GetGameInstance())->StartLoading();
 	GetMesh()->SetVisibility(false);
 
 	// wait for some seconds for replications
@@ -186,12 +187,12 @@ void APlayerCharacter::InitPlayer_Implementation(bool bIsRedTeam)
 	if(IsLocallyControlled())
 	{
 		Cast<ALocalPlayerController>(GetController())->InitPlayer();
-		Cast<UMSBGameInstance>(GetGameInstance())->StopLoading.Execute();
+		Cast<UMSBGameInstance>(GetGameInstance())->EndLoading();
 	}
 
 	CS_InitFinishedPlayer.Lock();
 	InitFinishedPlayer++;
-	if(InitFinishedPlayer == GameInstance->MaxPlayer)
+	if(InitFinishedPlayer == GameInstance->GetSubsystem<UNullSessionSubsystem>()->MaxPlayer)
 	{
 		// wait for some seconds for bIsRedTeam replication
 		FTimerHandle TimerHandle;

@@ -8,6 +8,7 @@
 #include "MSBGameInstance.h"
 #include "MSBGameStateBase.h"
 #include "Character/PlayerCharacter.h"
+#include "SessionManip/NullSessionSubsystem.h"
 
 AMookSabalBattleGameModeBase::AMookSabalBattleGameModeBase()
 {
@@ -118,8 +119,8 @@ void AMookSabalBattleGameModeBase::InitAllPlayers()
 void AMookSabalBattleGameModeBase::IncreaseRepFinishedPlayerCount()
 {
 	RepFinishedPlayerCount++;
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, FString::Printf(TEXT("current finished player %d and max %d"), RepFinishedPlayerCount, Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer));
-	if(RepFinishedPlayerCount == Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer) OnAllPlayerReplicationFinished.Execute();
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, FString::Printf(TEXT("current finished player %d and max %d"), RepFinishedPlayerCount, GetGameInstance()->GetSubsystem<UNullSessionSubsystem>()->MaxPlayer));
+	if(RepFinishedPlayerCount == GetGameInstance()->GetSubsystem<UNullSessionSubsystem>()->MaxPlayer) OnAllPlayerReplicationFinished.Execute();
 }
 
 AActor* AMookSabalBattleGameModeBase::ChoosePlayerStart_Implementation(AController* Player)

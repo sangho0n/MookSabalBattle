@@ -16,8 +16,7 @@ RegisterNicknameServiceImpl::RegisterNicknameServiceImpl()
 
 RegisterNicknameServiceImpl::~RegisterNicknameServiceImpl()
 {
-	Channel.reset();
-	ServiceStub.reset();
+
 }
 
 void RegisterNicknameServiceImpl::Init(const FString PlayerNickname, FString ServerUrl, const FString& Certificate, const FString& SslHostName)

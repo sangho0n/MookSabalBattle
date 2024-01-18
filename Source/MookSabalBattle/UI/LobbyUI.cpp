@@ -3,6 +3,8 @@
 
 #include "LobbyUI.h"
 
+#include "MookSabalBattle/SessionManip/NullSessionSubsystem.h"
+
 void ULobbyUI::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -48,8 +50,8 @@ void ULobbyUI::NativeOnInitialized()
 	Super::NativeOnInitialized();
 	SelectedSession.Reset();
 
-	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
-	GameInstance->OnInvalidNickname.BindUObject(this, &ULobbyUI::NotifyInvalidNickname);
+	auto SessionSubsystem = GetGameInstance()->GetSubsystem<UNullSessionSubsystem>();
+	SessionSubsystem->OnInvalidNickname.BindUObject(this, &ULobbyUI::NotifyInvalidNickname);
 }
 
 void ULobbyUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -74,8 +76,8 @@ void ULobbyUI::ShowOnHostCanvas()
 
 void ULobbyUI::TryHost(FString NickName, int32 MaxPlayerCount, bool bUseLan)
 {
-	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
-	GameInstance->HostGame(NickName, MaxPlayerCount, bUseLan);
+	auto SessionSubsystem = GetGameInstance()->GetSubsystem<UNullSessionSubsystem>();
+	SessionSubsystem->HostGame(NickName, MaxPlayerCount, bUseLan);
 }
 
 void ULobbyUI::JoinPressed()
@@ -151,8 +153,8 @@ void ULobbyUI::ConfirmHostPressed()
 
 void ULobbyUI::TryJoin(FString NickName)
 {
-	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
-	GameInstance->JoinSession(NickName, SelectedSession.ToWeakPtr());
+	auto SessionSubsystem = GetGameInstance()->GetSubsystem<UNullSessionSubsystem>();
+	SessionSubsystem->JoinSession(NickName, SelectedSession.ToWeakPtr());
 }
 
 void ULobbyUI::BackPressed()
@@ -180,9 +182,9 @@ void ULobbyUI::RefreshServerBrowser()
 		bUseLan = true;
 	}
 	
-	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
-	GameInstance->TryFindSession(bUseLan);
-	GameInstance->OnSessionSearchCompleteWithResults.BindUObject(this, &ULobbyUI::SetSessionSearchResults);
+	auto SessionSubsystem = GetGameInstance()->GetSubsystem<UNullSessionSubsystem>();
+	SessionSubsystem->TryFindSession(bUseLan);
+	SessionSubsystem->OnSessionSearchCompleteWithResults.BindUObject(this, &ULobbyUI::SetSessionSearchResults);
 }
 
 void ULobbyUI::SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& SessionSearchResults, bool bSucceed)
@@ -208,8 +210,8 @@ void ULobbyUI::SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& Sessi
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue,
 					TEXT("세션 찾기 실패"));
 	}
-	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
-	GameInstance->OnSessionSearchCompleteWithResults.Unbind();
+	auto SessionSubsystem = GetGameInstance()->GetSubsystem<UNullSessionSubsystem>();
+	SessionSubsystem->OnSessionSearchCompleteWithResults.Unbind();
 }
 
 
