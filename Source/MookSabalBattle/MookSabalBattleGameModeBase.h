@@ -34,6 +34,9 @@ private:
 	TArray<ABlueTeamPlayerStart*> FreeBlueTeamPlayerStarts;
 	TArray<ARedTeamPlayerStart*> FreeRedTeamPlayerStarts;
 	TMap<AController*, APlayerStart*> PlayerStartMap;
+	
+	int ApprovedPlayerNum;
+	FCriticalSection CS_Login = FCriticalSection();
 
 	UFUNCTION()
 	void InitAllPlayers();

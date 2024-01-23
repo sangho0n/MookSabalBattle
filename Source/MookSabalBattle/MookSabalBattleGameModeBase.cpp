@@ -49,30 +49,33 @@ void AMookSabalBattleGameModeBase::InitGame(const FString& MapName, const FStrin
 		}
 	}
 	RepFinishedPlayerCount = 0;
+	ApprovedPlayerNum = 0;
 
-	// TODO : 아래 코드는 PIE 용임.
+	// 아래 코드는 PIE 용임.
 	// Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer = 2;
 	// PlayerStartMap.Reserve(Cast<UMSBGameInstance>(GetGameInstance())->MaxPlayer);
 }
 
 void AMookSabalBattleGameModeBase::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
-	if(FreePlayerStarts.Num() == 0)
+	// Join 요청 동시성 관리 : 남은 자리가 1일 때 두명이 거의 동시에 참가 요청을 보낸 경우
+	CS_Login.Lock();
+	if(ApprovedPlayerNum <= GetGameInstance()->GetSubsystem<UNullSessionSubsystem>()->MaxPlayer)
 	{
-		ErrorMessage = TEXT("Server Full");
+		ErrorMessage = GameSession->ApproveLogin(Options);
+		ApprovedPlayerNum++;
 	}
+	else
+	{
+		ErrorMessage = TEXT("Session is already full");
+	}
+	CS_Login.Unlock();
 
-	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
+	FGameModeEvents::GameModePreLoginEvent.Broadcast(this, UniqueId, ErrorMessage);
 }
 
 FString AMookSabalBattleGameModeBase::InitNewPlayer(APlayerController* NewPlayerController, const FUniqueNetIdRepl& UniqueId, const FString& Options, const FString& Portal)
 {
-	if(FreePlayerStarts.Num() == 0)
-	{
-		MSB_LOG(Error, TEXT("No free player starts"));
-		return FString(TEXT("No free player starts"));
-	}
-
 	TArray<FString> OptionsArray;
 	Options.ParseIntoArray(OptionsArray, TEXT("?"));
 	
