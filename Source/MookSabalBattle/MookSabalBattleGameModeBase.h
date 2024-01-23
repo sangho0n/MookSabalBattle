@@ -4,6 +4,8 @@
 
 #include "MookSabalBattle.h"
 #include "GameFramework/GameModeBase.h"
+#include "Spawner/BlueTeamPlayerStart.h"
+#include "Spawner/RedTeamPlayerStart.h"
 #include "MookSabalBattleGameModeBase.generated.h"
 
 DECLARE_DELEGATE(FOnAllPlayerReplicationFinished);
@@ -29,7 +31,8 @@ public:
 private:
 	UPROPERTY()
 	TArray<APlayerController*> PlayerControllers;
-	TArray<APlayerStart*> FreePlayerStarts;
+	TArray<ABlueTeamPlayerStart*> FreeBlueTeamPlayerStarts;
+	TArray<ARedTeamPlayerStart*> FreeRedTeamPlayerStarts;
 	TMap<AController*, APlayerStart*> PlayerStartMap;
 
 	UFUNCTION()

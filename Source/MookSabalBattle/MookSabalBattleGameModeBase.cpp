@@ -37,7 +37,16 @@ void AMookSabalBattleGameModeBase::InitGame(const FString& MapName, const FStrin
 
 	for(TActorIterator<APlayerStart> it(GetWorld()); it; ++it)
 	{
-		FreePlayerStarts.Add(*it);
+		if(it->IsA(ARedTeamPlayerStart::StaticClass()))
+		{
+			auto RedTeamStart = Cast<ARedTeamPlayerStart>(*it);
+			FreeRedTeamPlayerStarts.Add(RedTeamStart);
+		}
+		else if(it->IsA(ABlueTeamPlayerStart::StaticClass()))
+		{
+			auto BlueTeamStart = Cast<ABlueTeamPlayerStart>(*it);
+			FreeBlueTeamPlayerStarts.Add(BlueTeamStart);
+		}
 	}
 	RepFinishedPlayerCount = 0;
 
@@ -67,9 +76,20 @@ FString AMookSabalBattleGameModeBase::InitNewPlayer(APlayerController* NewPlayer
 	TArray<FString> OptionsArray;
 	Options.ParseIntoArray(OptionsArray, TEXT("?"));
 	
-	auto FreeStart = FreePlayerStarts.Pop();
-	NewPlayerController->StartSpot = FreeStart;
-	PlayerStartMap.Add(NewPlayerController, FreeStart);
+	static int flag = 0;
+	if(flag & 1)//홀수
+	{
+		auto FreeStart = FreeRedTeamPlayerStarts.Pop();
+		NewPlayerController->StartSpot = FreeStart;
+		PlayerStartMap.Add(NewPlayerController, FreeStart);
+	}
+	else
+	{
+		auto FreeStart = FreeBlueTeamPlayerStarts.Pop();
+		NewPlayerController->StartSpot = FreeStart;
+		PlayerStartMap.Add(NewPlayerController, FreeStart);
+	}
+	flag++;
 	PlayerControllers.Add(NewPlayerController);
 
 	for(const auto& Option : OptionsArray)
@@ -100,19 +120,17 @@ void AMookSabalBattleGameModeBase::PostLogin(APlayerController* NewPlayer)
 
 void AMookSabalBattleGameModeBase::InitAllPlayers()
 {
-	int flag = 0;
-	bool bFlag;
 	for (auto PlayerController : PlayerControllers)
 	{
 		auto Character = Cast<APlayerCharacter>(PlayerController->GetPawn());
-		bFlag = flag%2==0?true:false;
 		FString Nickname = *ControllerToNickname.Find(PlayerController);
 		
 		UE_LOG(MookSablBattle, Log, TEXT("닉네임 ? %s"), *Nickname);
 		PlayerController->GetPlayerState<ACharacterState>()->SetPlayerName(Nickname);
-		Character->InitPlayer(bFlag);
-		
-		flag++;
+		if(PlayerController->StartSpot->IsA(ARedTeamPlayerStart::StaticClass()))
+			Character->InitPlayer(true);
+		else
+			Character->InitPlayer(false);
 	}
 
 }
