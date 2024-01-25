@@ -25,7 +25,7 @@ void AWeapon::BeginPlay()
 	SM_Weapon->SetSimulatePhysics(true);
 	SM_Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	SM_Weapon->SetRenderCustomDepth(true);
-	SM_Weapon->CustomDepthStencilValue = OUT_LINE::Weapon;
+	SM_Weapon->SetCustomDepthStencilValue(OUT_LINE::Weapon);
 	bIsPossessed = false;
 }
 
@@ -86,6 +86,8 @@ UStaticMeshComponent* AWeapon::ReadyToEquip(APlayerCharacter* Player)
 	auto Mesh = this->SM_Weapon;
 	Mesh->SetSimulatePhysics(false);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	OnPlayerPicked.Broadcast();
 
 	return Mesh;
 }

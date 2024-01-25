@@ -7,6 +7,8 @@
 #include "MookSabalBattle/Character/PlayerCharacter.h"
 #include "Weapon.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerPicked);
+
 UCLASS(Abstract)
 class MOOKSABALBATTLE_API AWeapon : public AActor 
 {
@@ -42,9 +44,10 @@ public:
 
 	UStaticMeshComponent* ReadyToEquip(APlayerCharacter* Player);
 
-	void AfterEquip();
-
 	float Damage;
 
 	bool bIsPossessed;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnPlayerPicked OnPlayerPicked;
 };

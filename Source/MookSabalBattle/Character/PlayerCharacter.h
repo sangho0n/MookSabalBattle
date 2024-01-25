@@ -51,7 +51,7 @@ private:
 
 public:
 	UPROPERTY(VisibleAnywhere, Category=Weapon)
-	AWeapon* CurrentWeapon;
+	TObjectPtr<AWeapon> CurrentWeapon;
 	
 protected:
 	UPROPERTY(VisibleAnywhere, Category=State, Replicated)
