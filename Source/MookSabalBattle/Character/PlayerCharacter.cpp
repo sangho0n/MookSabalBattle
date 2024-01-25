@@ -520,7 +520,7 @@ void APlayerCharacter::Shoot_Multicast_Implementation()
 	auto Gun = Cast<AGun>(CurrentWeapon);
 	if(!Gun->CanFire(this)) return;
 	
-	if(IsLocallyControlled())
+	if(IsLocallyControlled() && !bInterpingCamPos)
 	{
 		bInterpingCamPos = true;
 		DesiredCamPos = this->CamPosWhenFireGun;
