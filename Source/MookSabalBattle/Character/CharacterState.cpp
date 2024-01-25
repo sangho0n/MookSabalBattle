@@ -3,6 +3,7 @@
 
 #include "CharacterState.h"
 
+#include "PlayerCharacter.h"
 #include "Containers/StackTracker.h"
 #include "Net/UnrealNetwork.h"
 #include "Serialization/ArchiveStackTrace.h"
@@ -17,6 +18,7 @@ ACharacterState::ACharacterState()
 	bIsDead = false;
 	bIsEquipped = false;
 	bIsRedTeam = false;
+	bUseCustomPlayerNames = true;
 }
 
 void ACharacterState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -24,6 +26,8 @@ void ACharacterState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ACharacterState, bIsRedTeam);
+	DOREPLIFETIME(ACharacterState, KillCount);
+	DOREPLIFETIME(ACharacterState, DeathCount);
 }
 
 
@@ -35,14 +39,38 @@ void ACharacterState::BeginPlay()
 	HP = MaxHP;
 	bIsAttacking = false;
 	bIsReloading = false;
+	KillCount = 0;
+	DeathCount = 0;
 }
 
+void ACharacterState::Reset()
+{
+	Super::Reset();
+
+	HP = MaxHP;
+	bIsEquippable = false;
+	bIsAttacking = false;
+	bIsReloading = false;
+	bIsDead = false;
+	bIsEquipped = false;
+	OnHPChanges.Broadcast(GetHP());
+}
+
+
 // only called on Server
-void ACharacterState::ApplyDamage(float damage)
+void ACharacterState::ApplyDamage(float damage, AActor* Causer)
 {
 	//if(!GetOwner()->HasAuthority()) return;
 	MulticastDamage(damage);
-	if(GetHP() < KINDA_SMALL_NUMBER) OnHPIsZero.Broadcast();
+	if(GetHP() < KINDA_SMALL_NUMBER)
+	{
+		OnHPIsZero.Broadcast();
+		if(Causer->IsA(APlayerCharacter::StaticClass()))
+		{
+			auto CauserCharacterState = Cast<APlayerCharacter>(Causer)->GetCharacterStateComponent();
+			CauserCharacterState->KillCount++;
+		}
+	}
 }
 
 void ACharacterState::MulticastDamage_Implementation(float damage)

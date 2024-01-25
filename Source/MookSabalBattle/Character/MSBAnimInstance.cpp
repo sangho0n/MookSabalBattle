@@ -57,68 +57,63 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if(!IsValid(OwnedCharacter)) return;
 	if(!IsValid(OwnedCharacter->GetCharacterStateComponent())) return;
 
-	// TODO : below if statement will be deleted after server implemented.
-	// for now, just place some other characters in scene for debugging
-	if(nullptr != (OwnedCharacter))
-	{
-		auto Velocity = OwnedCharacter->GetVelocity(); // speed vector in WS
-		auto state = OwnedCharacter->GetCharacterStateComponent();
-		auto actorRotation = OwnedCharacter->GetActorRotation();
-		auto controlRotation = OwnedCharacter->GetControlRotation();
-		auto deltaRotation = controlRotation - actorRotation;
-		auto actorForward = OwnedCharacter->GetActorForwardVector();
-		
-		CurrentPawnSpeed = Velocity.Size();
-		bInAir = OwnedCharacter->GetMovementComponent()->IsFalling();
-		CurrentMode = state->CurrentMode;
-		bIsAttacking = state->IsAttacking();
-		bIsReload = state->IsReloading();
-		bIsDead = state->IsDead();
-
-		if(nullptr != OwnedCharacter->CurrentWeapon && OwnedCharacter->CurrentWeapon->IsA(AMelee::StaticClass()))
-		{
-			CurrentMelee = Cast<AMelee>(OwnedCharacter->CurrentWeapon);
-			SwingPlayRate = CurrentMelee->AttackSpeed;
-		}
-
-		if(CurrentMode == CharacterMode::GUN)
-		{
-			if(CurrentPawnSpeed < 0.1)
-			{
-				// use aim offset
-				OwnedCharacter->bUseControllerRotationYaw=false;
-				auto interpRotation = FRotator(Pitch, DeltaYaw, 0);
-				interpRotation = FMath::RInterpTo(interpRotation, deltaRotation, DeltaSeconds, 15.0f);
-				DeltaYaw = FMath::Clamp(interpRotation.Yaw, -180.0f, 180.0f);
-				Pitch = FMath::ClampAngle(interpRotation.Pitch, -90.0f, 90.0f);
-
-				if(DeltaYaw > 90.0f)
-				{
-					bIsCW = true;
-					OnOverDeltaOffset.Broadcast();
-				}
-				else if(DeltaYaw < -90.0f)
-				{
-					bIsCW = false;
-					OnOverDeltaOffset.Broadcast();
-				}
-			}
-			else
-			{
-				// use directional move
-				OwnedCharacter->bUseControllerRotationYaw=true;
-				Velocity = FVector(Velocity.X, Velocity.Y, 0); Velocity.Normalize();
-				if(FVector::CrossProduct(Velocity, actorForward).Z < 0.0f)
-					MovingDirection = FMath::RadiansToDegrees(
-						FMath::Acos(FVector::DotProduct(Velocity, actorForward)));
-				else
-					MovingDirection = -FMath::RadiansToDegrees(
-						FMath::Acos(FVector::DotProduct(Velocity, actorForward)));
-			}
-		}
+	auto Velocity = OwnedCharacter->GetVelocity(); // speed vector in WS
+	auto state = OwnedCharacter->GetCharacterStateComponent();
+	auto actorRotation = OwnedCharacter->GetActorRotation();
+	auto controlRotation = OwnedCharacter->GetControlRotation();
+	auto deltaRotation = controlRotation - actorRotation;
+	auto actorForward = OwnedCharacter->GetActorForwardVector();
 	
-		if(!bInAir) SetIntended(false);
+	CurrentPawnSpeed = Velocity.Size();
+	bInAir = OwnedCharacter->GetMovementComponent()->IsFalling();
+	CurrentMode = state->CurrentMode;
+	bIsAttacking = state->IsAttacking();
+	bIsReload = state->IsReloading();
+	bIsDead = state->IsDead();
+
+	if(nullptr != OwnedCharacter->CurrentWeapon && OwnedCharacter->CurrentWeapon->IsA(AMelee::StaticClass()))
+	{
+		CurrentMelee = Cast<AMelee>(OwnedCharacter->CurrentWeapon);
+		SwingPlayRate = CurrentMelee->AttackSpeed;
 	}
+
+	if(CurrentMode == CharacterMode::GUN)
+	{
+		if(CurrentPawnSpeed < 0.1)
+		{
+			// use aim offset
+			OwnedCharacter->bUseControllerRotationYaw=false;
+			auto interpRotation = FRotator(Pitch, DeltaYaw, 0);
+			interpRotation = FMath::RInterpTo(interpRotation, deltaRotation, DeltaSeconds, 15.0f);
+			DeltaYaw = FMath::Clamp(interpRotation.Yaw, -180.0f, 180.0f);
+			Pitch = FMath::ClampAngle(interpRotation.Pitch, -90.0f, 90.0f);
+
+			if(DeltaYaw > 90.0f)
+			{
+				bIsCW = true;
+				OnOverDeltaOffset.Broadcast();
+			}
+			else if(DeltaYaw < -90.0f)
+			{
+				bIsCW = false;
+				OnOverDeltaOffset.Broadcast();
+			}
+		}
+		else
+		{
+			// use directional move
+			OwnedCharacter->bUseControllerRotationYaw=true;
+			Velocity = FVector(Velocity.X, Velocity.Y, 0); Velocity.Normalize();
+			if(FVector::CrossProduct(Velocity, actorForward).Z < 0.0f)
+				MovingDirection = FMath::RadiansToDegrees(
+					FMath::Acos(FVector::DotProduct(Velocity, actorForward)));
+			else
+				MovingDirection = -FMath::RadiansToDegrees(
+					FMath::Acos(FVector::DotProduct(Velocity, actorForward)));
+		}
+	}
+
+	if(!bInAir) SetIntended(false);
 }
 
 bool UMSBAnimInstance::SetIntended(bool isIntended)

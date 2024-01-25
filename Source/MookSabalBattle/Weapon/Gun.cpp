@@ -47,10 +47,10 @@ void AGun::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProp
 void AGun::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	Bullets = 45;
+	Bullets = 20;
 	GunAttackLength = 7000.0f;
 	GunAttackSpreadAngle = 3.0f;
-	Damage = 3.0f;
+	Damage = 10.0f;
 }
 
 void AGun::FireParticleOnMuzzle_Server_Implementation()

@@ -31,8 +31,9 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+public:
+	virtual void Reset() override;
 
-public:	
 	bool bIsEquipped;
 
 	UPROPERTY(EditAnywhere, Category=Status)
@@ -57,15 +58,22 @@ public:
 	const float MaxHP = 200.0f;
 
 private:
-	UPROPERTY(Replicated, EditAnywhere, Category=Status)
+	UPROPERTY(BlueprintReadOnly, Replicated, EditAnywhere, Category=Status, meta=(AllowPrivateAccess=true))
 	bool bIsRedTeam;
+
 public:
+	UPROPERTY(BlueprintReadOnly, Replicated, EditAnywhere, Category=Status)
+	int32 KillCount;
+
+	UPROPERTY(BlueprintReadOnly, Replicated, EditAnywhere, Category=Status)
+	int32 DeathCount;
+
 	FOnHPIsZero OnHPIsZero;
 	
 	FOnHPChanges OnHPChanges;
 
 	UFUNCTION()
-	void ApplyDamage(float damage);
+	void ApplyDamage(float damage, AActor* Causer);
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastDamage(float damage);
 

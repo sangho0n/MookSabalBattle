@@ -3,6 +3,8 @@
 
 #include "LobbyUI.h"
 
+#include "MookSabalBattle/SessionManip/NullSessionSubsystem.h"
+
 void ULobbyUI::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -47,6 +49,9 @@ void ULobbyUI::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 	SelectedSession.Reset();
+
+	auto SessionSubsystem = GetGameInstance()->GetSubsystem<UNullSessionSubsystem>();
+	SessionSubsystem->OnInvalidNickname.BindUObject(this, &ULobbyUI::NotifyInvalidNickname);
 }
 
 void ULobbyUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -71,8 +76,8 @@ void ULobbyUI::ShowOnHostCanvas()
 
 void ULobbyUI::TryHost(FString NickName, int32 MaxPlayerCount, bool bUseLan)
 {
-	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
-	GameInstance->HostGame(NickName, MaxPlayerCount, bUseLan);
+	auto SessionSubsystem = GetGameInstance()->GetSubsystem<UNullSessionSubsystem>();
+	SessionSubsystem->HostGame(NickName, MaxPlayerCount, bUseLan);
 }
 
 void ULobbyUI::JoinPressed()
@@ -130,8 +135,7 @@ void ULobbyUI::ConfirmHostPressed()
 	if(NickName.Len() > 10)
 	{
 		bIgnore = true;
-		Text_NickNameSrv->SetText(FText::FromString(TEXT("Nickname cannot over 10 characters")));
-		Text_NickNameSrv->SetForegroundColor(FColor::Red);
+		Text_NickNameSrv->SetError(FText::FromString(TEXT("Nickname cannot over 10 characters")));
 	}
 	if(!bUseLan)
 	{
@@ -149,9 +153,8 @@ void ULobbyUI::ConfirmHostPressed()
 
 void ULobbyUI::TryJoin(FString NickName)
 {
-	// TODO gameInstance에 세션 참가 메서드 작성 후 요청
-	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
-	GameInstance->JoinSession(NickName, SelectedSession.ToWeakPtr());
+	auto SessionSubsystem = GetGameInstance()->GetSubsystem<UNullSessionSubsystem>();
+	SessionSubsystem->JoinSession(NickName, SelectedSession.ToWeakPtr());
 }
 
 void ULobbyUI::BackPressed()
@@ -179,9 +182,9 @@ void ULobbyUI::RefreshServerBrowser()
 		bUseLan = true;
 	}
 	
-	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
-	GameInstance->TryFindSession(bUseLan);
-	GameInstance->OnSessionSearchCompleteWithResults.BindUObject(this, &ULobbyUI::SetSessionSearchResults);
+	auto SessionSubsystem = GetGameInstance()->GetSubsystem<UNullSessionSubsystem>();
+	SessionSubsystem->TryFindSession(bUseLan);
+	SessionSubsystem->OnSessionSearchCompleteWithResults.BindUObject(this, &ULobbyUI::SetSessionSearchResults);
 }
 
 void ULobbyUI::SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& SessionSearchResults, bool bSucceed)
@@ -189,13 +192,14 @@ void ULobbyUI::SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& Sessi
 	if(bSucceed)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue,
-					TEXT("세션 찾기 성공함"));
+					FString::Printf(TEXT("세션 찾기 성공함 : %d개"), SessionSearchResults.Num()));
 
 		for(const FOnlineSessionSearchResult& SessionSearchResult : SessionSearchResults)
 		{
 			if(IsValid(ServerBrowserItemRef) && SessionSearchResult.Session.NumOpenPublicConnections > 0)
 			{
-				UServerBrowserItemUI* NewWidget = CreateWidget<UServerBrowserItemUI>(GetWorld(), ServerBrowserItemRef);NewWidget->AddToViewport();
+				UServerBrowserItemUI* NewWidget = CreateWidget<UServerBrowserItemUI>(GetWorld(), ServerBrowserItemRef);
+				NewWidget->AddToViewport();
 				ScrollBox_ServerBrowserList->AddChild(NewWidget);
 				NewWidget->OnSessionSelected.AddUObject(this, &ULobbyUI::ResetSessionCheckState);
 				NewWidget->SetInitialData(SessionSearchResult.Session.SessionSettings.Settings.FindRef("SessionName").Data.ToString(), SessionSearchResult);
@@ -207,8 +211,8 @@ void ULobbyUI::SetSessionSearchResults(TArray<FOnlineSessionSearchResult>& Sessi
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue,
 					TEXT("세션 찾기 실패"));
 	}
-	auto GameInstance = Cast<UMSBGameInstance>(GetGameInstance());
-	GameInstance->OnSessionSearchCompleteWithResults.Unbind();
+	auto SessionSubsystem = GetGameInstance()->GetSubsystem<UNullSessionSubsystem>();
+	SessionSubsystem->OnSessionSearchCompleteWithResults.Unbind();
 }
 
 
@@ -234,5 +238,10 @@ void ULobbyUI::ResetSessionCheckState(TSharedPtr<FOnlineSessionSearchResult> New
 
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Black,
 				FString::Printf(TEXT("현재 선택된 세션 이름 %s"), *SelectedSession.Get()->Session.SessionSettings.Settings.FindRef("SessionName").Data.ToString()));
+}
+
+void ULobbyUI::NotifyInvalidNickname()
+{
+	Text_NickNameCL->SetError(FText::FromString(TEXT("This Nickname is already in use")));
 }
 

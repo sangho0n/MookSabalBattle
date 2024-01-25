@@ -13,13 +13,17 @@
 
 #include "DrawDebugHelpers.h"
 #include "LocalPlayerController.h"
+#include "Blueprint/UserWidgetBlueprint.h"
 #include "Engine/DamageEvents.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/Engine.h"
 #include "MookSabalBattle/MookSabalBattleGameModeBase.h"
 #include "MookSabalBattle/MSBGameInstance.h"
+#include "MookSabalBattle/MSBGameStateBase.h"
+#include "MookSabalBattle/SessionManip/NullSessionSubsystem.h"
 
 int APlayerCharacter::InitFinishedPlayer = 0;
+FCriticalSection APlayerCharacter::CS_InitFinishedPlayer = FCriticalSection();
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -106,7 +110,7 @@ void APlayerCharacter::PostInitializeComponents()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	if(IsLocallyControlled()) Cast<UMSBGameInstance>(GetGameInstance())->OnLoading.Execute();
+	if(IsLocallyControlled()) Cast<UMSBGameInstance>(GetGameInstance())->StartLoading();
 	GetMesh()->SetVisibility(false);
 
 	// wait for some seconds for replications
@@ -134,8 +138,35 @@ void APlayerCharacter::AfterReplication()
 	}
 }
 
+void APlayerCharacter::Respawn()
+{
+	GetMesh()->SetVisibility(true);
+	CharacterState->Reset();
+	ChangeCharacterMode(CharacterMode::NON_EQUIPPED);
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn"));
+	GetMesh()->SetCollisionProfileName(TEXT("Humanoid"));
+	
+	if(IsLocallyControlled())
+	{
+		auto LocalController = Cast<ALocalPlayerController>(GetController());
+		LocalController->InitPlayer();
+		LocalController->EnableInput(LocalController);
+	}
+
+	// respawn at its own PlayerStart
+	if(HasAuthority())
+	{
+		auto GameMode = Cast<AMookSabalBattleGameModeBase>(GetWorld()->GetAuthGameMode());
+		APlayerStart* PlayerStart = Cast<APlayerStart>(GameMode->ChoosePlayerStart(GetController()));
+		SetActorLocationAndRotation(
+			PlayerStart->GetActorLocation(),
+			PlayerStart->GetActorRotation()
+		);
+	}
+}
+
 // NetMulticast RPC (called on both listen server and client)
-void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool bIsRedTeam)
+void APlayerCharacter::InitPlayer_Implementation(bool bIsRedTeam)
 {
 	GetMesh()->SetVisibility(true);
 	CharacterState = Cast<ACharacterState>(GetPlayerState());
@@ -146,7 +177,6 @@ void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool b
 	if(HasAuthority())
 	{
 		CharacterState->OnHPIsZero.AddDynamic(this, &APlayerCharacter::Die_Server);
-		CharacterState->SetPlayerName(UserName);
 		CharacterState->SetTeam(bIsRedTeam);
 		CharacterState->SetDead(false);
 	}
@@ -157,11 +187,12 @@ void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool b
 	if(IsLocallyControlled())
 	{
 		Cast<ALocalPlayerController>(GetController())->InitPlayer();
-		Cast<UMSBGameInstance>(GetGameInstance())->StopLoading.Execute();
+		Cast<UMSBGameInstance>(GetGameInstance())->EndLoading();
 	}
 
+	CS_InitFinishedPlayer.Lock();
 	InitFinishedPlayer++;
-	if(GameInstance->MaxPlayer == InitFinishedPlayer)
+	if(InitFinishedPlayer == GameInstance->GetSubsystem<UNullSessionSubsystem>()->MaxPlayer)
 	{
 		// wait for some seconds for bIsRedTeam replication
 		FTimerHandle TimerHandle;
@@ -169,6 +200,7 @@ void APlayerCharacter::InitPlayer_Implementation(const FString &UserName, bool b
 		FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &APlayerCharacter::SetPlayerOutline);
 		GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, DelayInSeconds, false);
 	}
+	CS_InitFinishedPlayer.Unlock();
 }
 
 void APlayerCharacter::InitWidgets_Implementation()
@@ -182,6 +214,14 @@ void APlayerCharacter::InitWidgets_Implementation()
 			InGameUI->AddToViewport();
 			MSB_LOG_LOCATION(Warning);
 			InGameUI->BindCharacterStat(CharacterState);
+			Cast<AMSBGameStateBase>(GetWorld()->GetGameState())->PlayGame();
+		}
+
+		if(IsValid(EndGameUIClass))
+		{
+			EndGameUI = CreateWidget(GetWorld(), EndGameUIClass);
+			EndGameUI->AddToViewport();
+			EndGameUI->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
 
@@ -201,11 +241,21 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 void APlayerCharacter::SetPlayerOutline()
 {
 	TArray<TObjectPtr<APlayerState>> Players = GetWorld()->GetGameState()->PlayerArray;
-	APlayerCharacter* LocalPlayer = Cast<APlayerCharacter>(Players[0]->GetPawn());
+	APlayerCharacter* LocalPlayer = nullptr;
 
-	for(int i = 1; i < Players.Num(); i++)
+	for(auto Player : Players)
+	{
+		if(Player->GetPawn()->IsLocallyControlled())
+		{
+			LocalPlayer = Cast<APlayerCharacter>(Player->GetPawn());
+		}
+	}
+
+	for(int i = 0; i < Players.Num(); i++)
 	{
 		APlayerCharacter* Character = Cast<APlayerCharacter>(Players[i]->GetPawn());
+		if(Character->IsLocallyControlled()) continue;
+		
 		Character->GetMesh()->SetRenderCustomDepth(true);
 		if(LocalPlayer->IsSameTeam(Character))
 		{
@@ -470,7 +520,7 @@ void APlayerCharacter::Shoot_Multicast_Implementation()
 	auto Gun = Cast<AGun>(CurrentWeapon);
 	if(!Gun->CanFire(this)) return;
 	
-	if(IsLocallyControlled())
+	if(IsLocallyControlled() && !bInterpingCamPos)
 	{
 		bInterpingCamPos = true;
 		DesiredCamPos = this->CamPosWhenFireGun;
@@ -746,20 +796,23 @@ void APlayerCharacter::OnCharacterEndOverlapWithCharacter(UPrimitiveComponent* O
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	DamageAmount = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	CharacterState->ApplyDamage(DamageAmount);
+	CharacterState->ApplyDamage(DamageAmount, DamageCauser);
 	return DamageAmount;
 }
 
 // Server RPC
 void APlayerCharacter::Die_Server_Implementation()
 {
-	GEngine->AddOnScreenDebugMessage(5, 5.0f, FColor::Red, FString::Printf(TEXT("죽음 서버 rpc")));
+	auto GameState = Cast<AMSBGameStateBase>(GetWorld()->GetGameState());
+	GEngine->AddOnScreenDebugMessage(7, 5.0f, FColor::Red, FString::Printf(TEXT("죽음 서버 rpc")));
 	
 	if(nullptr != CurrentWeapon)
 	{
 		CurrentWeapon->Destroy();
 	}
-	CharacterState->OnHPIsZero.Clear();
+	GameState->AdjustScore(this);
+	CharacterState->DeathCount++;
+	
 	Die_Multicast();
 }
 void APlayerCharacter::Die_Multicast_Implementation()
@@ -775,7 +828,18 @@ void APlayerCharacter::Die_Multicast_Implementation()
 	{
 		CurrentWeapon->Destroy();
 	}
-	OnGetDamage.Clear();
+	//OnGetDamage.Clear();
+
+	if(IsLocallyControlled())
+	{
+		GetLocalViewingPlayerController()->DisableInput(GetLocalViewingPlayerController());
+	}
+
+	FTimerHandle TimerHandle;
+	float DelayInSeconds = 5.0f;
+	FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &APlayerCharacter::Respawn);
+	GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate, DelayInSeconds, false);
+	// TODO : blink mesh until to be respawned
 }
 
 /**

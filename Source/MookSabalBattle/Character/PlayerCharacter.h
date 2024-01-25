@@ -51,7 +51,7 @@ private:
 
 public:
 	UPROPERTY(VisibleAnywhere, Category=Weapon)
-	AWeapon* CurrentWeapon;
+	TObjectPtr<AWeapon> CurrentWeapon;
 	
 protected:
 	UPROPERTY(VisibleAnywhere, Category=State, Replicated)
@@ -71,6 +71,10 @@ private:
 
 	TSubclassOf<UInGameUI> InGameUIClass;
 	UInGameUI* InGameUI;
+	
+	UPROPERTY(BlueprintReadWrite, meta=(AllowPrivateAccess=true))
+	TSubclassOf<UUserWidget> EndGameUIClass;
+	UUserWidget* EndGameUI;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -218,11 +222,18 @@ private:
 	void AfterReplication();
 
 	static int InitFinishedPlayer;
+	static FCriticalSection CS_InitFinishedPlayer;
 
 	/* static */ void SetPlayerOutline();
+
+	UFUNCTION(BlueprintCallable)
+	void Respawn();
+
+
+	
 public:
 	UFUNCTION(NetMulticast, Reliable)
-	void InitPlayer(const FString &UserName, bool bIsRedTeam);
+	void InitPlayer(const bool bIsRedTeam);
 	UFUNCTION(BlueprintNativeEvent)
 	void InitWidgets();
 };
