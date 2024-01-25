@@ -43,7 +43,7 @@ public:
 	FOnScoreChanged OnScoreChanged;
 
 private:
-	const float GamePlaySeconds = 20;
+	const float GamePlaySeconds = 60 * 3;
 	UPROPERTY(Replicated)
 	float AccGameSeconds;
 	bool bIsGameStarted;
