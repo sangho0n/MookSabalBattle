@@ -2,6 +2,7 @@
 
 
 #include "Weapon.h"
+#include "MookSabalBattle/Character/PlayerCharacter.h"
 
 // Sets default values
 AWeapon::AWeapon()
@@ -36,36 +37,6 @@ void AWeapon::PostInitializeComponents()
 	SM_Weapon->SetCollisionProfileName(TEXT("IgnoreOnlyPawn"));
 	SM_Weapon->SetUseCCD(true);
 	Collider->SetCollisionProfileName(TEXT("Weapon"));
-	Collider->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnCharacterBeginOverlap);
-	Collider->OnComponentEndOverlap.AddDynamic(this, &AWeapon::OnCharacterEndOverlap);
-}
-
-
-void AWeapon::OnCharacterBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if(OtherActor->IsA(APlayerCharacter::StaticClass()))
-	{
-		auto Character = Cast<APlayerCharacter>(OtherActor);
-		if(Character->IsLocallyControlled())
-		{
-			// show equip UI
-			Character->OnWeaponStartOverlap_Server(this);
-		}
-	}
-}
-
-void AWeapon::OnCharacterEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	if(OtherActor->IsA(APlayerCharacter::StaticClass()))
-	{
-		auto Character = Cast<APlayerCharacter>(OtherActor);
-		if(Character->IsLocallyControlled())
-		{
-			// hide equip UI
-			MSB_LOG(Warning, TEXT("end"));
-			Character->OnWeaponEndOverlap_Server();
-		}
-	}
 }
 
 void AWeapon::Destroyed()
@@ -73,7 +44,7 @@ void AWeapon::Destroyed()
 	Super::Destroyed();
 }
 
-UStaticMeshComponent* AWeapon::ReadyToEquip(APlayerCharacter* Player)
+UStaticMeshComponent* AWeapon::ReadyToEquip()
 {
 	bIsPossessed = true;
 	

@@ -4,7 +4,6 @@
 
 #include "../MookSabalBattle.h"
 #include "GameFramework/Actor.h"
-#include "MookSabalBattle/Character/PlayerCharacter.h"
 #include "Weapon.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerPicked);
@@ -34,15 +33,7 @@ protected:
 	virtual void Destroyed() override;
 public:	
 
-	UFUNCTION()
-	virtual void OnCharacterBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	
-	UFUNCTION()
-	virtual void OnCharacterEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	UStaticMeshComponent* ReadyToEquip(APlayerCharacter* Player);
+	UStaticMeshComponent* ReadyToEquip();
 
 	float Damage;
 

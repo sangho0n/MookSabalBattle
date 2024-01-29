@@ -5,6 +5,7 @@
 #include "../MookSabalBattle.h"
 #include "Weapon.h"
 #include "Kismet/GameplayStatics.h"
+#include "MookSabalBattle/Character/PlayerCharacter.h"
 #include "Gun.generated.h"
 
 /**

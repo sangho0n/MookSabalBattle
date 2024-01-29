@@ -9,7 +9,6 @@
 #include "MookSabalBattle/Weapon/Melee.h"
 #include "MookSabalBattle/Weapon/Pick.h"
 #include "MookSabalBattle/Weapon/Sword.h"
-#include "MookSabalBattle/Weapon/Weapon.h"
 
 #include "DrawDebugHelpers.h"
 #include "LocalPlayerController.h"
@@ -88,6 +87,9 @@ APlayerCharacter::APlayerCharacter()
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn"));
 	GetMesh()->SetCollisionProfileName(TEXT("Humanoid"));
 	OverlappedAlly = {};
+
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnWeaponBeginOverlap);
+	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnWeaponEndOverlap);
 }
 
 void APlayerCharacter::PostInitializeComponents()
@@ -388,14 +390,14 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 	}
 }
 
-void APlayerCharacter::EquipWeapon_Server_Implementation(AWeapon* NewWeapon)
+void APlayerCharacter::EquipWeapon_Server_Implementation()
 {
 	// if Already possessed by other character or not available
-	MSB_LOG(Warning,TEXT("b is possesse %s, is valid %s, is equippable %s")
-		,NewWeapon->bIsPossessed?TEXT("true"):TEXT("false")
-		,IsValid(NewWeapon)?TEXT("true"):TEXT("false"),
+	MSB_LOG(Warning,TEXT("is possesse %s, is valid %s, is equippable %s")
+		,OverlappedWeapon->bIsPossessed?TEXT("true"):TEXT("false")
+		,IsValid(OverlappedWeapon)?TEXT("true"):TEXT("false"),
 		CharacterState->IsEquippable()?TEXT("true"):TEXT("false"));
-	if(NewWeapon->bIsPossessed || !IsValid(NewWeapon) || !CharacterState->IsEquippable()) return;
+	if(OverlappedWeapon->bIsPossessed || !IsValid(OverlappedWeapon) || !CharacterState->IsEquippable()) return;
 
 	EquipWeapon_Multicast();
 }
@@ -408,7 +410,7 @@ void APlayerCharacter::EquipWeapon_Multicast_Implementation()
 		CurrentWeapon->Destroy();
 	}
 	CurrentWeapon = OverlappedWeapon;
-	auto weaponMesh = CurrentWeapon->ReadyToEquip(this);
+	auto weaponMesh = CurrentWeapon->ReadyToEquip();
 
 	if(CurrentWeapon->IsA(AGun::StaticClass()))
 	{
@@ -458,31 +460,30 @@ void APlayerCharacter::EquipWeapon_Multicast_Implementation()
 	CurrentWeapon->SetOwner(this);
 }
 
-void APlayerCharacter::OnWeaponStartOverlap_Server_Implementation(AWeapon* OverlappedWeapon_)
+// called on every endpoint
+void APlayerCharacter::OnWeaponBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	OnWeaponStartOverlap_Multicast(OverlappedWeapon_);
-}
+	if(!OtherActor->IsA(AWeapon::StaticClass())) return;
 
-void APlayerCharacter::OnWeaponStartOverlap_Multicast_Implementation(AWeapon* OverlappedWeapon_)
-{
+	auto Weapon = Cast<AWeapon>(OtherActor);
+	
 	CharacterState->SetEquippable(true);
-	this->OverlappedWeapon = OverlappedWeapon_;
+	this->OverlappedWeapon = Weapon;
 	if(IsLocallyControlled())
 		InGameUI->SetEquipVisible();
 }
 
-void APlayerCharacter::OnWeaponEndOverlap_Server_Implementation()
+void APlayerCharacter::OnWeaponEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	OnWeaponEndOverlap_Multicast();
-}
+	if(!OtherActor->IsA(AWeapon::StaticClass())) return;
 
-void APlayerCharacter::OnWeaponEndOverlap_Multicast_Implementation()
-{
+	OverlappedWeapon = nullptr;
 	CharacterState->SetEquippable(false);
 	if(IsLocallyControlled())
 		InGameUI->SetEquipInvisible();
 }
-
 
 ACharacterState* APlayerCharacter::GetCharacterStateComponent()
 {

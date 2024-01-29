@@ -6,6 +6,7 @@
 #include "MookSabalBattle/Character/CharacterState.h"
 #include "GameFramework/Character.h"
 #include "MookSabalBattle/UI/InGameUI.h"
+#include "MookSabalBattle/Weapon/Weapon.h"
 #include "PlayerCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGetDamage, FName, BoneName, FVector, HitFrom);
@@ -64,7 +65,7 @@ public:
 	void Turn(float NewAxisValue);
 	
 	UPROPERTY(VisibleAnywhere, Category=Weapon)
-	AWeapon* OverlappedWeapon;
+	TObjectPtr<AWeapon> OverlappedWeapon;
 	
 private:
 	void ChangeCharacterMode(CharacterMode NewMode);
@@ -81,19 +82,18 @@ public:
 	ACharacterState* GetCharacterStateComponent();
 	
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void EquipWeapon_Server(AWeapon* NewWeapon);
+	void EquipWeapon_Server();
 	UFUNCTION(NetMulticast, Reliable)
 	void EquipWeapon_Multicast();
 	
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void OnWeaponStartOverlap_Server(AWeapon* OverlappedWeapon_);
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
-	void OnWeaponStartOverlap_Multicast(AWeapon* OverlappedWeapon_);
+	UFUNCTION(BlueprintCallable)
+	virtual void OnWeaponBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void OnWeaponEndOverlap_Server();
-	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
-	void OnWeaponEndOverlap_Multicast();
+	UFUNCTION(BlueprintCallable)
+	virtual void OnWeaponEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 
 private:
 	const FVector CamPosWhenGunMode = FVector(0.0f, 50.0f, 50.0f);

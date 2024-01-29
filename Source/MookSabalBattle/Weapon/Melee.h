@@ -4,6 +4,7 @@
 
 #include "../MookSabalBattle.h"
 #include "Weapon.h"
+#include "MookSabalBattle/Character/PlayerCharacter.h"
 #include "Melee.generated.h"
 
 /**

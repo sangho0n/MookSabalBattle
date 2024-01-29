@@ -129,11 +129,11 @@ void ALocalPlayerController::Equip()
 
 		if(!state->bIsEquipped)
 		{
-			character->EquipWeapon_Server(character->OverlappedWeapon);
+			character->EquipWeapon_Server();
 		}
 		else // equipped
 		{
-			character->EquipWeapon_Server(character->OverlappedWeapon);
+			character->EquipWeapon_Server();
 		}
 	}
 	// We could write some code below here when we tend to implement ridings or sth else
