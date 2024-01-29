@@ -14,7 +14,7 @@
   <p align="center">
     멀티플레이 TPS 게임
     <br />
-    with listen server(미완성)
+    with listen server(개선중)
     <br />
     <br />
 <!--     <a href="">데모 영상 보기(준비중)</a> ·
@@ -25,7 +25,7 @@
 # About
 UE 5.2 버전을 사용하여 만든 1인 프로젝트 멀티플레이 TPS 게임의 원격저장소입니다.
 
-제작 기간은 2023. 8. 7 ~ 입니다. (진행중)
+제작 기간은 2023. 8. 7 ~ 입니다.
 
 브랜치명 및 커밋명은 [다음](https://github.com/sangho0n/MookSabalBattle/issues/1)을 따라 작성하였습니다. 또한 각 브랜치별 구현 예정 사항을 깃헙 이슈를 이용하여 등록, 관리하였습니다.
 
@@ -121,7 +121,7 @@ void APlayerCharacter::Hit(int32 CurrCombo)
 
 ### 방 찾기
 초기 로비 창에서 Join 버튼을 누르면 자동으로 검색이 이루어진다. 자신이 원하는 방을 선택할 수 있으며, 기존에 이미 선택했던 방이 있을 때 새로운 방을 선택하면 자동으로 기존 방에 대한 선택이 해제된다.
-세션 정보 중 세션 호스트의 이름, 현재원/정원가 화면에 노출된다.
+세션 정보 중 [호스트의 이름, 현재원/정원]이 화면에 노출된다.
 
 Refresh 버튼을 통해 다시 검색할 수 있다.
 ![image](https://github.com/sangho0n/MookSabalBattle/assets/54069713/648a2df0-3f61-40ce-8094-6a27a677cf38)
@@ -129,12 +129,16 @@ Refresh 버튼을 통해 다시 검색할 수 있다.
 
 ### 방 참가하기
 원하는 방을 선택한 후 닉네임을 입력하고 Confirm 버튼을 누르면 방에 참가 요청을 보낼 수 있다. 유효한 요청일 때 세션 참가가 이루어지며, 정원이 다 찼을 경우 게임이 시작된다.
+- 유효하지 않은 요청 유형
+	- 닉네임이 10자를 넘어가는 경우
+	 - 중복된 닉네임을 가진 유저가 이미 세션에 참가하고 있는 경우
+	 - 이미 시작된 세션인 경우
 ![image](https://github.com/sangho0n/MookSabalBattle/assets/54069713/39e8b8c0-99e2-4a97-9aab-92a145152436)
 
+### 세션 종료
+호스트가 설정한 방의 참가 인원이 채워지면 게임이 시작된다.
+일정 시간 후 게임이 종료되며, 승패여부와 각 플레이어의 세부 정보가 화면에 표시된다.
 
-
-https://github.com/sangho0n/MookSabalBattle/assets/54069713/424577d9-0df0-4782-9212-284c260ce8c3
-
-
-
+게임 결과가 고지된 후 일정 시간이 지나면 로비화면으로 되돌아온다.
+![GameResult](https://github.com/sangho0n/MookSabalBattle/assets/54069713/3b5ebdb8-e62c-45c1-82f4-d17ce61c9f7c)
 
