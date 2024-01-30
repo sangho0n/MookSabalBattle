@@ -37,7 +37,7 @@ void RegisterNicknameServiceImpl::Init(const FString PlayerNickname, FString Ser
 grpc::Status RegisterNicknameServiceImpl::RegisterNickname(grpc::ServerContext* context, const NickName* request, RegisterResponse* response)
 {
 	// get nickname map
-	FString Nickname = FString(request->value().c_str());
+	FString Nickname = FString(FUTF8ToTCHAR(request->value().c_str()));
 	
 	// find duplicate nickname
 	if(PlayerNicknames.Contains(Nickname))
