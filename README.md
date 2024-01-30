@@ -17,8 +17,7 @@
     with listen server(개선중)
     <br />
     <br />
-<!--     <a href="">데모 영상 보기(준비중)</a> ·
-    <a href="">화면 설계</a> -->
+<a href="https://drive.google.com/file/d/1oEgK-jrPDGn802M5s4zCV0Jbppc5Ppim/view?usp=sharing">설명 영상 보기</a> 
   </p>
 </div>
 
