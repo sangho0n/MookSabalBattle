@@ -236,6 +236,8 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(APlayerCharacter, CharacterState);
+	DOREPLIFETIME(APlayerCharacter, ActorRotation);
+	DOREPLIFETIME(APlayerCharacter, ControlRotation);
 }
 
 // act like a static method for setting outline of player characters
@@ -332,14 +334,16 @@ void APlayerCharacter::Jump()
 }
 
 
-void APlayerCharacter::LookUp(float NewAxisValue)
+void APlayerCharacter::LookUp_Implementation(float NewAxisValue)
 {
-
+	ControlRotation = GetControlRotation();
+	ActorRotation = GetActorRotation();
 }
 
-void APlayerCharacter::Turn(float NewAxisValue)
+void APlayerCharacter::Turn_Implementation(float NewAxisValue)
 {
-
+	ControlRotation = GetControlRotation();
+	ActorRotation = GetActorRotation();
 }
 
 void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
@@ -372,7 +376,7 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		// Don't rotate when the controller rotates. Let that just affect the camera.
 		this->bUseControllerRotationPitch = false;
 		this->bUseControllerRotationRoll = false;
-		this->bUseControllerRotationYaw = false;
+		this->bUseControllerRotationYaw = true;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		if(!IsLocallyControlled()) return;
 		// 3rd view mouse rotation

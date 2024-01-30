@@ -59,10 +59,6 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	auto Velocity = OwnedCharacter->GetVelocity(); // speed vector in WS
 	auto state = OwnedCharacter->GetCharacterStateComponent();
-	auto actorRotation = OwnedCharacter->GetActorRotation();
-	auto controlRotation = OwnedCharacter->GetControlRotation();
-	auto deltaRotation = controlRotation - actorRotation;
-	auto actorForward = OwnedCharacter->GetActorForwardVector();
 	
 	CurrentPawnSpeed = Velocity.Size();
 	bInAir = OwnedCharacter->GetMovementComponent()->IsFalling();
@@ -79,12 +75,17 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	if(CurrentMode == CharacterMode::GUN)
 	{
+		ActorForwardVector = OwnedCharacter->GetActorForwardVector();
+		
 		if(CurrentPawnSpeed < 0.1)
 		{
 			// use aim offset
 			OwnedCharacter->bUseControllerRotationYaw=false;
+
+			ControlRotation = OwnedCharacter->ControlRotation;
+			ActorRotation = OwnedCharacter->ActorRotation;
 			auto interpRotation = FRotator(Pitch, DeltaYaw, 0);
-			interpRotation = FMath::RInterpTo(interpRotation, deltaRotation, DeltaSeconds, 15.0f);
+			interpRotation = FMath::RInterpTo(interpRotation, ControlRotation - ActorRotation, DeltaSeconds, 15.0f);
 			DeltaYaw = FMath::Clamp(interpRotation.Yaw, -180.0f, 180.0f);
 			Pitch = FMath::ClampAngle(interpRotation.Pitch, -90.0f, 90.0f);
 
@@ -104,12 +105,12 @@ void UMSBAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			// use directional move
 			OwnedCharacter->bUseControllerRotationYaw=true;
 			Velocity = FVector(Velocity.X, Velocity.Y, 0); Velocity.Normalize();
-			if(FVector::CrossProduct(Velocity, actorForward).Z < 0.0f)
+			if(FVector::CrossProduct(Velocity, ActorForwardVector).Z < 0.0f)
 				MovingDirection = FMath::RadiansToDegrees(
-					FMath::Acos(FVector::DotProduct(Velocity, actorForward)));
+					FMath::Acos(FVector::DotProduct(Velocity, ActorForwardVector)));
 			else
 				MovingDirection = -FMath::RadiansToDegrees(
-					FMath::Acos(FVector::DotProduct(Velocity, actorForward)));
+					FMath::Acos(FVector::DotProduct(Velocity, ActorForwardVector)));
 		}
 	}
 
@@ -188,9 +189,8 @@ void UMSBAnimInstance::ResetDelta()
 {
 	DeltaYaw = 0;
 	// set character forward vector to be equal controlling forward vector
-	auto controlRotation = OwnedCharacter->GetControlRotation().Vector();
-	auto controlRotOnXY = FRotator(FVector(controlRotation.X, controlRotation.Y, 0).Rotation());
-	OwnedCharacter->SetActorRotation(controlRotOnXY);
+	auto ControlRotOnXY = FRotator(FVector(ControlRotation.Vector().X, ControlRotation.Vector().Y, 0).Rotation());
+	OwnedCharacter->SetActorRotation(ControlRotOnXY);
 }
 
 void UMSBAnimInstance::PlayRandomDeadAnim()

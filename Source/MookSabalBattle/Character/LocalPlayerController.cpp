@@ -90,13 +90,13 @@ void ALocalPlayerController::MouseVerticalChange(float NewAxisValue)
 	if(!InputEnabled()) return;
 	if(!bIsPossessingPawnInitialized) return;
 	
+	AddPitchInput(NewAxisValue);
 	auto ControllingPawn = GetPawn();
 	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
 		auto character = Cast<APlayerCharacter>(ControllingPawn);
 		character->LookUp(NewAxisValue);
 	}
-	AddPitchInput(NewAxisValue);
 }
 
 void ALocalPlayerController::MouseHorizontalChange(float NewAxisValue)
@@ -104,13 +104,13 @@ void ALocalPlayerController::MouseHorizontalChange(float NewAxisValue)
 	if(!InputEnabled()) return;
 	if(!bIsPossessingPawnInitialized) return;
 	
+	AddYawInput(NewAxisValue);
 	auto ControllingPawn = GetPawn();
 	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
 		auto character = Cast<APlayerCharacter>(ControllingPawn);
 		character->Turn(NewAxisValue);
 	}
-	AddYawInput(NewAxisValue);
 }
 
 void ALocalPlayerController::Equip()

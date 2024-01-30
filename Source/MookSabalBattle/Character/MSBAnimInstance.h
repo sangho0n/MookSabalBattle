@@ -56,12 +56,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	float MaxWalkSpeed;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
-	float DeltaYaw;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
-	float Pitch;
-
 	UPROPERTY(BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
 	APlayerCharacter* OwnedCharacter;
 	
@@ -94,6 +88,14 @@ private:
 	const int32 MaxCombo = 3;
 
 	bool NextComboInputOn;
+	
+	FRotator ControlRotation;
+	FRotator ActorRotation;
+	FVector ActorForwardVector;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
+	float DeltaYaw;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, meta=(AllowPrivateAccess=true))
+	float Pitch;
 
 	FName GetNextComboSectionName();
 public:
