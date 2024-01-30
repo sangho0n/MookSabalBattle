@@ -58,6 +58,9 @@ UStaticMeshComponent* AWeapon::ReadyToEquip()
 	Mesh->SetSimulatePhysics(false);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	// change outline to be none
+	SM_Weapon->SetCustomDepthStencilValue(OUT_LINE::Base);
+
 	OnPlayerPicked.Broadcast();
 
 	return Mesh;

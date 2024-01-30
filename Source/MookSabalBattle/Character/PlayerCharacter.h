@@ -15,7 +15,8 @@ DECLARE_DELEGATE(FOnNewPlayerReplicationFinished);
 UENUM()
 enum OUT_LINE
 {
-	Ally = 1,
+	Base = 0,
+	Ally,
 	Enemy,
 	Weapon
 };
@@ -61,7 +62,9 @@ protected:
 public:
 	void ForwardBack(float NewAxisValue);
 	void LeftRight(float NewAxisValue);
+	UFUNCTION(Server, Unreliable)
 	void LookUp(float NewAxisValue);
+	UFUNCTION(Server, Unreliable)
 	void Turn(float NewAxisValue);
 	
 	UPROPERTY(VisibleAnywhere, Category=Weapon)
@@ -236,4 +239,9 @@ public:
 	void InitPlayer(const bool bIsRedTeam);
 	UFUNCTION(BlueprintNativeEvent)
 	void InitWidgets();
+
+	UPROPERTY(Replicated)
+	FRotator ControlRotation;
+	UPROPERTY(Replicated)
+	FRotator ActorRotation;
 };
