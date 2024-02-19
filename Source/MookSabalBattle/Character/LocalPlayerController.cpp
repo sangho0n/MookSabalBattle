@@ -3,9 +3,57 @@
 
 #include "LocalPlayerController.h"
 
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "MSBAnimInstance.h"
 #include "PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
+
+ALocalPlayerController::ALocalPlayerController()
+{
+	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMCNormalRef(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/Main/Input/IMC_Normal.IMC_Normal'"));
+	if(IMCNormalRef.Succeeded())
+	{
+		IMC_Normal = IMCNormalRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> IADirMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Main/Input/Actions/IA_DirMove.IA_DirMove'"));
+	if(IADirMoveRef.Succeeded())
+	{
+		IA_DirMove = IADirMoveRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> IALookRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Main/Input/Actions/IA_Look.IA_Look'"));
+	if(IADirMoveRef.Succeeded())
+	{
+		IA_Look = IALookRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> IAAttackRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Main/Input/Actions/IA_Attack.IA_Attack'"));
+	if(IADirMoveRef.Succeeded())
+	{
+		IA_Attack = IAAttackRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> IAReloadRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Main/Input/Actions/IA_Reload.IA_Reload'"));
+	if(IADirMoveRef.Succeeded())
+	{
+		IA_Reload = IAReloadRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> IAJumpRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Main/Input/Actions/IA_Jump.IA_Jump'"));
+	if(IADirMoveRef.Succeeded())
+	{
+		IA_Jump = IAJumpRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> IAEquipRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Main/Input/Actions/IA_Equip.IA_Equip'"));
+	if(IADirMoveRef.Succeeded())
+	{
+		IA_Equip = IAEquipRef.Object;
+	}
+}
+
 
 void ALocalPlayerController::PostInitializeComponents()
 {
@@ -32,44 +80,59 @@ void ALocalPlayerController::OnPossess(APawn* InPawn)
 void ALocalPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+	Subsystem->ClearAllMappings();
+	Subsystem->AddMappingContext(IMC_Normal, 0);
+
+	auto EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
+
+	EnhancedInputComponent->BindAction(IA_DirMove, ETriggerEvent::Triggered, this, &ALocalPlayerController::Move);
+	EnhancedInputComponent->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ALocalPlayerController::Look);
+	EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Triggered, this, &ALocalPlayerController::Jump);
+	EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Triggered, this, &ALocalPlayerController::Attack);
+	EnhancedInputComponent->BindAction(IA_Attack, ETriggerEvent::Canceled, this, &ALocalPlayerController::AttackStop);
+	EnhancedInputComponent->BindAction(IA_Reload, ETriggerEvent::Triggered, this, &ALocalPlayerController::Reload);
+	EnhancedInputComponent->BindAction(IA_Equip, ETriggerEvent::Triggered, this, &ALocalPlayerController::Equip);
 	
-	InputComponent->BindAxis("MoveForward", this, &ALocalPlayerController::ForwardBack);
-	InputComponent->BindAxis("MoveRight", this, &ALocalPlayerController::LeftRight);
-	InputComponent->BindAction("Jump", IE_Pressed, this, &ALocalPlayerController::Jump);
-	InputComponent->BindAxis("LookUp", this, &ALocalPlayerController::MouseVerticalChange);
-	InputComponent->BindAxis("Turn", this, &ALocalPlayerController::MouseHorizontalChange);
-	InputComponent->BindAction("Equip", IE_Pressed, this, &ALocalPlayerController::Equip);
-	InputComponent->BindAction("Attack", IE_Pressed, this, &ALocalPlayerController::Attack);
-	InputComponent->BindAction("Attack", IE_Released, this, &ALocalPlayerController::AttackStop);
-	InputComponent->BindAction("Reload", IE_Released, this, &ALocalPlayerController::Reload);
 }
 
-void ALocalPlayerController::ForwardBack(float NewAxisValue)
+void ALocalPlayerController::Move(const FInputActionValue& Value)
 {
 	if(!InputEnabled()) return;
 	if(!bIsPossessingPawnInitialized) return;
+	
+	const FVector2D MoveValue = Value.Get<FVector2D>();
+	const FRotator MovementRotation(0, GetControlRotation().Yaw, 0);
 
 	auto ControllingPawn = GetPawn();
 	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
 		auto character = Cast<APlayerCharacter>(ControllingPawn);
-		character->ForwardBack(NewAxisValue);
+		
+		character->DirectionalMove(MoveValue.X, MoveValue.Y);
 	}
 }
 
-void ALocalPlayerController::LeftRight(float NewAxisValue)
+void ALocalPlayerController::Look(const FInputActionValue& Value)
 {
 	if(!InputEnabled()) return;
 	if(!bIsPossessingPawnInitialized) return;
 	
+	const FVector2D LookValue = Value.Get<FVector2D>();
+	
+	AddYawInput(LookValue.X);
+	AddPitchInput(LookValue.Y);
 	auto ControllingPawn = GetPawn();
 	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
 	{
 		auto character = Cast<APlayerCharacter>(ControllingPawn);
-		character->LeftRight(NewAxisValue);
-
+		
+		character->LookUp(LookValue.Y);
+		character->Turn(LookValue.X);
 	}
 }
+
 
 void ALocalPlayerController::Jump()
 {
@@ -82,34 +145,6 @@ void ALocalPlayerController::Jump()
 		auto character = Cast<APlayerCharacter>(ControllingPawn);
 		character->Jump();
 
-	}
-}
-
-void ALocalPlayerController::MouseVerticalChange(float NewAxisValue)
-{
-	if(!InputEnabled()) return;
-	if(!bIsPossessingPawnInitialized) return;
-	
-	AddPitchInput(NewAxisValue);
-	auto ControllingPawn = GetPawn();
-	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
-	{
-		auto character = Cast<APlayerCharacter>(ControllingPawn);
-		character->LookUp(NewAxisValue);
-	}
-}
-
-void ALocalPlayerController::MouseHorizontalChange(float NewAxisValue)
-{
-	if(!InputEnabled()) return;
-	if(!bIsPossessingPawnInitialized) return;
-	
-	AddYawInput(NewAxisValue);
-	auto ControllingPawn = GetPawn();
-	if(ControllingPawn->IsA(APlayerCharacter::StaticClass()))
-	{
-		auto character = Cast<APlayerCharacter>(ControllingPawn);
-		character->Turn(NewAxisValue);
 	}
 }
 

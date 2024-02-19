@@ -60,8 +60,7 @@ protected:
 	ACharacterState* CharacterState;
 
 public:
-	void ForwardBack(float NewAxisValue);
-	void LeftRight(float NewAxisValue);
+	void DirectionalMove(float RightAxisValue, float ForwardAxisValue);
 	UFUNCTION(Server, Unreliable)
 	void LookUp(float NewAxisValue);
 	UFUNCTION(Server, Unreliable)

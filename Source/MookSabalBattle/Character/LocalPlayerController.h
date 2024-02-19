@@ -4,6 +4,8 @@
 
 #include "../MookSabalBattle.h"
 #include "GameFramework/PlayerController.h"
+#include "InputAction.h"
+#include "InputMappingContext.h"
 #include "LocalPlayerController.generated.h"
 
 /**
@@ -13,6 +15,8 @@ UCLASS()
 class MOOKSABALBATTLE_API ALocalPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+
+	ALocalPlayerController();
 	
 public:
 	virtual void PostInitializeComponents() override;
@@ -23,11 +27,9 @@ protected:
 	virtual void SetupInputComponent() override;
 	
 private:
-	void ForwardBack(float NewAxisValue);
-	void LeftRight(float NewAxisValue);
+	void Move(const FInputActionValue& Value);
 	void Jump();
-	void MouseVerticalChange(float NewAxisValue);
-	void MouseHorizontalChange(float NewAxisValue);
+	void Look(const FInputActionValue& Value);
 	void Equip();
 	void Attack();
 	void Reload();
@@ -41,4 +43,13 @@ UPROPERTY(Replicated)
 public:
 	UFUNCTION(Client, Reliable)
 	void DisableInputEachCient(APlayerController* Controller);
+
+private:
+	TObjectPtr<UInputMappingContext> IMC_Normal;
+	TObjectPtr<UInputAction> IA_DirMove;
+	TObjectPtr<UInputAction> IA_Look;
+	TObjectPtr<UInputAction> IA_Attack;
+	TObjectPtr<UInputAction> IA_Reload;
+	TObjectPtr<UInputAction> IA_Jump;
+	TObjectPtr<UInputAction> IA_Equip;
 };

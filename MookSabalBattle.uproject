@@ -33,6 +33,10 @@
 			"Name": "GrpcWrapper",
 			"Enabled": true,
 			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/23a893176d314732ba91d33dda0f04e2"
+		},
+		{
+			"Name": "EnhancedInput",
+			"Enabled": true
 		}
 	]
 }

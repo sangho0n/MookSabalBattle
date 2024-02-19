@@ -301,28 +301,26 @@ void APlayerCharacter::Tick(float DeltaTime)
 	}
 }
 
-void APlayerCharacter::ForwardBack(float NewAxisValue)
+void APlayerCharacter::DirectionalMove(float RightAxisValue, float ForwardAxisValue)
 {
-	if(NewAxisValue != 0.0)
+	const FRotator MovementRotation(0, Controller->GetControlRotation().Yaw, 0);
+ 
+	// Forward/Backward direction
+	if (ForwardAxisValue != 0.f)
 	{
-		const auto Rotation = Controller->GetControlRotation();
-		const FRotator XYRotation(0, Rotation.Yaw, 0);
-
-		const FVector Forward = FRotationMatrix(XYRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Forward, NewAxisValue);
-		//GetCharacterMovement()->AddInputVector(Forward*NewAxisValue, false);
+		// Get forward vector
+		const FVector Direction = MovementRotation.RotateVector(FVector::ForwardVector);
+ 
+		AddMovementInput(Direction, ForwardAxisValue);
 	}
-}
-
-void APlayerCharacter::LeftRight(float NewAxisValue)
-{
-	if(NewAxisValue != 0.0)
+ 
+	// Right/Left direction
+	if (RightAxisValue != 0.f)
 	{
-		const auto Rotation = Controller->GetControlRotation();
-		const FRotator XYRotation(0, Rotation.Yaw, 0);
-
-		const auto Forward = FRotationMatrix(XYRotation).GetUnitAxis(EAxis::Y);
-		AddMovementInput(Forward, NewAxisValue);
+		// Get right vector
+		const FVector Direction = MovementRotation.RotateVector(FVector::RightVector);
+ 
+		AddMovementInput(Direction, RightAxisValue);
 	}
 }
 
@@ -377,7 +375,7 @@ void APlayerCharacter::ChangeCharacterMode(CharacterMode NewMode)
 		this->bUseControllerRotationPitch = false;
 		this->bUseControllerRotationRoll = false;
 		this->bUseControllerRotationYaw = true;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
 		if(!IsLocallyControlled()) return;
 		// 3rd view mouse rotation
 		SpringArm->TargetArmLength = 400.0f;
