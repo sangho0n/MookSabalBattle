@@ -4,7 +4,6 @@
 
 #include "../MookSabalBattle.h"
 #include "Weapon.h"
-#include "Kismet/GameplayStatics.h"
 #include "MookSabalBattle/Character/PlayerCharacter.h"
 #include "Gun.generated.h"
 
@@ -31,15 +30,11 @@ public:
 
 private:
 	FName MuzzleSocket;
-	FVector MuzzlePosInLocal;
 
 	UFUNCTION(Server, Unreliable)
-	void FireParticleOnMuzzle_Server();
+	void SyncParticles(FVector MuzzlePoint, FVector TargetPoint, bool bIsBlocked, bool bIsHit);
 	UFUNCTION(NetMulticast, Unreliable) 
-	void FireParticleOnMuzzle_Multicast();
-
-private:
-	UParticleSystem* FireParticle;
+	void MulticastParticles(FVector MuzzlePoint, FVector TargetPoint, bool bIsBlocked, bool bIsHit);
 
 public:
 	FPointDamageEvent Hit(APlayerCharacter* Causer);

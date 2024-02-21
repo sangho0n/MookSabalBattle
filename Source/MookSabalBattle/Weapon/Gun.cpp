@@ -53,22 +53,15 @@ void AGun::PostInitializeComponents()
 	Damage = 10.0f;
 }
 
-void AGun::FireParticleOnMuzzle_Server_Implementation()
+void AGun::SyncParticles_Implementation(FVector MuzzlePoint, FVector TargetPoint, bool bIsBlocked, bool bIsHit)
 {
-	FireParticleOnMuzzle_Multicast();
+	MulticastParticles(MuzzlePoint, TargetPoint, bIsBlocked, bIsHit);
 }
 
-void AGun::FireParticleOnMuzzle_Multicast_Implementation()
+void AGun::MulticastParticles_Implementation(FVector MuzzlePoint, FVector TargetPoint, bool bIsBlocked, bool bIsHit)
 {
-	UGameplayStatics::SpawnEmitterAttached(FireParticle,
-		SM_Weapon,
-		MuzzleSocket,
-		FVector(0, 0, 0),
-		FRotator(-90.0f, 0, 0),
-		FVector(0.2f)
-		);
+	UWeaponEventManager::GetInstance()->OnFire.Broadcast(MuzzlePoint, TargetPoint, bIsBlocked, bIsHit);
 }
-
 
 // called on client
 FPointDamageEvent AGun::Hit(APlayerCharacter* Causer)
@@ -82,8 +75,7 @@ FPointDamageEvent AGun::Hit(APlayerCharacter* Causer)
 	if(!CanFire(Causer)) { return DamageEvent;}
 	Bullets--; MulticastBulltes(Bullets);
 	MSB_LOG(Warning, TEXT("current bullets : %d"), Bullets);
-
-	FireParticleOnMuzzle_Server();
+	
 	bool bHit = false;
 	bool bBlocked = false;
 	auto CameraLocation = Causer->GetCameraLocation();
@@ -121,6 +113,9 @@ FPointDamageEvent AGun::Hit(APlayerCharacter* Causer)
 			
 		}
 	}
+	
+	SyncParticles(SM_Weapon->GetSocketLocation(MuzzleSocket), TargetPos, bBlocked, bHit);
+	
 #if ENABLE_DRAW_DEBUG
 	DrawDebugLine(
 		GetWorld(),
